@@ -1,0 +1,20 @@
+name: kafmesh
+description: Kafmesh service is an example service to test kafmesh.
+
+output:
+  package: service
+  path: ./internal/testing/service
+
+messages:
+  protobuf:
+    - ./protos
+  avro:
+    - ./avro
+
+components:
+  - ./components/*.yaml
+
+defaults:
+  partition: 10
+  replication: 3
+  type: "protobuf"
