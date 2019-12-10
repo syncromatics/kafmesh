@@ -2,7 +2,7 @@ name: details
 description: The details component handles the flow for device details.
 
 emitters:
-  - message: kafmesh.deviceId.detail
+  - message: kafmesh.deviceId.details
     type: protobuf
     partitions: 10
 
@@ -10,7 +10,7 @@ processors:
   - groupName: kafmesh.deviceId.enrichedDetail
     description: Provides enriched device details with customer information.
     inputs:
-      - message: kafmesh.deviceId.detail
+      - message: kafmesh.deviceId.details
         type: protobuf
       - message: kafmesh.deviceId.customer
         type: protobuf

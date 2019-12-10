@@ -18,4 +18,8 @@ RUN golint -set_exit_status ./...
 #testing
 FROM build as test
 
+ENV GOPATH=/go
+RUN apt update && apt install -y protobuf-compiler
+RUN go get -u github.com/golang/protobuf/protoc-gen-go
+
 CMD go test -race -coverprofile=/artifacts/coverage.txt -covermode=atomic ./...

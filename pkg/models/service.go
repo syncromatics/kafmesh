@@ -12,9 +12,9 @@ type Service struct {
 	Name        string
 	Description string
 	Components  []string
-	Output      *OutputSettings
-	Defaults    *TopicDefaults
-	Messages    *MessageDefinitions
+	Output      OutputSettings
+	Defaults    TopicDefaults
+	Messages    MessageDefinitions
 }
 
 // OutputSettings define how the service is generated

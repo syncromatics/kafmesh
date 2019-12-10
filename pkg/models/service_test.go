@@ -41,11 +41,11 @@ defaults:
 	assert.Equal(t, &models.Service{
 		Name:        "kafmesh",
 		Description: "Kafmesh service is an example service to test kafmesh.",
-		Output: &models.OutputSettings{
+		Output: models.OutputSettings{
 			Package: "service",
 			Path:    "./internal/testing/service",
 		},
-		Messages: &models.MessageDefinitions{
+		Messages: models.MessageDefinitions{
 			Protobuf: []string{
 				"./protos",
 			},
@@ -56,7 +56,7 @@ defaults:
 		Components: []string{
 			"./components/*.yaml",
 		},
-		Defaults: &models.TopicDefaults{
+		Defaults: models.TopicDefaults{
 			Partition:   10,
 			Replication: 3,
 			Type:        "protobuf",
