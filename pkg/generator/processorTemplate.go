@@ -204,7 +204,7 @@ type processorOptions struct {
 	Codecs    []codec
 }
 
-func generateProcessor(writer io.Writer, processor processorOptions) error {
+func generateProcessor(writer io.Writer, processor *processorOptions) error {
 	err := processorTemplate.Execute(writer, processor)
 	if err != nil {
 		return errors.Wrap(err, "failed to execute processor template")
@@ -212,7 +212,7 @@ func generateProcessor(writer io.Writer, processor processorOptions) error {
 	return nil
 }
 
-func buildProcessorOptions(pkg string, mod string, modelsPath string, processor models.Processor) (processorOptions, error) {
+func buildProcessorOptions(pkg string, mod string, modelsPath string, processor models.Processor) (*processorOptions, error) {
 	imports := map[string]int{}
 	importIndex := 0
 
@@ -559,5 +559,5 @@ func buildProcessorOptions(pkg string, mod string, modelsPath string, processor 
 
 	sort.Strings(options.Imports)
 
-	return options, nil
+	return &options, nil
 }

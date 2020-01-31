@@ -39,10 +39,7 @@ func Generate(options Options) error {
 			return errors.Wrap(err, "failed to glob files")
 		}
 
-		for _, f := range fs {
-			fixed := strings.TrimPrefix(f, protoPath+"/")
-			files = append(files, fixed)
-		}
+		files = append(files, fs...)
 	}
 
 	args := append(includes, files...)
@@ -103,7 +100,7 @@ func processComponent(rootPath string, outputPath string, mod string, modelsPath
 
 	for _, p := range component.Processors {
 		fileName := strings.ReplaceAll(p.GroupName, ".", "_")
-		fileName = fmt.Sprintf("%s.km.go", fileName)
+		fileName = fmt.Sprintf("%s_processor.km.go", fileName)
 		file, err := os.Create(path.Join(componentPath, fileName))
 		if err != nil {
 			return errors.Wrapf(err, "failed to open service file")
@@ -118,6 +115,26 @@ func processComponent(rootPath string, outputPath string, mod string, modelsPath
 		err = generateProcessor(file, co)
 		if err != nil {
 			return errors.Wrap(err, "failed to generate processor")
+		}
+	}
+
+	for _, e := range component.Emitters {
+		fileName := strings.ReplaceAll(e.Message, ".", "_")
+		fileName = fmt.Sprintf("%s_emitter.km.go", fileName)
+		file, err := os.Create(path.Join(componentPath, fileName))
+		if err != nil {
+			return errors.Wrapf(err, "failed to open service file")
+		}
+		defer file.Close()
+
+		co, err := buildEmitterOptions(component.Name, mod, mPath, e)
+		if err != nil {
+			return errors.Wrap(err, "failed to build emitter options")
+		}
+
+		err = generateEmitter(file, co)
+		if err != nil {
+			return errors.Wrap(err, "failed to generate emitter")
 		}
 	}
 
