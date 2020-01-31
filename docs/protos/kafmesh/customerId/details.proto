@@ -1,0 +1,7 @@
+syntax = "proto3";
+
+package kafmesh.customerId;
+
+message Details {
+    string name = 1;
+}

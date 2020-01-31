@@ -1,0 +1,7 @@
+syntax = "proto3";
+
+package kafmesh.deviceId;
+
+message heartbeat {
+    int64 time = 1;
+}
