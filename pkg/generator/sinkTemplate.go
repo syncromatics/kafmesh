@@ -18,16 +18,14 @@ package {{ .Package }}
 
 import (
 	"context"
+	"time"
 
-	"github.com/burdiyan/kafkautil"
 	"github.com/lovoo/goka"
-	"github.com/lovoo/goka/kafka"
-	"github.com/lovoo/goka/storage"
 	"github.com/pkg/errors"
-	"github.com/syndtr/goleveldb/leveldb/opt"
 
 	"github.com/syncromatics/kafmesh/pkg/runner"
-	"{{ .Import }}"
+
+	{{ .Import }}
 )
 
 type {{ .Name }}_Sink interface {
@@ -36,7 +34,7 @@ type {{ .Name }}_Sink interface {
 }
 
 type impl_{{ .Name }}_Sink struct {
-	{{ .Name }}_Sink sink
+	sink {{ .Name }}_Sink
 	codec goka.Codec
 	group string
 	topic string
@@ -156,7 +154,8 @@ func buildSinkOptions(pkg string, mod string, modelsPath string, sink models.Sin
 	}
 
 	imp := strings.TrimPrefix(mPkg.String(), "/")
-	options.Import = fmt.Sprintf("%s%s/%s", mod, modelsPath, imp)
+	d := strings.Split(imp, "/")
+	options.Import = fmt.Sprintf("%s \"%s%s/%s\"", d[len(d)-1], mod, modelsPath, imp)
 
 	options.MessageType = nameFrags[len(nameFrags)-2] + "." + strcase.ToCamel(nameFrags[len(nameFrags)-1])
 

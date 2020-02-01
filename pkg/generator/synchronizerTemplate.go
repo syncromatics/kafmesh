@@ -27,7 +27,8 @@ import (
 	"github.com/syndtr/goleveldb/leveldb/opt"
 
 	"github.com/syncromatics/kafmesh/pkg/runner"
-	"{{ .Import }}"
+
+	{{ .Import }}
 )
 
 type {{ .Name }}_Synchronizer_Message struct {
@@ -207,7 +208,8 @@ func buildSynchronizerOptions(pkg string, mod string, modelsPath string, synchro
 	}
 
 	imp := strings.TrimPrefix(mPkg.String(), "/")
-	options.Import = fmt.Sprintf("%s%s/%s", mod, modelsPath, imp)
+	d := strings.Split(imp, "/")
+	options.Import = fmt.Sprintf("%s \"%s%s/%s\"", d[len(d)-1], mod, modelsPath, imp)
 
 	options.MessageType = nameFrags[len(nameFrags)-2] + "." + strcase.ToCamel(nameFrags[len(nameFrags)-1])
 

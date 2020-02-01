@@ -17,7 +17,7 @@ func Test_Generator(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	tmpDir = path.Join("/tmp", "genTest")
+	//tmpDir = path.Join("/tmp", "genTest")
 
 	protoDir := path.Join(tmpDir, "protos")
 	err = os.MkdirAll(protoDir, os.ModePerm)
@@ -75,7 +75,7 @@ message DetailsEnriched {
 	options := generator.Options{
 		Service: &models.Service{
 			Output: models.OutputSettings{
-				Path:    "kafmesh",
+				Path:    "internal/kafmesh",
 				Package: "kafmesh",
 				Module:  "test",
 			},
@@ -85,7 +85,8 @@ message DetailsEnriched {
 				},
 			},
 		},
-		RootPath: tmpDir,
+		RootPath:        tmpDir,
+		DefinitionsPath: tmpDir,
 		Components: []*models.Component{
 			&models.Component{
 				Name: "details",
@@ -176,7 +177,7 @@ message DetailsEnriched {
 	validateView(tmpDir, t)
 	validateSynchronizer(tmpDir, t)
 
-	s, err := ioutil.ReadFile(path.Join(tmpDir, "kafmesh", "service.km.go"))
+	s, err := ioutil.ReadFile(path.Join(tmpDir, "internal", "kafmesh", "service.km.go"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -191,7 +192,7 @@ package kafmesh
 import (
 	"github.com/syncromatics/kafmesh/pkg/runner"
 	"github.com/pkg/errors"
-	"test/kafmesh/details"
+	"test/internal/kafmesh/details"
 )
 func Register_TestMeshTestIdTest2Processor(service *runner.Service, processor details.TestMeshTestIdTest2Processor) error {
 	r, err := details.Register_TestMeshTestIdTest2Processor(service.Options(), processor)

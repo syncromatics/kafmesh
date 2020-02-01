@@ -13,9 +13,10 @@ import (
 
 // Options for the kafmesh generator
 type Options struct {
-	Service    *models.Service
-	Components []*models.Component
-	RootPath   string
+	Service         *models.Service
+	Components      []*models.Component
+	RootPath        string
+	DefinitionsPath string
 }
 
 // Generate generates the kafmesh files
@@ -30,7 +31,7 @@ func Generate(options Options) error {
 	includes := []string{}
 	files := []string{}
 	for _, p := range options.Service.Messages.Protobuf {
-		protoPath := path.Join(options.RootPath, p)
+		protoPath := path.Join(options.DefinitionsPath, p)
 		includes = append(includes, protoPath)
 
 		fs, err := filepathx.Glob(path.Join(protoPath, "**/*.proto"))
@@ -43,19 +44,22 @@ func Generate(options Options) error {
 
 	args := append(includes, files...)
 
-	modelsPath := path.Join(options.RootPath, options.Service.Output.Path, "models")
-	err = os.MkdirAll(modelsPath, os.ModePerm)
+	modelsPath := path.Join(options.Service.Output.Path, "models")
+	err = os.MkdirAll(path.Join(options.RootPath, modelsPath), os.ModePerm)
 	if err != nil {
 		return errors.Wrap(err, "failed to create output models path")
 	}
 
 	args = append(args, "--go_out=.")
 
-	err = Protoc(protoOptions{
+	protocOptions := protoOptions{
 		Files:    files,
 		Includes: includes,
-		Output:   modelsPath,
-	})
+		Output:   path.Join(options.RootPath, modelsPath),
+	}
+
+	fmt.Printf("options:files: %s, includes: %s, output: %s\n", protocOptions.Files, protocOptions.Includes, protocOptions.Output)
+	err = Protoc(protocOptions)
 	if err != nil {
 		return errors.Wrapf(err, "failed to run protoc")
 	}
@@ -67,13 +71,13 @@ func Generate(options Options) error {
 	defer file.Close()
 
 	for _, c := range options.Components {
-		err = processComponent(options.RootPath, outputPath, options.Service.Output.Package, modelsPath, c)
+		err = processComponent(options.RootPath, outputPath, options.Service.Output.Module, modelsPath, c)
 		if err != nil {
 			return errors.Wrapf(err, "failed to process component")
 		}
 	}
 
-	sOptions, err := buildServiceOptions(options.Service, options.Components, options.Service.Output.Package)
+	sOptions, err := buildServiceOptions(options.Service, options.Components, options.Service.Output.Module)
 	if err != nil {
 		return errors.Wrapf(err, "failed to build options")
 	}
@@ -87,7 +91,7 @@ func Generate(options Options) error {
 }
 
 func processComponent(rootPath string, outputPath string, mod string, modelsPath string, component *models.Component) error {
-	mPath := strings.TrimPrefix(modelsPath, rootPath)
+	mPath := "/" + strings.TrimPrefix(modelsPath, rootPath)
 	componentPath := path.Join(outputPath, component.Name)
 	_, err := os.Stat(componentPath)
 	if os.IsNotExist(err) {

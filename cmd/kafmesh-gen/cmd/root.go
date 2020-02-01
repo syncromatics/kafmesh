@@ -42,14 +42,17 @@ var rootCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		exPath = filepath.Dir(fullServicePath)
+		cPath := filepath.Dir(fullServicePath)
 
 		components := []*models.Component{}
 
 		for _, g := range service.Components {
-			cs, err := filepath.Glob(filepath.Join(exPath, g))
+			cs, err := filepath.Glob(filepath.Join(cPath, g))
 			if err != nil {
 				log.Fatal(err)
+			}
+			if len(cs) == 0 {
+				fmt.Printf("warning: no component files found in '%s\n'", filepath.Join(cPath, g))
 			}
 			for _, c := range cs {
 				componentFile, err := os.Open(c)
@@ -67,11 +70,19 @@ var rootCmd = &cobra.Command{
 			}
 		}
 
+		if len(components) == 0 {
+			log.Fatal("no components found")
+		}
+
 		err = generator.Generate(generator.Options{
-			RootPath:   exPath,
-			Service:    service,
-			Components: components,
+			RootPath:        exPath,
+			Service:         service,
+			Components:      components,
+			DefinitionsPath: cPath,
 		})
+		if err != nil {
+			log.Fatal(err)
+		}
 	},
 }
 

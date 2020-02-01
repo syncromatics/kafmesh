@@ -9,7 +9,7 @@ import (
 )
 
 func validateSynchronizer(tmpDir string, t *testing.T) {
-	s, err := ioutil.ReadFile(path.Join(tmpDir, "kafmesh", "details", "testMesh_testId_test_synchronizer.km.go"))
+	s, err := ioutil.ReadFile(path.Join(tmpDir, "internal", "kafmesh", "details", "testMesh_testId_test_synchronizer.km.go"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -33,7 +33,8 @@ import (
 	"github.com/syndtr/goleveldb/leveldb/opt"
 
 	"github.com/syncromatics/kafmesh/pkg/runner"
-	"test/kafmesh/models/testMesh/testId"
+
+	testId "test/internal/kafmesh/models/testMesh/testId"
 )
 
 type TestId_Test_View struct {

@@ -9,7 +9,7 @@ import (
 )
 
 func validateSink(tmpDir string, t *testing.T) {
-	s, err := ioutil.ReadFile(path.Join(tmpDir, "kafmesh", "details", "enriched_data_postgres_sink.km.go"))
+	s, err := ioutil.ReadFile(path.Join(tmpDir, "internal", "kafmesh", "details", "enriched_data_postgres_sink.km.go"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -24,16 +24,14 @@ package details
 
 import (
 	"context"
+	"time"
 
-	"github.com/burdiyan/kafkautil"
 	"github.com/lovoo/goka"
-	"github.com/lovoo/goka/kafka"
-	"github.com/lovoo/goka/storage"
 	"github.com/pkg/errors"
-	"github.com/syndtr/goleveldb/leveldb/opt"
 
 	"github.com/syncromatics/kafmesh/pkg/runner"
-	"test/kafmesh/models/testMesh/testSerial"
+
+	testSerial "test/internal/kafmesh/models/testMesh/testSerial"
 )
 
 type Enriched_Data_Postgres_Sink interface {
@@ -42,7 +40,7 @@ type Enriched_Data_Postgres_Sink interface {
 }
 
 type impl_Enriched_Data_Postgres_Sink struct {
-	Enriched_Data_Postgres_Sink sink
+	sink Enriched_Data_Postgres_Sink
 	codec goka.Codec
 	group string
 	topic string

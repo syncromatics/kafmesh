@@ -9,7 +9,7 @@ import (
 )
 
 func validateView(tmpDir string, t *testing.T) {
-	s, err := ioutil.ReadFile(path.Join(tmpDir, "kafmesh", "details", "testMesh_testSerial_detailsEnriched_view.km.go"))
+	s, err := ioutil.ReadFile(path.Join(tmpDir, "internal", "kafmesh", "details", "testMesh_testSerial_detailsEnriched_view.km.go"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -33,7 +33,8 @@ import (
 	"github.com/syndtr/goleveldb/leveldb/opt"
 
 	"github.com/syncromatics/kafmesh/pkg/runner"
-	"test/kafmesh/models/testMesh/testSerial"
+
+	testSerial "test/internal/kafmesh/models/testMesh/testSerial"
 )
 
 type TestSerial_DetailsEnriched_View struct {

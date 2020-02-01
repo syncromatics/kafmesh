@@ -9,7 +9,7 @@ import (
 )
 
 func validateEmitter(tmpDir string, t *testing.T) {
-	s, err := ioutil.ReadFile(path.Join(tmpDir, "kafmesh", "details", "testMesh_testSerial_details_emitter.km.go"))
+	s, err := ioutil.ReadFile(path.Join(tmpDir, "internal", "kafmesh", "details", "testMesh_testSerial_details_emitter.km.go"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -27,13 +27,11 @@ import (
 
 	"github.com/burdiyan/kafkautil"
 	"github.com/lovoo/goka"
-	"github.com/lovoo/goka/kafka"
-	"github.com/lovoo/goka/storage"
 	"github.com/pkg/errors"
-	"github.com/syndtr/goleveldb/leveldb/opt"
 
 	"github.com/syncromatics/kafmesh/pkg/runner"
-	"test/kafmesh/models/testMesh/testSerial"
+
+	testSerial "test/internal/kafmesh/models/testMesh/testSerial"
 )
 
 type TestSerial_Details_Emitter struct {
@@ -42,7 +40,7 @@ type TestSerial_Details_Emitter struct {
 
 type TestSerial_Details_Emitter_Message struct {
 	Key string
-	Value *testSerial.Details{}
+	Value *testSerial.Details
 }
 
 func New_TestSerial_Details_Emitter(options runner.ServiceOptions) (*TestSerial_Details_Emitter, error) {

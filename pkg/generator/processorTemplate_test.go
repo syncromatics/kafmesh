@@ -9,7 +9,7 @@ import (
 )
 
 func validateProcessors(tmpDir string, t *testing.T) {
-	s, err := ioutil.ReadFile(path.Join(tmpDir, "kafmesh", "details", "testMesh_testId_test2_processor.km.go"))
+	s, err := ioutil.ReadFile(path.Join(tmpDir, "internal", "kafmesh", "details", "testMesh_testId_test2_processor.km.go"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -34,8 +34,8 @@ import (
 
 	"github.com/syncromatics/kafmesh/pkg/runner"
 
-	m0 "test/kafmesh/models/testMesh/testId"
-	m1 "test/kafmesh/models/testMesh/testSerial"
+	m0 "test/internal/kafmesh/models/testMesh/testId"
+	m1 "test/internal/kafmesh/models/testMesh/testSerial"
 )
 
 type TestMeshTestIdTest2ProcessorContext interface {
