@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/lovoo/goka"
+
 	"github.com/Shopify/sarama"
 	cluster "github.com/bsm/sarama-cluster"
 	"github.com/pkg/errors"
@@ -11,7 +13,7 @@ import (
 
 // SinkDefinition is the definition of a sink that runs at an interval and will also flush if the buffer is full
 type SinkDefinition interface {
-	Codec() Codec
+	Codec() goka.Codec
 	Group() string
 	Topic() string
 	MaxBufferSize() int

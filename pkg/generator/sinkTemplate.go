@@ -30,7 +30,7 @@ import (
 
 type {{ .Name }}_Sink interface {
 	Flush() error
-	Collect(ctx runner.MessageContext, key string, msg *{{ .MessageType }})
+	Collect(ctx runner.MessageContext, key string, msg *{{ .MessageType }}) error
 }
 
 type impl_{{ .Name }}_Sink struct {
@@ -75,7 +75,7 @@ func (s *impl_{{ .Name }}_Sink) Collect(ctx runner.MessageContext, key string, m
 	return s.sink.Collect(ctx, key, m)
 }
 
-func Register_{{ .Name }}_Sink(options runner.ServiceOptions, sink *{{ .Name }}_Sink, interval time.Duration, maxBufferSize int) (func(ctx context.Context) func(), error) {
+func Register_{{ .Name }}_Sink(options runner.ServiceOptions, sink {{ .Name }}_Sink, interval time.Duration, maxBufferSize int) (func(ctx context.Context) func() error, error) {
 	brokers := options.Brokers
 	protoWrapper := options.ProtoWrapper
 
@@ -93,7 +93,7 @@ func Register_{{ .Name }}_Sink(options runner.ServiceOptions, sink *{{ .Name }}_
 		interval: interval,
 	}
 
-	s, err := runner.NewSink(d, brokers)
+	s := runner.NewSinkRunner(d, brokers)
 
 	return func(ctx context.Context) func() error {
 		return func() error {
