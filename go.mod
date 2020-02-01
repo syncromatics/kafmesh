@@ -11,6 +11,7 @@ require (
 	github.com/lovoo/goka v0.1.3
 	github.com/pkg/errors v0.8.1
 	github.com/samuel/go-zookeeper v0.0.0-20190923202752-2cc03de413da // indirect
+	github.com/spf13/cobra v0.0.5
 	github.com/stretchr/testify v1.4.0
 	github.com/syncromatics/proto-schema-registry v0.7.1
 	github.com/syndtr/goleveldb v1.0.0 // indirect

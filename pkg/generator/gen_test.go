@@ -77,6 +77,7 @@ message DetailsEnriched {
 			Output: models.OutputSettings{
 				Path:    "kafmesh",
 				Package: "kafmesh",
+				Module:  "test",
 			},
 			Messages: models.MessageDefinitions{
 				Protobuf: []string{
@@ -162,7 +163,6 @@ message DetailsEnriched {
 				},
 			},
 		},
-		Mod: "test",
 	}
 
 	err = generator.Generate(options)

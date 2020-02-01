@@ -16,7 +16,6 @@ type Options struct {
 	Service    *models.Service
 	Components []*models.Component
 	RootPath   string
-	Mod        string
 }
 
 // Generate generates the kafmesh files
@@ -68,13 +67,13 @@ func Generate(options Options) error {
 	defer file.Close()
 
 	for _, c := range options.Components {
-		err = processComponent(options.RootPath, outputPath, options.Mod, modelsPath, c)
+		err = processComponent(options.RootPath, outputPath, options.Service.Output.Package, modelsPath, c)
 		if err != nil {
 			return errors.Wrapf(err, "failed to process component")
 		}
 	}
 
-	sOptions, err := buildServiceOptions(options.Service, options.Components, options.Mod)
+	sOptions, err := buildServiceOptions(options.Service, options.Components, options.Service.Output.Package)
 	if err != nil {
 		return errors.Wrapf(err, "failed to build options")
 	}

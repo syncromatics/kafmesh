@@ -21,6 +21,7 @@ type Service struct {
 type OutputSettings struct {
 	Package string
 	Path    string
+	Module  string
 }
 
 // TopicDefaults are the default kafka settings for the service

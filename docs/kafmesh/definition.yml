@@ -3,6 +3,7 @@ description: Kafmesh service is an example service to test kafmesh.
 
 output:
   package: service
+  module: service
   path: ./internal/testing/service
 
 messages:
