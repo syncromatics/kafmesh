@@ -26,76 +26,68 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/burdiyan/kafkautil"
 	"github.com/lovoo/goka"
 	"github.com/lovoo/goka/storage"
 	"github.com/pkg/errors"
 	"github.com/syndtr/goleveldb/leveldb/opt"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/syncromatics/kafmesh/pkg/runner"
 
 	testId "test/internal/kafmesh/models/testMesh/testId"
 )
 
-type TestId_Test_View struct {
+type TestIdTest_Synchronizer_Message struct {
+	key string
+	value *testId.Test
+}
+
+func New_TestIdTest_Synchronizer_Message(key string, value *testId.Test) *TestIdTest_Synchronizer_Message {
+	return &TestIdTest_Synchronizer_Message{
+		key: key,
+		value: value,
+	}
+}
+
+func (m *TestIdTest_Synchronizer_Message) Key() string {
+	return m.key
+}
+
+func (m *TestIdTest_Synchronizer_Message) Value() interface{} {
+	return m.value
+}
+
+type TestIdTest_Synchronizer_Context interface {
+	Keys() ([]string, error)
+	Get(string) (*testId.Test, error)
+	Emit(*TestIdTest_Synchronizer_Message) error
+	EmitBulk(context.Context, []*TestIdTest_Synchronizer_Message) error
+}
+
+type TestIdTest_Synchronizer_Context_impl struct {
 	view *goka.View
+	emitter *runner.Emitter
 }
 
-func New_TestId_Test_View(options runner.ServiceOptions) (*TestId_Test_View, error) {
-	brokers := options.Brokers
-	protoWrapper := options.ProtoWrapper
-
-	codec, err := protoWrapper.Codec("testMesh.testId.test", &testId.Test{})
+func (c *TestIdTest_Synchronizer_Context_impl) Keys() ([]string, error) {
+	it, err := c.view.Iterator()
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create codec")
+		return nil, errors.Wrap(err, "failed to get iterator")
 	}
 
-	var builder storage.Builder
-	if g.settings.StorageInMemory {
-		builder = storage.MemoryBuilder()
-	} else {
-		opts := &opt.Options{
-			BlockCacheCapacity: opt.MiB * 1,
-			WriteBuffer:        opt.MiB * 1,
-		}
-
-		path := filepath.Join("/tmp/storage", "view", "testMesh.testId.test")
-
-		err := os.MkdirAll(path, os.ModePerm)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to create view db directory")
-		}
-
-		builder = storage.BuilderWithOptions(path, opts)
+	keys := []string{}
+	for it.Next() {
+		keys = append(keys, it.Key())
 	}
 
-	view, err := goka.NewView(g.settings.Brokers,
-		goka.Table("testMesh.testId.test"),
-		codec,
-		goka.WithViewStorageBuilder(builder),
-		goka.WithViewHasher(kafkautil.MurmurHasher),
-	)
-
-	if err != nil {
-		return nil, errors.Wrap(err, "failed creating view")
-	}
-
-	return &TestId_Test_View{
-		view: view,
-	}, nil
+	return keys, nil
 }
 
-func (v *TestId_Test_View) Watch(ctx context.Context) func() error {
-	return v.view.Run(ctx)
-}
-
-func (v *TestId_Test_View) Keys() []string {
-	return v.Keys()
-}
-
-func (v *TestId_Test_View) Get(key string) (*testId.Test, error) {
-	m, err := v.view.Get(key)
+func (c *TestIdTest_Synchronizer_Context_impl) Get(key string) (*testId.Test, error) {
+	m, err := c.view.Get(key)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get value from view")
 	}
@@ -106,6 +98,111 @@ func (v *TestId_Test_View) Get(key string) (*testId.Test, error) {
 	}
 
 	return msg, nil
+}
+
+func (c *TestIdTest_Synchronizer_Context_impl) Emit(message *TestIdTest_Synchronizer_Message) error {
+	return c.emitter.Emit(message.Key(), message.Value())
+}
+
+func (c *TestIdTest_Synchronizer_Context_impl) EmitBulk(ctx context.Context, messages []*TestIdTest_Synchronizer_Message) error {
+	b := []runner.EmitMessage{}
+	for _, m := range messages {
+		b = append(b, m)
+	}
+	return c.emitter.EmitBulk(ctx, b)
+}
+
+type TestIdTest_Synchronizer interface {
+	Sync(TestIdTest_Synchronizer_Context) error
+}
+
+func Register_TestIdTest_Synchronizer(options runner.ServiceOptions, sychronizer TestIdTest_Synchronizer, updateInterval time.Duration) (func(context.Context) func() error, error) {
+	brokers := options.Brokers
+	protoWrapper := options.ProtoWrapper
+
+	codec, err := protoWrapper.Codec("testMesh.testId.test", &testId.Test{})
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create codec")
+	}
+
+	opts := &opt.Options{
+		BlockCacheCapacity: opt.MiB * 1,
+		WriteBuffer:        opt.MiB * 1,
+	}
+
+	path := filepath.Join("/tmp/storage", "synchronizer", "testMesh.testId.test")
+
+	err = os.MkdirAll(path, os.ModePerm)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create synchronizer db directory")
+	}
+
+	builder := storage.BuilderWithOptions(path, opts)
+
+	view, err := goka.NewView(brokers,
+		goka.Table("testMesh.testId.test"),
+		codec,
+		goka.WithViewStorageBuilder(builder),
+		goka.WithViewHasher(kafkautil.MurmurHasher),
+	)
+
+	if err != nil {
+		return nil, errors.Wrap(err, "failed creating sychronizer view")
+	}
+
+	e, err := goka.NewEmitter(brokers,
+		goka.Stream("testMesh.testId.test"),
+		codec,
+		goka.WithEmitterHasher(kafkautil.MurmurHasher))
+
+	if err != nil {
+		return nil, errors.Wrap(err, "failed creating sychronizer emitter")
+	}
+
+	emitter := runner.NewEmitter(e)
+
+	c := &TestIdTest_Synchronizer_Context_impl{
+		view:    view,
+		emitter: emitter,
+	}
+
+	return func(ctx context.Context) func() error {
+		return func() error {
+			gctx, cancel := context.WithCancel(ctx)
+			grp, gctx := errgroup.WithContext(ctx)
+
+			timer := time.NewTimer(0)
+			grp.Go(func() error {
+				for {
+					select {
+					case <-gctx.Done():
+						return nil
+					case <-timer.C:
+						err := sychronizer.Sync(c)
+						if err != nil {
+							return err
+						}
+						timer = time.NewTimer(updateInterval)
+					}
+				}
+			})
+
+			grp.Go(emitter.Watch(gctx))
+			grp.Go(func() error {
+				return view.Run(ctx)
+			})
+
+			select {
+			case <- ctx.Done():
+				cancel()
+				return nil
+			case <- gctx.Done():
+				cancel()
+				err := grp.Wait()
+				return err
+			}
+		}
+	}, nil
 }
 `
 )

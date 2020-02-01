@@ -35,7 +35,7 @@ import (
 )
 
 {{ with .Context -}}
-type {{ .Name }} interface {
+type {{ .Name }}_ProcessorContext interface {
 	{{- range .Methods }}
 	{{.Name}}({{ .Args }}
 {{- end}}
@@ -43,7 +43,7 @@ type {{ .Name }} interface {
 {{- end }}
 
 {{ with .Interface -}}
-type {{ .Name }} interface {
+type {{ .Name }}_Processor interface {
 	{{- range .Methods }}
 	{{.Name}}({{ .Args }}) error
 {{- end}}
@@ -51,16 +51,16 @@ type {{ .Name }} interface {
 {{- end}}
 {{ $impl := "" }}
 {{ with .Context -}}
-type {{ .Name }}Impl struct {
+type {{ .Name }}_ProcessorContext_Impl struct {
 	ctx goka.Context
 }
-{{ $impl = print "new" .Name "Impl" }}
-func new{{ .Name }}Impl(ctx goka.Context) *{{ .Name }}Impl {
-	return &{{ .Name }}Impl{ctx}
+
+func new_{{ .Name }}_ProcessorContext_Impl(ctx goka.Context) *{{ .Name }}_ProcessorContext_Impl {
+	return &{{ .Name }}_ProcessorContext_Impl{ctx}
 }
 {{$c := .Name}}
 {{- range .Methods }}
-func (c *{{$c}}Impl) {{.Name}}({{ .Args }} {
+func (c *{{$c}}_ProcessorContext_Impl) {{.Name}}({{ .Args }} {
 {{- $t := . -}}
 {{- with (eq .Type "lookup" ) }}
 	v := c.ctx.Lookup("{{- $t.Topic -}}", key)
@@ -84,9 +84,9 @@ func (c *{{$c}}Impl) {{.Name}}({{ .Args }} {
 }
 {{ end}}
 {{- end}}
-
+{{ $c := .Context -}}
 {{ with .Interface -}}
-func Register_{{ .Name }}(options runner.ServiceOptions, service {{ .Name }}) (func(context.Context) func() error, error) {
+func Register_{{ .Name }}_Processor(options runner.ServiceOptions, service {{ .Name }}_Processor) (func(context.Context) func() error, error) {
 {{- end }}
 	brokers := options.Brokers
 	protoWrapper := options.ProtoWrapper
@@ -112,7 +112,7 @@ func Register_{{ .Name }}(options runner.ServiceOptions, service {{ .Name }}) (f
 {{- with (eq .Type "input" ) }}
 		goka.Input(goka.Stream("{{ $e.Topic }}"), c{{ $e.Codec }}, func(ctx goka.Context, m interface{}) {
 			msg := m.(*{{ $e.Message }})
-			w := {{ $impl }}(ctx)
+			w := new_{{ $c.Name }}_ProcessorContext_Impl(ctx)
 			err := service.{{ $e.Func }}(w, msg)
 			if err != nil {
 				ctx.Fail(err)
@@ -231,10 +231,9 @@ func buildProcessorOptions(pkg string, mod string, modelsPath string, processor 
 	for _, s := range strings.Split(processor.GroupName, ".") {
 		iname.WriteString(strcase.ToCamel(s))
 	}
-	iname.WriteString("Processor")
 
 	options.Context = processorContext{
-		Name:    iname.String() + "Context",
+		Name:    iname.String(),
 		Methods: []contextMethod{},
 	}
 
@@ -268,7 +267,7 @@ func buildProcessorOptions(pkg string, mod string, modelsPath string, processor 
 		}
 
 		var args strings.Builder
-		args.WriteString("ctx " + options.Context.Name)
+		args.WriteString(fmt.Sprintf("ctx %s_ProcessorContext", options.Context.Name))
 		message := nameFrags[len(nameFrags)-1]
 		args.WriteString(fmt.Sprintf(", message *m%d.%s", i, strcase.ToCamel(message)))
 

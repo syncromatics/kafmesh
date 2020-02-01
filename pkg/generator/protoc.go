@@ -54,7 +54,7 @@ func Protoc(options protoOptions) error {
 		for _, f := range files {
 			pargs = append(pargs, f)
 		}
-		pargs = append(pargs, "--go_out="+options.Output)
+		pargs = append(pargs, "--go_out=plugins=grpc:"+options.Output)
 
 		errBuf := bytes.NewBuffer([]byte{})
 

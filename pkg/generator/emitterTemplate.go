@@ -37,7 +37,7 @@ type {{ .Name }}_Emitter_Message struct {
 	value *{{ .MessageType }}
 }
 
-func New{{ .Name }}_Emitter_Message(key string, value *{{ .MessageType }}) *{{ .Name }}_Emitter_Message {
+func New_{{ .Name }}_Emitter_Message(key string, value *{{ .MessageType }}) *{{ .Name }}_Emitter_Message {
 	return &{{ .Name }}_Emitter_Message{
 		key: key,
 		value: value,
@@ -49,7 +49,7 @@ func (m *{{ .Name }}_Emitter_Message) Key() string {
 }
 
 func (m *{{ .Name }}_Emitter_Message) Value() interface{} {
-	return m.Value
+	return m.value
 }
 
 func New_{{ .Name }}_Emitter(options runner.ServiceOptions) (*{{ .Name }}_Emitter, error) {
@@ -118,7 +118,6 @@ func buildEmitterOptions(pkg string, mod string, modelsPath string, emitter mode
 	nameFrags := strings.Split(emitter.Message, ".")
 	for _, f := range nameFrags[1:] {
 		name.WriteString(strcase.ToCamel(f))
-		name.WriteString("_")
 	}
 
 	topic := emitter.Message
@@ -127,7 +126,7 @@ func buildEmitterOptions(pkg string, mod string, modelsPath string, emitter mode
 	}
 
 	options.TopicName = topic
-	options.Name = strings.TrimRight(name.String(), "_")
+	options.Name = name.String()
 
 	var mPkg strings.Builder
 	for _, p := range nameFrags[:len(nameFrags)-1] {

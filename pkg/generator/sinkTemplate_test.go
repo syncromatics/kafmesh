@@ -34,13 +34,13 @@ import (
 	testSerial "test/internal/kafmesh/models/testMesh/testSerial"
 )
 
-type Enriched_Data_Postgres_Sink interface {
+type EnrichedDataPostgres_Sink interface {
 	Flush() error
-	Collect(ctx runner.MessageContext, key string, msg *testSerial.DetailsEnriched)
+	Collect(ctx runner.MessageContext, key string, msg *testSerial.DetailsEnriched) error
 }
 
-type impl_Enriched_Data_Postgres_Sink struct {
-	sink Enriched_Data_Postgres_Sink
+type impl_EnrichedDataPostgres_Sink struct {
+	sink EnrichedDataPostgres_Sink
 	codec goka.Codec
 	group string
 	topic string
@@ -48,31 +48,31 @@ type impl_Enriched_Data_Postgres_Sink struct {
 	interval time.Duration
 }
 
-func (s *impl_Enriched_Data_Postgres_Sink) Codec() goka.Codec {
+func (s *impl_EnrichedDataPostgres_Sink) Codec() goka.Codec {
 	return s.codec
 }
 
-func (s *impl_Enriched_Data_Postgres_Sink) Group() string {
+func (s *impl_EnrichedDataPostgres_Sink) Group() string {
 	return s.group
 }
 
-func (s *impl_Enriched_Data_Postgres_Sink) Topic() string {
+func (s *impl_EnrichedDataPostgres_Sink) Topic() string {
 	return s.topic
 }
 
-func (s *impl_Enriched_Data_Postgres_Sink) MaxBufferSize() int {
+func (s *impl_EnrichedDataPostgres_Sink) MaxBufferSize() int {
 	return s.maxBufferSize
 }
 
-func (s *impl_Enriched_Data_Postgres_Sink) Interval() time.Duration {
+func (s *impl_EnrichedDataPostgres_Sink) Interval() time.Duration {
 	return s.interval
 }
 
-func (s *impl_Enriched_Data_Postgres_Sink) Flush() error {
+func (s *impl_EnrichedDataPostgres_Sink) Flush() error {
 	return s.sink.Flush()
 }
 
-func (s *impl_Enriched_Data_Postgres_Sink) Collect(ctx runner.MessageContext, key string, msg interface{}) error {
+func (s *impl_EnrichedDataPostgres_Sink) Collect(ctx runner.MessageContext, key string, msg interface{}) error {
 	m, ok := msg.(*testSerial.DetailsEnriched)
 	if !ok {
 		return errors.Errorf("expecting message of type '*testSerial.DetailsEnriched' got type '%t'", msg)
@@ -81,7 +81,7 @@ func (s *impl_Enriched_Data_Postgres_Sink) Collect(ctx runner.MessageContext, ke
 	return s.sink.Collect(ctx, key, m)
 }
 
-func Register_Enriched_Data_Postgres_Sink(options runner.ServiceOptions, sink *Enriched_Data_Postgres_Sink, interval time.Duration, maxBufferSize int) (func(ctx context.Context) func(), error) {
+func Register_EnrichedDataPostgres_Sink(options runner.ServiceOptions, sink EnrichedDataPostgres_Sink, interval time.Duration, maxBufferSize int) (func(ctx context.Context) func() error, error) {
 	brokers := options.Brokers
 	protoWrapper := options.ProtoWrapper
 
@@ -90,26 +90,19 @@ func Register_Enriched_Data_Postgres_Sink(options runner.ServiceOptions, sink *E
 		return nil, errors.Wrap(err, "failed to create codec")
 	}
 
-	d := &impl_Enriched_Data_Postgres_Sink{
+	d := &impl_EnrichedDataPostgres_Sink{
 		sink: sink,
 		codec: codec,
-		group: "enriched_data_postgres-sink",
+		group: "enricheddatapostgres-sink",
 		topic: "testMesh.testSerial.detailsEnriched",
 		maxBufferSize: maxBufferSize,
 		interval: interval,
 	}
 
-	s, err := runner.NewSink(d, brokers)
+	s := runner.NewSinkRunner(d, brokers)
 
 	return func(ctx context.Context) func() error {
-		return func() error {
-			err := s.Run(ctx)
-			if err != nil {
-				return errors.Wrap(err, "failed to run sink")
-			}
-
-			return nil
-		}
+		return s.Run(ctx)
 	}, nil
 }
 `

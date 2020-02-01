@@ -18,13 +18,16 @@ package {{ .Package }}
 
 import (
 	"context"
+	"os"
+	"path/filepath"
+	"time"
 
 	"github.com/burdiyan/kafkautil"
 	"github.com/lovoo/goka"
-	"github.com/lovoo/goka/kafka"
 	"github.com/lovoo/goka/storage"
 	"github.com/pkg/errors"
 	"github.com/syndtr/goleveldb/leveldb/opt"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/syncromatics/kafmesh/pkg/runner"
 
@@ -32,8 +35,23 @@ import (
 )
 
 type {{ .Name }}_Synchronizer_Message struct {
-	Key string
-	Value *{{ .MessageType }}{}
+	key string
+	value *{{ .MessageType }}
+}
+
+func New_{{ .Name }}_Synchronizer_Message(key string, value *{{ .MessageType }}) *{{ .Name }}_Synchronizer_Message {
+	return &{{ .Name }}_Synchronizer_Message{
+		key: key,
+		value: value,
+	}
+}
+
+func (m *{{ .Name }}_Synchronizer_Message) Key() string {
+	return m.key
+}
+
+func (m *{{ .Name }}_Synchronizer_Message) Value() interface{} {
+	return m.value
 }
 
 type {{ .Name }}_Synchronizer_Context interface {
@@ -49,7 +67,17 @@ type {{ .Name }}_Synchronizer_Context_impl struct {
 }
 
 func (c *{{ .Name }}_Synchronizer_Context_impl) Keys() ([]string, error) {
-	return c.view.Keys()
+	it, err := c.view.Iterator()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get iterator")
+	}
+
+	keys := []string{}
+	for it.Next() {
+		keys = append(keys, it.Key())
+	}
+
+	return keys, nil
 }
 
 func (c *{{ .Name }}_Synchronizer_Context_impl) Get(key string) (*{{ .MessageType }}, error) {
@@ -67,18 +95,22 @@ func (c *{{ .Name }}_Synchronizer_Context_impl) Get(key string) (*{{ .MessageTyp
 }
 
 func (c *{{ .Name }}_Synchronizer_Context_impl) Emit(message *{{ .Name }}_Synchronizer_Message) error {
-	return c.emitter.Emit(message)
+	return c.emitter.Emit(message.Key(), message.Value())
 }
 
 func (c *{{ .Name }}_Synchronizer_Context_impl) EmitBulk(ctx context.Context, messages []*{{ .Name }}_Synchronizer_Message) error {
-	return c.EmitBulk(ctx, messages)
+	b := []runner.EmitMessage{}
+	for _, m := range messages {
+		b = append(b, m)
+	}
+	return c.emitter.EmitBulk(ctx, b)
 }
 
 type {{ .Name }}_Synchronizer interface {
 	Sync({{ .Name }}_Synchronizer_Context) error
 }
 
-func Register_{{ .Name }}_Synchronizer(options runner.ServiceOptions, sychronizer {{ .Name }}_Synchronizer, updateInterval time.Duration) (func(context.Context) error, error) {
+func Register_{{ .Name }}_Synchronizer(options runner.ServiceOptions, sychronizer {{ .Name }}_Synchronizer, updateInterval time.Duration) (func(context.Context) func() error, error) {
 	brokers := options.Brokers
 	protoWrapper := options.ProtoWrapper
 
@@ -87,26 +119,21 @@ func Register_{{ .Name }}_Synchronizer(options runner.ServiceOptions, sychronize
 		return nil, errors.Wrap(err, "failed to create codec")
 	}
 
-	var builder storage.Builder
-	if g.settings.StorageInMemory {
-		builder = storage.MemoryBuilder()
-	} else {
-		opts := &opt.Options{
-			BlockCacheCapacity: opt.MiB * 1,
-			WriteBuffer:        opt.MiB * 1,
-		}
-
-		path := filepath.Join("/tmp/storage", "synchronizer", "{{ .TopicName }}")
-
-		err := os.MkdirAll(path, os.ModePerm)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to create synchronizer db directory")
-		}
-
-		builder = storage.BuilderWithOptions(path, opts)
+	opts := &opt.Options{
+		BlockCacheCapacity: opt.MiB * 1,
+		WriteBuffer:        opt.MiB * 1,
 	}
 
-	view, err := goka.NewView(g.settings.Brokers,
+	path := filepath.Join("/tmp/storage", "synchronizer", "{{ .TopicName }}")
+
+	err = os.MkdirAll(path, os.ModePerm)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create synchronizer db directory")
+	}
+
+	builder := storage.BuilderWithOptions(path, opts)
+
+	view, err := goka.NewView(brokers,
 		goka.Table("{{ .TopicName }}"),
 		codec,
 		goka.WithViewStorageBuilder(builder),
@@ -128,37 +155,46 @@ func Register_{{ .Name }}_Synchronizer(options runner.ServiceOptions, sychronize
 
 	emitter := runner.NewEmitter(e)
 
-	c := &{{ .Name }}_Synchronizer_Context_impl{}
+	c := &{{ .Name }}_Synchronizer_Context_impl{
+		view:    view,
+		emitter: emitter,
+	}
 
-	return func(ctx context.Context) error {
-		gctx, cancel := context.WithCancel(ctx)
-		grp, gctx := errgroup.NewGroup(ctx)
+	return func(ctx context.Context) func() error {
+		return func() error {
+			gctx, cancel := context.WithCancel(ctx)
+			grp, gctx := errgroup.WithContext(ctx)
 
-		timer := time.NewTimer(0)
-		grp.Go(func() error {
-			for {
-				select {
-				case <-gctx.Done():
-					return nil
-				case <-timer.C:
-					err := sychronizer.Sync(c)
-					if err != nil {
-						return err
+			timer := time.NewTimer(0)
+			grp.Go(func() error {
+				for {
+					select {
+					case <-gctx.Done():
+						return nil
+					case <-timer.C:
+						err := sychronizer.Sync(c)
+						if err != nil {
+							return err
+						}
+						timer = time.NewTimer(updateInterval)
 					}
-					timer = time.NewTimer(updateInterval)
 				}
+			})
+
+			grp.Go(emitter.Watch(gctx))
+			grp.Go(func() error {
+				return view.Run(ctx)
+			})
+
+			select {
+			case <- ctx.Done():
+				cancel()
+				return nil
+			case <- gctx.Done():
+				cancel()
+				err := grp.Wait()
+				return err
 			}
-		})
-
-		grp.Go(emitter.Watch(gctx))
-
-		select {
-		case <- ctx.Done():
-			cancel()
-			return nil
-		case <- gctx.Done():
-			err := grp.Wait()
-			return err
 		}
 	}, nil
 }
@@ -174,7 +210,7 @@ type synchronizerOptions struct {
 }
 
 func generateSynchronizer(writer io.Writer, synchronizer *synchronizerOptions) error {
-	err := viewTemplate.Execute(writer, synchronizer)
+	err := synchronizerTemplate.Execute(writer, synchronizer)
 	if err != nil {
 		return errors.Wrap(err, "failed to execute synchronizer template")
 	}
@@ -190,7 +226,6 @@ func buildSynchronizerOptions(pkg string, mod string, modelsPath string, synchro
 	nameFrags := strings.Split(synchronizer.Message, ".")
 	for _, f := range nameFrags[1:] {
 		name.WriteString(strcase.ToCamel(f))
-		name.WriteString("_")
 	}
 
 	topic := synchronizer.Message
@@ -199,7 +234,7 @@ func buildSynchronizerOptions(pkg string, mod string, modelsPath string, synchro
 	}
 
 	options.TopicName = topic
-	options.Name = strings.TrimRight(name.String(), "_")
+	options.Name = name.String()
 
 	var mPkg strings.Builder
 	for _, p := range nameFrags[:len(nameFrags)-1] {

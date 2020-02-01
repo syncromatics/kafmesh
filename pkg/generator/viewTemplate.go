@@ -126,7 +126,6 @@ func buildViewOptions(pkg string, mod string, modelsPath string, view models.Vie
 	nameFrags := strings.Split(view.Message, ".")
 	for _, f := range nameFrags[1:] {
 		name.WriteString(strcase.ToCamel(f))
-		name.WriteString("_")
 	}
 
 	topic := view.Message
@@ -135,7 +134,7 @@ func buildViewOptions(pkg string, mod string, modelsPath string, view models.Vie
 	}
 
 	options.TopicName = topic
-	options.Name = strings.TrimRight(name.String(), "_")
+	options.Name = name.String()
 
 	var mPkg strings.Builder
 	for _, p := range nameFrags[:len(nameFrags)-1] {

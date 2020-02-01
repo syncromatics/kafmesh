@@ -125,11 +125,11 @@ func buildSinkOptions(pkg string, mod string, modelsPath string, sink models.Sin
 	}
 
 	var name strings.Builder
-	nameFrags := strings.Split(sink.Message, ".")
-	for _, f := range nameFrags[1:] {
+	nameFrags := strings.Split(sink.Name, " ")
+	for _, f := range nameFrags {
 		name.WriteString(strcase.ToCamel(f))
-		name.WriteString("_")
 	}
+	nameFrags = strings.Split(sink.Message, ".")
 
 	topic := sink.Message
 	if sink.TopicDefinition.Topic != nil {
@@ -137,7 +137,7 @@ func buildSinkOptions(pkg string, mod string, modelsPath string, sink models.Sin
 	}
 
 	options.TopicName = topic
-	options.Name = strings.ReplaceAll(sink.Name, " ", "_")
+	options.Name = name.String()
 	options.GroupName = fmt.Sprintf("%s-sink", strings.ToLower(options.Name))
 
 	var mPkg strings.Builder

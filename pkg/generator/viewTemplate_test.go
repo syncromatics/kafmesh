@@ -24,10 +24,11 @@ package details
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 
 	"github.com/burdiyan/kafkautil"
 	"github.com/lovoo/goka"
-	"github.com/lovoo/goka/kafka"
 	"github.com/lovoo/goka/storage"
 	"github.com/pkg/errors"
 	"github.com/syndtr/goleveldb/leveldb/opt"
@@ -37,11 +38,11 @@ import (
 	testSerial "test/internal/kafmesh/models/testMesh/testSerial"
 )
 
-type TestSerial_DetailsEnriched_View struct {
+type TestSerialDetailsEnriched_View struct {
 	view *goka.View
 }
 
-func New_TestSerial_DetailsEnriched_View(options runner.ServiceOptions) (*TestSerial_DetailsEnriched_View, error) {
+func New_TestSerialDetailsEnriched_View(options runner.ServiceOptions) (*TestSerialDetailsEnriched_View, error) {
 	brokers := options.Brokers
 	protoWrapper := options.ProtoWrapper
 
@@ -50,26 +51,21 @@ func New_TestSerial_DetailsEnriched_View(options runner.ServiceOptions) (*TestSe
 		return nil, errors.Wrap(err, "failed to create codec")
 	}
 
-	var builder storage.Builder
-	if g.settings.StorageInMemory {
-		builder = storage.MemoryBuilder()
-	} else {
-		opts := &opt.Options{
-			BlockCacheCapacity: opt.MiB * 1,
-			WriteBuffer:        opt.MiB * 1,
-		}
-
-		path := filepath.Join("/tmp/storage", "view", "testMesh.testSerial.detailsEnriched")
-
-		err := os.MkdirAll(path, os.ModePerm)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to create view db directory")
-		}
-
-		builder = storage.BuilderWithOptions(path, opts)
+	opts := &opt.Options{
+		BlockCacheCapacity: opt.MiB * 1,
+		WriteBuffer:        opt.MiB * 1,
 	}
 
-	view, err := goka.NewView(g.settings.Brokers,
+	path := filepath.Join("/tmp/storage", "view", "testMesh.testSerial.detailsEnriched")
+
+	err = os.MkdirAll(path, os.ModePerm)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create view db directory")
+	}
+
+	builder := storage.BuilderWithOptions(path, opts)
+
+	view, err := goka.NewView(brokers,
 		goka.Table("testMesh.testSerial.detailsEnriched"),
 		codec,
 		goka.WithViewStorageBuilder(builder),
@@ -80,20 +76,22 @@ func New_TestSerial_DetailsEnriched_View(options runner.ServiceOptions) (*TestSe
 		return nil, errors.Wrap(err, "failed creating view")
 	}
 
-	return &TestSerial_DetailsEnriched_View{
+	return &TestSerialDetailsEnriched_View{
 		view: view,
 	}, nil
 }
 
-func (v *TestSerial_DetailsEnriched_View) Watch(ctx context.Context) func() error {
-	return v.view.Run(ctx)
+func (v *TestSerialDetailsEnriched_View) Watch(ctx context.Context) func() error {
+	return func() error {
+		return v.view.Run(ctx)
+	}
 }
 
-func (v *TestSerial_DetailsEnriched_View) Keys() []string {
+func (v *TestSerialDetailsEnriched_View) Keys() []string {
 	return v.Keys()
 }
 
-func (v *TestSerial_DetailsEnriched_View) Get(key string) (*testSerial.DetailsEnriched, error) {
+func (v *TestSerialDetailsEnriched_View) Get(key string) (*testSerial.DetailsEnriched, error) {
 	m, err := v.view.Get(key)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get value from view")
