@@ -146,6 +146,13 @@ message DetailsEnriched {
 						},
 					},
 				},
+				Views: []models.View{
+					models.View{
+						TopicDefinition: models.TopicDefinition{
+							Message: "testMesh.testSerial.detailsEnriched",
+						},
+					},
+				},
 			},
 		},
 		Mod: "test",
@@ -159,6 +166,7 @@ message DetailsEnriched {
 	validateProcessors(tmpDir, t)
 	validateEmitter(tmpDir, t)
 	validateSink(tmpDir, t)
+	validateView(tmpDir, t)
 
 	s, err := ioutil.ReadFile(path.Join(tmpDir, "kafmesh", "service.km.go"))
 	if err != nil {

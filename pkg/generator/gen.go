@@ -159,5 +159,25 @@ func processComponent(rootPath string, outputPath string, mod string, modelsPath
 		}
 	}
 
+	for _, v := range component.Views {
+		fileName := strings.ReplaceAll(v.Message, ".", "_")
+		fileName = fmt.Sprintf("%s_view.km.go", fileName)
+		file, err := os.Create(path.Join(componentPath, fileName))
+		if err != nil {
+			return errors.Wrapf(err, "failed to open service file")
+		}
+		defer file.Close()
+
+		co, err := buildViewOptions(component.Name, mod, mPath, v)
+		if err != nil {
+			return errors.Wrap(err, "failed to build view options")
+		}
+
+		err = generateView(file, co)
+		if err != nil {
+			return errors.Wrap(err, "failed to generate view")
+		}
+	}
+
 	return nil
 }

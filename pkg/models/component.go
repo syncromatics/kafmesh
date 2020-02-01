@@ -16,6 +16,7 @@ type Component struct {
 	Processors    []Processor
 	Sinks         []Sink
 	Synchronizers []Synchronizer
+	Views         []View
 
 	Persistence *Persistence
 }
@@ -35,6 +36,12 @@ type TopicCreationDefinition struct {
 
 // Emitter is a producer into kafka
 type Emitter struct {
+	TopicDefinition         `yaml:",inline"`
+	TopicCreationDefinition `yaml:",inline"`
+}
+
+// View is a view into kafka
+type View struct {
 	TopicDefinition         `yaml:",inline"`
 	TopicCreationDefinition `yaml:",inline"`
 }
