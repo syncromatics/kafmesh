@@ -4,7 +4,7 @@ go 1.13
 
 require (
 	github.com/Shopify/sarama v1.24.1
-	github.com/bsm/sarama-cluster v2.1.15+incompatible // indirect
+	github.com/bsm/sarama-cluster v2.1.15+incompatible
 	github.com/emicklei/proto v1.9.0
 	github.com/golang/protobuf v1.3.2
 	github.com/iancoleman/strcase v0.0.0-20191112232945-16388991a334

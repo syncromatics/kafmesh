@@ -138,6 +138,14 @@ message DetailsEnriched {
 						},
 					},
 				},
+				Sinks: []models.Sink{
+					models.Sink{
+						Name: "Enriched Data Postgres",
+						TopicDefinition: models.TopicDefinition{
+							Message: "testMesh.testSerial.detailsEnriched",
+						},
+					},
+				},
 			},
 		},
 		Mod: "test",
@@ -150,6 +158,7 @@ message DetailsEnriched {
 
 	validateProcessors(tmpDir, t)
 	validateEmitter(tmpDir, t)
+	validateSink(tmpDir, t)
 
 	s, err := ioutil.ReadFile(path.Join(tmpDir, "kafmesh", "service.km.go"))
 	if err != nil {

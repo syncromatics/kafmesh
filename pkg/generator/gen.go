@@ -138,5 +138,26 @@ func processComponent(rootPath string, outputPath string, mod string, modelsPath
 		}
 	}
 
+	for _, s := range component.Sinks {
+		fileName := strings.ReplaceAll(s.Name, " ", "_")
+		fileName = fmt.Sprintf("%s_sink.km.go", fileName)
+		fileName = strings.ToLower(fileName)
+		file, err := os.Create(path.Join(componentPath, fileName))
+		if err != nil {
+			return errors.Wrapf(err, "failed to open service file")
+		}
+		defer file.Close()
+
+		co, err := buildSinkOptions(component.Name, mod, mPath, s)
+		if err != nil {
+			return errors.Wrap(err, "failed to build sink options")
+		}
+
+		err = generateSink(file, co)
+		if err != nil {
+			return errors.Wrap(err, "failed to generate sink")
+		}
+	}
+
 	return nil
 }
