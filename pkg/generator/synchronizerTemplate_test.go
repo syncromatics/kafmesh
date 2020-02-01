@@ -24,10 +24,11 @@ package details
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 
 	"github.com/burdiyan/kafkautil"
 	"github.com/lovoo/goka"
-	"github.com/lovoo/goka/kafka"
 	"github.com/lovoo/goka/storage"
 	"github.com/pkg/errors"
 	"github.com/syndtr/goleveldb/leveldb/opt"

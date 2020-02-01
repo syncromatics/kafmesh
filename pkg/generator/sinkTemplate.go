@@ -96,14 +96,7 @@ func Register_{{ .Name }}_Sink(options runner.ServiceOptions, sink {{ .Name }}_S
 	s := runner.NewSinkRunner(d, brokers)
 
 	return func(ctx context.Context) func() error {
-		return func() error {
-			err := s.Run(ctx)
-			if err != nil {
-				return errors.Wrap(err, "failed to run sink")
-			}
-
-			return nil
-		}
+		return s.Run(ctx)
 	}, nil
 }
 `))

@@ -18,10 +18,11 @@ package {{ .Package }}
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 
 	"github.com/burdiyan/kafkautil"
 	"github.com/lovoo/goka"
-	"github.com/lovoo/goka/kafka"
 	"github.com/lovoo/goka/storage"
 	"github.com/pkg/errors"
 	"github.com/syndtr/goleveldb/leveldb/opt"
@@ -44,26 +45,21 @@ func New_{{ .Name }}_View(options runner.ServiceOptions) (*{{ .Name }}_View, err
 		return nil, errors.Wrap(err, "failed to create codec")
 	}
 
-	var builder storage.Builder
-	if g.settings.StorageInMemory {
-		builder = storage.MemoryBuilder()
-	} else {
-		opts := &opt.Options{
-			BlockCacheCapacity: opt.MiB * 1,
-			WriteBuffer:        opt.MiB * 1,
-		}
-
-		path := filepath.Join("/tmp/storage", "view", "{{ .TopicName }}")
-
-		err := os.MkdirAll(path, os.ModePerm)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to create view db directory")
-		}
-
-		builder = storage.BuilderWithOptions(path, opts)
+	opts := &opt.Options{
+		BlockCacheCapacity: opt.MiB * 1,
+		WriteBuffer:        opt.MiB * 1,
 	}
 
-	view, err := goka.NewView(g.settings.Brokers,
+	path := filepath.Join("/tmp/storage", "view", "{{ .TopicName }}")
+
+	err = os.MkdirAll(path, os.ModePerm)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create view db directory")
+	}
+
+	builder := storage.BuilderWithOptions(path, opts)
+
+	view, err := goka.NewView(brokers,
 		goka.Table("{{ .TopicName }}"),
 		codec,
 		goka.WithViewStorageBuilder(builder),
@@ -80,7 +76,9 @@ func New_{{ .Name }}_View(options runner.ServiceOptions) (*{{ .Name }}_View, err
 }
 
 func (v *{{ .Name }}_View) Watch(ctx context.Context) func() error {
-	return v.view.Run(ctx)
+	return func() error {
+		return v.view.Run(ctx)
+	}
 }
 
 func (v *{{ .Name }}_View) Keys() []string {

@@ -33,8 +33,23 @@ type {{ .Name }}_Emitter struct {
 }
 
 type {{ .Name }}_Emitter_Message struct {
-	Key string
-	Value *{{ .MessageType }}
+	key string
+	value *{{ .MessageType }}
+}
+
+func New{{ .Name }}_Emitter_Message(key string, value *{{ .MessageType }}) *{{ .Name }}_Emitter_Message {
+	return &{{ .Name }}_Emitter_Message{
+		key: key,
+		value: value,
+	}
+}
+
+func (m *{{ .Name }}_Emitter_Message) Key() string {
+	return m.key
+}
+
+func (m *{{ .Name }}_Emitter_Message) Value() interface{} {
+	return m.Value
 }
 
 func New_{{ .Name }}_Emitter(options runner.ServiceOptions) (*{{ .Name }}_Emitter, error) {
@@ -65,11 +80,15 @@ func (e *{{ .Name }}_Emitter) Watch(ctx context.Context) func() error {
 }
 
 func (e *{{ .Name }}_Emitter) Emit(message *{{ .Name }}_Emitter_Message) error {
-	return e.Emit(message.Key, message.Value)
+	return e.emitter.Emit(message.Key(), message.Value())
 }
 
 func (e *{{ .Name }}_Emitter) EmitBulk(ctx context.Context, messages []*{{ .Name }}_Emitter_Message) error {
-	return e.emitter.EmitBulk(ctx, messages)
+	b := []runner.EmitMessage{}
+	for _, m := range messages {
+		b = append(b, m)
+	}
+	return e.emitter.EmitBulk(ctx, b)
 }
 `))
 )
