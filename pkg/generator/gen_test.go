@@ -153,6 +153,13 @@ message DetailsEnriched {
 						},
 					},
 				},
+				Synchronizers: []models.Synchronizer{
+					models.Synchronizer{
+						TopicDefinition: models.TopicDefinition{
+							Message: "testMesh.testId.test",
+						},
+					},
+				},
 			},
 		},
 		Mod: "test",
@@ -167,6 +174,7 @@ message DetailsEnriched {
 	validateEmitter(tmpDir, t)
 	validateSink(tmpDir, t)
 	validateView(tmpDir, t)
+	validateSynchronizer(tmpDir, t)
 
 	s, err := ioutil.ReadFile(path.Join(tmpDir, "kafmesh", "service.km.go"))
 	if err != nil {
