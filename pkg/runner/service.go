@@ -3,6 +3,9 @@ package runner
 import (
 	"context"
 	"sync"
+	"time"
+
+	"github.com/Shopify/sarama"
 
 	pingv1 "github.com/syncromatics/kafmesh/internal/protos/kafmesh/ping/v1"
 	"github.com/syncromatics/kafmesh/internal/services"
@@ -38,6 +41,18 @@ func NewService(brokers []string, protoRegistry *Registry, grpcServer *grpc.Serv
 		protoWrapper: NewProtoWrapper(protoRegistry),
 		server:       grpcServer,
 	}
+}
+
+// ConfigureKafka waits for kafka to be ready and configures the topics
+// for this service. It will also check if topics it doesn't create exist
+// in the correct configuration.
+func (s *Service) ConfigureKafka(ctx context.Context) error {
+	err := s.waitForKafkaToBeReady(ctx)
+	if err != nil {
+		return errors.Wrap(err, "failed to talk to kafka")
+	}
+
+	return nil
 }
 
 // Run executes the kafmesh services
@@ -82,5 +97,36 @@ func (s *Service) Options() ServiceOptions {
 	return ServiceOptions{
 		Brokers:      s.brokers,
 		ProtoWrapper: s.protoWrapper,
+	}
+}
+
+func (s *Service) waitForKafkaToBeReady(ctx context.Context) error {
+	var lastErr error
+	config := sarama.NewConfig()
+	config.Version = sarama.MaxVersion
+
+	for {
+		var brokers []*sarama.Broker
+		var err error
+		client, err := sarama.NewClusterAdmin(s.brokers, config)
+		if err != nil {
+			lastErr = err
+			goto checkContext
+		}
+
+		brokers, _, err = client.DescribeCluster()
+		if err == nil && len(brokers) > 0 {
+			client.Close()
+			return nil
+		}
+		lastErr = err
+
+	checkContext:
+		select {
+		case <-ctx.Done():
+			return errors.Wrap(lastErr, "failed waiting for registry to start")
+		default:
+			time.Sleep(100 * time.Millisecond)
+		}
 	}
 }

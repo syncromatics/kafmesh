@@ -30,7 +30,7 @@ func WaitTillServiceIsRunning(ctx context.Context, url string) error {
 		}
 		select {
 		case <-ctx.Done():
-			return errors.Errorf("context canceled")
+			return errors.Wrapf(lastErr, "context canceled, last error:")
 		default:
 			time.Sleep(100 * time.Millisecond)
 		}
