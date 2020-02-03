@@ -2,9 +2,16 @@ package models
 
 import (
 	"io"
+	"regexp"
+	"strings"
 
+	"github.com/iancoleman/strcase"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
+)
+
+var (
+	capitalsRegex = regexp.MustCompile(`[A-Z][^A-Z]*`)
 )
 
 // Component is a piece of a service that provides processors that accomplish a task
@@ -26,6 +33,32 @@ type TopicDefinition struct {
 	Message string
 	Type    *string
 	Topic   *string
+}
+
+// ToSafeMessageTypeName generates a name that will pass go vet
+func (t TopicDefinition) ToSafeMessageTypeName() string {
+	builder := strings.Builder{}
+	nameFrags := strings.Split(t.Message, ".")
+	for _, f := range nameFrags {
+		builder.WriteString(strcase.ToCamel(f))
+	}
+
+	name := builder.String()
+	builder.Reset()
+
+	submatchall := capitalsRegex.FindAllString(name, -1)
+	for _, element := range submatchall {
+		switch element {
+		case "Id":
+			builder.WriteString("ID")
+		case "Api":
+			builder.WriteString("API")
+		default:
+			builder.WriteString(element)
+		}
+
+	}
+	return builder.String()
 }
 
 // TopicCreationDefinition describe how a topic should be created

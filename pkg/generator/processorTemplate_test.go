@@ -39,6 +39,7 @@ import (
 )
 
 type TestMeshTestIdTest2_ProcessorContext interface {
+	Key() string
 	Lookup_TestSerialDetails(key string) *m1.Details
 	Join_TestSerialDetails() *m1.Details
 	Output_TestSerialDetailsEnriched(key string, message *m1.DetailsEnriched)
@@ -47,8 +48,8 @@ type TestMeshTestIdTest2_ProcessorContext interface {
 }
 
 type TestMeshTestIdTest2_Processor interface {
-	HandleInput_TestIdTest(ctx TestMeshTestIdTest2_ProcessorContext, message *m0.Test) error
-	HandleInput_TestIdTest2(ctx TestMeshTestIdTest2_ProcessorContext, message *m0.Test2) error
+	HandleTestMeshTestIDTest(ctx TestMeshTestIdTest2_ProcessorContext, message *m0.Test) error
+	HandleTestMeshTestIDTest2(ctx TestMeshTestIdTest2_ProcessorContext, message *m0.Test2) error
 }
 
 type TestMeshTestIdTest2_ProcessorContext_Impl struct {
@@ -57,6 +58,10 @@ type TestMeshTestIdTest2_ProcessorContext_Impl struct {
 
 func new_TestMeshTestIdTest2_ProcessorContext_Impl(ctx goka.Context) *TestMeshTestIdTest2_ProcessorContext_Impl {
 	return &TestMeshTestIdTest2_ProcessorContext_Impl{ctx}
+}
+
+func (c *TestMeshTestIdTest2_ProcessorContext_Impl) Key() string {
+	return c.ctx.Key()
 }
 
 func (c *TestMeshTestIdTest2_ProcessorContext_Impl) Lookup_TestSerialDetails(key string) *m1.Details {
@@ -80,6 +85,9 @@ func (c *TestMeshTestIdTest2_ProcessorContext_Impl) SaveState(state *m1.DetailsS
 func (c *TestMeshTestIdTest2_ProcessorContext_Impl) State() *m1.DetailsState {
 	v := c.ctx.Value()
 	t := v.(*m1.DetailsState)
+	if t == nil {
+		t = &m1.DetailsState{}
+	}
 	return t
 }
 
@@ -126,7 +134,7 @@ func Register_TestMeshTestIdTest2_Processor(options runner.ServiceOptions, servi
 		goka.Input(goka.Stream("testMesh.testId.test"), c0, func(ctx goka.Context, m interface{}) {
 			msg := m.(*m0.Test)
 			w := new_TestMeshTestIdTest2_ProcessorContext_Impl(ctx)
-			err := service.HandleInput_TestIdTest(w, msg)
+			err := service.HandleTestMeshTestIDTest(w, msg)
 			if err != nil {
 				ctx.Fail(err)
 			}
@@ -134,7 +142,7 @@ func Register_TestMeshTestIdTest2_Processor(options runner.ServiceOptions, servi
 		goka.Input(goka.Stream("testMesh.testId.test2"), c1, func(ctx goka.Context, m interface{}) {
 			msg := m.(*m0.Test2)
 			w := new_TestMeshTestIdTest2_ProcessorContext_Impl(ctx)
-			err := service.HandleInput_TestIdTest2(w, msg)
+			err := service.HandleTestMeshTestIDTest2(w, msg)
 			if err != nil {
 				ctx.Fail(err)
 			}

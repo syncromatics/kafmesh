@@ -28,31 +28,33 @@ import (
 	{{ .Import }}
 )
 
-type {{ .Name }}_Emitter struct {
+type {{ .Name }}_Emitter interface {
+	Emit(message {{ .Name }}_Emitter_Message) error
+	EmitBulk(ctx context.Context, messages []{{ .Name }}_Emitter_Message) error
+}
+
+type {{ .Name }}_Emitter_impl struct {
 	emitter *runner.Emitter
 }
 
 type {{ .Name }}_Emitter_Message struct {
-	key string
-	value *{{ .MessageType }}
+	Key string
+	Value *{{ .MessageType }}
 }
 
-func New_{{ .Name }}_Emitter_Message(key string, value *{{ .MessageType }}) *{{ .Name }}_Emitter_Message {
-	return &{{ .Name }}_Emitter_Message{
-		key: key,
-		value: value,
-	}
+type impl_{{ .Name }}_Emitter_Message struct {
+	msg {{ .Name }}_Emitter_Message
 }
 
-func (m *{{ .Name }}_Emitter_Message) Key() string {
-	return m.key
+func (m *impl_{{ .Name }}_Emitter_Message) Key() string {
+	return m.msg.Key
 }
 
-func (m *{{ .Name }}_Emitter_Message) Value() interface{} {
-	return m.value
+func (m *impl_{{ .Name }}_Emitter_Message) Value() interface{} {
+	return m.msg.Value
 }
 
-func New_{{ .Name }}_Emitter(options runner.ServiceOptions) (*{{ .Name }}_Emitter, error) {
+func New_{{ .Name }}_Emitter(options runner.ServiceOptions) (*{{ .Name }}_Emitter_impl, error) {
 	brokers := options.Brokers
 	protoWrapper := options.ProtoWrapper
 
@@ -70,23 +72,23 @@ func New_{{ .Name }}_Emitter(options runner.ServiceOptions) (*{{ .Name }}_Emitte
 		return nil, errors.Wrap(err, "failed creating emitter")
 	}
 
-	return &{{ .Name }}_Emitter{
+	return &{{ .Name }}_Emitter_impl{
 		emitter: runner.NewEmitter(emitter),
 	}, nil
 }
 
-func (e *{{ .Name }}_Emitter) Watch(ctx context.Context) func() error {
+func (e *{{ .Name }}_Emitter_impl) Watch(ctx context.Context) func() error {
 	return e.emitter.Watch(ctx)
 }
 
-func (e *{{ .Name }}_Emitter) Emit(message *{{ .Name }}_Emitter_Message) error {
-	return e.emitter.Emit(message.Key(), message.Value())
+func (e *{{ .Name }}_Emitter_impl) Emit(message {{ .Name }}_Emitter_Message) error {
+	return e.emitter.Emit(message.Key, message.Value)
 }
 
-func (e *{{ .Name }}_Emitter) EmitBulk(ctx context.Context, messages []*{{ .Name }}_Emitter_Message) error {
+func (e *{{ .Name }}_Emitter_impl) EmitBulk(ctx context.Context, messages []{{ .Name }}_Emitter_Message) error {
 	b := []runner.EmitMessage{}
 	for _, m := range messages {
-		b = append(b, m)
+		b = append(b, &impl_{{ .Name }}_Emitter_Message{msg: m})
 	}
 	return e.emitter.EmitBulk(ctx, b)
 }

@@ -36,6 +36,7 @@ import (
 
 {{ with .Context -}}
 type {{ .Name }}_ProcessorContext interface {
+	Key() string
 	{{- range .Methods }}
 	{{.Name}}({{ .Args }}
 {{- end}}
@@ -59,7 +60,10 @@ func new_{{ .Name }}_ProcessorContext_Impl(ctx goka.Context) *{{ .Name }}_Proces
 	return &{{ .Name }}_ProcessorContext_Impl{ctx}
 }
 {{$c := .Name}}
-{{- range .Methods }}
+func (c *{{$c}}_ProcessorContext_Impl) Key() string {
+	return c.ctx.Key()
+}
+{{ range .Methods }}
 func (c *{{$c}}_ProcessorContext_Impl) {{.Name}}({{ .Args }} {
 {{- $t := . -}}
 {{- with (eq .Type "lookup" ) }}
@@ -79,6 +83,9 @@ func (c *{{$c}}_ProcessorContext_Impl) {{.Name}}({{ .Args }} {
 {{- with (eq .Type "state") }}
 	v := c.ctx.Value()
 	t := v.(*{{- $t.MessageType -}})
+	if t == nil {
+		t = &{{- $t.MessageType -}}{}
+	}
 	return t
 {{- end }}
 }
@@ -244,7 +251,7 @@ func buildProcessorOptions(pkg string, mod string, modelsPath string, processor 
 
 	for _, input := range processor.Inputs {
 		var name strings.Builder
-		name.WriteString("HandleInput_")
+		name.WriteString("Handle")
 		nameFrags := strings.Split(input.Message, ".")
 		for _, f := range nameFrags[1:] {
 			name.WriteString(strcase.ToCamel(f))
@@ -272,7 +279,7 @@ func buildProcessorOptions(pkg string, mod string, modelsPath string, processor 
 		args.WriteString(fmt.Sprintf(", message *m%d.%s", i, strcase.ToCamel(message)))
 
 		method := interfaceMethod{
-			Name: name.String(),
+			Name: fmt.Sprintf("Handle%s", input.ToSafeMessageTypeName()),
 			Args: args.String(),
 		}
 		intr.Methods = append(intr.Methods, method)
@@ -298,7 +305,7 @@ func buildProcessorOptions(pkg string, mod string, modelsPath string, processor 
 			Topic:   topic,
 			Message: fmt.Sprintf("m%d.%s", i, strcase.ToCamel(message)),
 			Codec:   c.Index,
-			Func:    name.String(),
+			Func:    method.Name,
 		})
 	}
 	options.Interface = intr

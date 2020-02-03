@@ -4,8 +4,12 @@ import (
 	"context"
 	"sync"
 
+	pingv1 "github.com/syncromatics/kafmesh/internal/protos/kafmesh/ping/v1"
+	"github.com/syncromatics/kafmesh/internal/services"
+
 	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
+	"google.golang.org/grpc"
 )
 
 // ServiceOptions are the options passed to services
@@ -18,6 +22,7 @@ type ServiceOptions struct {
 type Service struct {
 	brokers      []string
 	protoWrapper *ProtoWrapper
+	server       *grpc.Server
 
 	mtx     sync.Mutex
 	running bool
@@ -25,10 +30,13 @@ type Service struct {
 }
 
 // NewService creates a new kafmesh service
-func NewService(brokers []string, protoRegistry *Registry) *Service {
+func NewService(brokers []string, protoRegistry *Registry, grpcServer *grpc.Server) *Service {
+	pingv1.RegisterPingAPIServer(grpcServer, &services.PingAPI{})
+
 	return &Service{
 		brokers:      brokers,
 		protoWrapper: NewProtoWrapper(protoRegistry),
+		server:       grpcServer,
 	}
 }
 

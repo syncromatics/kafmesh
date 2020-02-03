@@ -42,7 +42,7 @@ func Register_{{ .Name }}(service *runner.Service, processor {{ .Package }}.{{ .
 {{ end -}}
 
 {{ range .Emitters }}
-func New_{{ .Name }}_Emitter(service *runner.Service) (*{{ .Package }}.{{ .Name }}_Emitter, error) {
+func New_{{ .Name }}_Emitter(service *runner.Service) ({{ .Package }}.{{ .Name }}_Emitter, error) {
 	e, err := {{ .Package }}.New_{{ .Name }}_Emitter(service.Options())
 	if err != nil {
 		return nil, err
@@ -58,7 +58,7 @@ func New_{{ .Name }}_Emitter(service *runner.Service) (*{{ .Package }}.{{ .Name 
 {{ end -}}
 
 {{ range .Views }}
-func New_{{ .Name }}_View(service *runner.Service) (*{{ .Package }}.{{ .Name }}_View, error) {
+func New_{{ .Name }}_View(service *runner.Service) ({{ .Package }}.{{ .Name }}_View, error) {
 	v, err := {{ .Package }}.New_{{ .Name }}_View(service.Options())
 	if err != nil {
 		return nil, err

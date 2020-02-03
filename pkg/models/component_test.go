@@ -161,3 +161,19 @@ synchronizers:
 		},
 	}, component)
 }
+
+func Test_TopicDefinition_ToSafeMessageTypeName(t *testing.T) {
+	topic := models.TopicDefinition{
+		Message: "deviceId.Customer",
+	}
+
+	name := topic.ToSafeMessageTypeName()
+	assert.Equal(t, "deviceId.customer", name)
+
+	topic = models.TopicDefinition{
+		Message: "device.Api",
+	}
+
+	name = topic.ToSafeMessageTypeName()
+	assert.Equal(t, "deviceAPI", name)
+}

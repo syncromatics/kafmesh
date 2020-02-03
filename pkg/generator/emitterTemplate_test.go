@@ -39,8 +39,12 @@ type TestSerialDetails_Emitter struct {
 }
 
 type TestSerialDetails_Emitter_Message struct {
-	key string
-	value *testSerial.Details
+	Key string
+	Value *testSerial.Details
+}
+
+type impl_TestSerialDetails_Emitter_Message struct {
+	msg TestSerialDetails_Emitter_Message
 }
 
 func New_TestSerialDetails_Emitter_Message(key string, value *testSerial.Details) *TestSerialDetails_Emitter_Message {
@@ -86,13 +90,13 @@ func (e *TestSerialDetails_Emitter) Watch(ctx context.Context) func() error {
 }
 
 func (e *TestSerialDetails_Emitter) Emit(message *TestSerialDetails_Emitter_Message) error {
-	return e.emitter.Emit(message.Key(), message.Value())
+	return e.emitter.Emit(message.Key, message.Value)
 }
 
 func (e *TestSerialDetails_Emitter) EmitBulk(ctx context.Context, messages []*TestSerialDetails_Emitter_Message) error {
 	b := []runner.EmitMessage{}
 	for _, m := range messages {
-		b = append(b, m)
+		b = append(b, &impl_TestSerialDetails_Emitter_Message{msg: m})
 	}
 	return e.emitter.EmitBulk(ctx, b)
 }

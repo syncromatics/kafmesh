@@ -32,11 +32,16 @@ import (
 	{{ .Import }}
 )
 
-type {{ .Name }}_View struct {
+type {{ .Name }}_View interface {
+	Keys() []string
+	Get(key string) (*{{ .MessageType }}, error)
+}
+
+type {{ .Name }}_View_impl struct {
 	view *goka.View
 }
 
-func New_{{ .Name }}_View(options runner.ServiceOptions) (*{{ .Name }}_View, error) {
+func New_{{ .Name }}_View(options runner.ServiceOptions) (*{{ .Name }}_View_impl, error) {
 	brokers := options.Brokers
 	protoWrapper := options.ProtoWrapper
 
@@ -70,22 +75,22 @@ func New_{{ .Name }}_View(options runner.ServiceOptions) (*{{ .Name }}_View, err
 		return nil, errors.Wrap(err, "failed creating view")
 	}
 
-	return &{{ .Name }}_View{
+	return &{{ .Name }}_View_impl{
 		view: view,
 	}, nil
 }
 
-func (v *{{ .Name }}_View) Watch(ctx context.Context) func() error {
+func (v *{{ .Name }}_View_impl) Watch(ctx context.Context) func() error {
 	return func() error {
 		return v.view.Run(ctx)
 	}
 }
 
-func (v *{{ .Name }}_View) Keys() []string {
+func (v *{{ .Name }}_View_impl) Keys() []string {
 	return v.Keys()
 }
 
-func (v *{{ .Name }}_View) Get(key string) (*{{ .MessageType }}, error) {
+func (v *{{ .Name }}_View_impl) Get(key string) (*{{ .MessageType }}, error) {
 	m, err := v.view.Get(key)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get value from view")
