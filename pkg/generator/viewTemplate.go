@@ -96,6 +96,10 @@ func (v *{{ .Name }}_View_impl) Get(key string) (*{{ .MessageType }}, error) {
 		return nil, errors.Wrap(err, "failed to get value from view")
 	}
 
+	if m == nil {
+		return nil, nil
+	}
+
 	msg, ok := m.(*{{ .MessageType }})
 	if !ok {
 		return nil, errors.Errorf("expecting message of type '*{{ .MessageType }}' got type '%t'", m)

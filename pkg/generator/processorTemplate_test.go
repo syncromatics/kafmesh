@@ -24,6 +24,8 @@ package details
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 
 	"github.com/burdiyan/kafkautil"
 	"github.com/lovoo/goka"
@@ -66,11 +68,17 @@ func (c *TestMeshTestIdTest2_ProcessorContext_Impl) Key() string {
 
 func (c *TestMeshTestIdTest2_ProcessorContext_Impl) Lookup_TestSerialDetails(key string) *m1.Details {
 	v := c.ctx.Lookup("testMesh.testSerial.details", key)
+	if v == nil {
+		return nil
+	}
 	return v.(*m1.Details)
 }
 
 func (c *TestMeshTestIdTest2_ProcessorContext_Impl) Join_TestSerialDetails() *m1.Details {
 	v := c.ctx.Join("testMesh.testSerial.details")
+	if v == nil {
+		return nil
+	}
 	return v.(*m1.Details)
 }
 
@@ -84,11 +92,10 @@ func (c *TestMeshTestIdTest2_ProcessorContext_Impl) SaveState(state *m1.DetailsS
 
 func (c *TestMeshTestIdTest2_ProcessorContext_Impl) State() *m1.DetailsState {
 	v := c.ctx.Value()
-	t := v.(*m1.DetailsState)
-	if t == nil {
-		t = &m1.DetailsState{}
+	if v == nil {
+		return &m1.DetailsState{}
 	}
-	return t
+	return v.(*m1.DetailsState)
 }
 
 func Register_TestMeshTestIdTest2_Processor(options runner.ServiceOptions, service TestMeshTestIdTest2_Processor) (func(context.Context) func() error, error) {
@@ -103,7 +110,15 @@ func Register_TestMeshTestIdTest2_Processor(options runner.ServiceOptions, servi
 		WriteBuffer:        opt.MiB * 1,
 	}
 
-	builder := storage.BuilderWithOptions("/tmp/storage", opts)
+	path := filepath.Join("/tmp/storage", "processor", "testMesh.testId.test2")
+
+	err := os.MkdirAll(path, os.ModePerm)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create processor db directory")
+	}
+
+	builder := storage.BuilderWithOptions(path, opts)
+
 
 	c0, err := protoWrapper.Codec("testMesh.testId.test", &m0.Test{})
 	if err != nil {

@@ -20,6 +20,8 @@ package {{ .Package }}
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 
 	"github.com/burdiyan/kafkautil"
 	"github.com/lovoo/goka"
@@ -68,10 +70,16 @@ func (c *{{$c}}_ProcessorContext_Impl) {{.Name}}({{ .Args }} {
 {{- $t := . -}}
 {{- with (eq .Type "lookup" ) }}
 	v := c.ctx.Lookup("{{- $t.Topic -}}", key)
+	if v == nil {
+		return nil
+	}
 	return v.(*{{- $t.MessageType -}})
 {{- end -}}
 {{- with (eq .Type "join" ) }}
 	v := c.ctx.Join("{{- $t.Topic -}}")
+	if v == nil {
+		return nil
+	}
 	return v.(*{{- $t.MessageType -}})
 {{- end -}}
 {{- with (eq .Type "output" ) }}
@@ -82,11 +90,10 @@ func (c *{{$c}}_ProcessorContext_Impl) {{.Name}}({{ .Args }} {
 {{- end -}}
 {{- with (eq .Type "state") }}
 	v := c.ctx.Value()
-	t := v.(*{{- $t.MessageType -}})
-	if t == nil {
-		t = &{{- $t.MessageType -}}{}
+	if v == nil {
+		return &{{- $t.MessageType -}}{}
 	}
-	return t
+	return v.(*{{- $t.MessageType -}})
 {{- end }}
 }
 {{ end}}
@@ -106,7 +113,15 @@ func Register_{{ .Name }}_Processor(options runner.ServiceOptions, service {{ .N
 		WriteBuffer:        opt.MiB * 1,
 	}
 
-	builder := storage.BuilderWithOptions("/tmp/storage", opts)
+	path := filepath.Join("/tmp/storage", "processor", "{{ .Group }}")
+
+	err := os.MkdirAll(path, os.ModePerm)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create processor db directory")
+	}
+
+	builder := storage.BuilderWithOptions(path, opts)
+
 {{ range .Codecs }}
 	c{{ .Index }}, err := protoWrapper.Codec("{{ .Topic }}", &{{ .Message }}{})
 	if err != nil {
@@ -289,14 +304,14 @@ func buildProcessorOptions(pkg string, mod string, modelsPath string, processor 
 			topic = *input.TopicDefinition.Topic
 		}
 
-		c, ok := codecs[message]
+		c, ok := codecs[topic]
 		if !ok {
 			c = codec{
 				Index:   codecIndex,
 				Topic:   topic,
 				Message: fmt.Sprintf("m%d.%s", i, strcase.ToCamel(message)),
 			}
-			codecs[message] = c
+			codecs[topic] = c
 			codecIndex++
 		}
 
@@ -354,14 +369,14 @@ func buildProcessorOptions(pkg string, mod string, modelsPath string, processor 
 		}
 		options.Context.Methods = append(options.Context.Methods, m)
 
-		c, ok := codecs[message]
+		c, ok := codecs[m.Topic]
 		if !ok {
 			c = codec{
 				Index:   codecIndex,
 				Topic:   m.Topic,
 				Message: fmt.Sprintf("m%d.%s", i, strcase.ToCamel(message)),
 			}
-			codecs[message] = c
+			codecs[m.Topic] = c
 			codecIndex++
 		}
 
@@ -417,14 +432,14 @@ func buildProcessorOptions(pkg string, mod string, modelsPath string, processor 
 
 		options.Context.Methods = append(options.Context.Methods, m)
 
-		c, ok := codecs[message]
+		c, ok := codecs[m.Topic]
 		if !ok {
 			c = codec{
 				Index:   codecIndex,
 				Topic:   m.Topic,
 				Message: fmt.Sprintf("m%d.%s", i, strcase.ToCamel(message)),
 			}
-			codecs[message] = c
+			codecs[m.Topic] = c
 			codecIndex++
 		}
 
@@ -478,14 +493,14 @@ func buildProcessorOptions(pkg string, mod string, modelsPath string, processor 
 
 		options.Context.Methods = append(options.Context.Methods, m)
 
-		c, ok := codecs[message]
+		c, ok := codecs[m.Topic]
 		if !ok {
 			c = codec{
 				Index:   codecIndex,
 				Topic:   m.Topic,
 				Message: fmt.Sprintf("m%d.%s", i, strcase.ToCamel(message)),
 			}
-			codecs[message] = c
+			codecs[m.Topic] = c
 			codecIndex++
 		}
 
@@ -533,14 +548,14 @@ func buildProcessorOptions(pkg string, mod string, modelsPath string, processor 
 			MessageType: fmt.Sprintf("m%d.%s", i, strcase.ToCamel(message)),
 		})
 
-		c, ok := codecs[message]
+		c, ok := codecs[options.Group+"-table"]
 		if !ok {
 			c = codec{
 				Index:   codecIndex,
 				Topic:   options.Group + "-table",
 				Message: fmt.Sprintf("m%d.%s", i, strcase.ToCamel(message)),
 			}
-			codecs[message] = c
+			codecs[options.Group+"-table"] = c
 			codecIndex++
 		}
 

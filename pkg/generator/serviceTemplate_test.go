@@ -45,7 +45,7 @@ func Register_TestMeshTestIdTest2_Processor(service *runner.Service, processor d
 	return nil
 }
 
-func New_TestSerialDetails_Emitter(service *runner.Service) (*details.TestSerialDetails_Emitter, error) {
+func New_TestSerialDetails_Emitter(service *runner.Service) (details.TestSerialDetails_Emitter, error) {
 	e, err := details.New_TestSerialDetails_Emitter(service.Options())
 	if err != nil {
 		return nil, err
@@ -59,7 +59,7 @@ func New_TestSerialDetails_Emitter(service *runner.Service) (*details.TestSerial
 	return e, nil
 }
 
-func New_TestSerialDetailsEnriched_View(service *runner.Service) (*details.TestSerialDetailsEnriched_View, error) {
+func New_TestSerialDetailsEnriched_View(service *runner.Service) (details.TestSerialDetailsEnriched_View, error) {
 	v, err := details.New_TestSerialDetailsEnriched_View(service.Options())
 	if err != nil {
 		return nil, err

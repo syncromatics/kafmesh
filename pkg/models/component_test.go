@@ -168,12 +168,12 @@ func Test_TopicDefinition_ToSafeMessageTypeName(t *testing.T) {
 	}
 
 	name := topic.ToSafeMessageTypeName()
-	assert.Equal(t, "deviceId.customer", name)
+	assert.Equal(t, "DeviceIDCustomer", name)
 
 	topic = models.TopicDefinition{
 		Message: "device.Api",
 	}
 
 	name = topic.ToSafeMessageTypeName()
-	assert.Equal(t, "deviceAPI", name)
+	assert.Equal(t, "DeviceAPI", name)
 }

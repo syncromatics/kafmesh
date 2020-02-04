@@ -38,11 +38,16 @@ import (
 	testSerial "test/internal/kafmesh/models/testMesh/testSerial"
 )
 
-type TestSerialDetailsEnriched_View struct {
+type TestSerialDetailsEnriched_View interface {
+	Keys() []string
+	Get(key string) (*testSerial.DetailsEnriched, error)
+}
+
+type TestSerialDetailsEnriched_View_impl struct {
 	view *goka.View
 }
 
-func New_TestSerialDetailsEnriched_View(options runner.ServiceOptions) (*TestSerialDetailsEnriched_View, error) {
+func New_TestSerialDetailsEnriched_View(options runner.ServiceOptions) (*TestSerialDetailsEnriched_View_impl, error) {
 	brokers := options.Brokers
 	protoWrapper := options.ProtoWrapper
 
@@ -76,25 +81,29 @@ func New_TestSerialDetailsEnriched_View(options runner.ServiceOptions) (*TestSer
 		return nil, errors.Wrap(err, "failed creating view")
 	}
 
-	return &TestSerialDetailsEnriched_View{
+	return &TestSerialDetailsEnriched_View_impl{
 		view: view,
 	}, nil
 }
 
-func (v *TestSerialDetailsEnriched_View) Watch(ctx context.Context) func() error {
+func (v *TestSerialDetailsEnriched_View_impl) Watch(ctx context.Context) func() error {
 	return func() error {
 		return v.view.Run(ctx)
 	}
 }
 
-func (v *TestSerialDetailsEnriched_View) Keys() []string {
+func (v *TestSerialDetailsEnriched_View_impl) Keys() []string {
 	return v.Keys()
 }
 
-func (v *TestSerialDetailsEnriched_View) Get(key string) (*testSerial.DetailsEnriched, error) {
+func (v *TestSerialDetailsEnriched_View_impl) Get(key string) (*testSerial.DetailsEnriched, error) {
 	m, err := v.view.Get(key)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get value from view")
+	}
+
+	if m == nil {
+		return nil, nil
 	}
 
 	msg, ok := m.(*testSerial.DetailsEnriched)

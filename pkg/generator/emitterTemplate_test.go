@@ -34,7 +34,12 @@ import (
 	testSerial "test/internal/kafmesh/models/testMesh/testSerial"
 )
 
-type TestSerialDetails_Emitter struct {
+type TestSerialDetails_Emitter interface {
+	Emit(message TestSerialDetails_Emitter_Message) error
+	EmitBulk(ctx context.Context, messages []TestSerialDetails_Emitter_Message) error
+}
+
+type TestSerialDetails_Emitter_impl struct {
 	emitter *runner.Emitter
 }
 
@@ -47,22 +52,15 @@ type impl_TestSerialDetails_Emitter_Message struct {
 	msg TestSerialDetails_Emitter_Message
 }
 
-func New_TestSerialDetails_Emitter_Message(key string, value *testSerial.Details) *TestSerialDetails_Emitter_Message {
-	return &TestSerialDetails_Emitter_Message{
-		key: key,
-		value: value,
-	}
+func (m *impl_TestSerialDetails_Emitter_Message) Key() string {
+	return m.msg.Key
 }
 
-func (m *TestSerialDetails_Emitter_Message) Key() string {
-	return m.key
+func (m *impl_TestSerialDetails_Emitter_Message) Value() interface{} {
+	return m.msg.Value
 }
 
-func (m *TestSerialDetails_Emitter_Message) Value() interface{} {
-	return m.value
-}
-
-func New_TestSerialDetails_Emitter(options runner.ServiceOptions) (*TestSerialDetails_Emitter, error) {
+func New_TestSerialDetails_Emitter(options runner.ServiceOptions) (*TestSerialDetails_Emitter_impl, error) {
 	brokers := options.Brokers
 	protoWrapper := options.ProtoWrapper
 
@@ -80,20 +78,20 @@ func New_TestSerialDetails_Emitter(options runner.ServiceOptions) (*TestSerialDe
 		return nil, errors.Wrap(err, "failed creating emitter")
 	}
 
-	return &TestSerialDetails_Emitter{
+	return &TestSerialDetails_Emitter_impl{
 		emitter: runner.NewEmitter(emitter),
 	}, nil
 }
 
-func (e *TestSerialDetails_Emitter) Watch(ctx context.Context) func() error {
+func (e *TestSerialDetails_Emitter_impl) Watch(ctx context.Context) func() error {
 	return e.emitter.Watch(ctx)
 }
 
-func (e *TestSerialDetails_Emitter) Emit(message *TestSerialDetails_Emitter_Message) error {
+func (e *TestSerialDetails_Emitter_impl) Emit(message TestSerialDetails_Emitter_Message) error {
 	return e.emitter.Emit(message.Key, message.Value)
 }
 
-func (e *TestSerialDetails_Emitter) EmitBulk(ctx context.Context, messages []*TestSerialDetails_Emitter_Message) error {
+func (e *TestSerialDetails_Emitter_impl) EmitBulk(ctx context.Context, messages []TestSerialDetails_Emitter_Message) error {
 	b := []runner.EmitMessage{}
 	for _, m := range messages {
 		b = append(b, &impl_TestSerialDetails_Emitter_Message{msg: m})
