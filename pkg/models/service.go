@@ -2,6 +2,7 @@ package models
 
 import (
 	"io"
+	"time"
 
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
@@ -29,6 +30,8 @@ type TopicDefaults struct {
 	Partition   int
 	Replication int
 	Type        string
+	Retention   time.Duration
+	Segment     time.Duration
 }
 
 // MessageDefinitions define where to locate the schema for the messages.

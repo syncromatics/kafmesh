@@ -4,6 +4,7 @@ import (
 	"io"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/iancoleman/strcase"
 	"github.com/pkg/errors"
@@ -33,6 +34,15 @@ type TopicDefinition struct {
 	Message string
 	Type    *string
 	Topic   *string
+}
+
+// ToTopicName extracts the topic name from the definition
+func (t TopicDefinition) ToTopicName() string {
+	if t.Topic != nil {
+		return *t.Topic
+	}
+
+	return t.Message
 }
 
 // ToSafeMessageTypeName generates a name that will pass go vet
@@ -65,6 +75,9 @@ func (t TopicDefinition) ToSafeMessageTypeName() string {
 type TopicCreationDefinition struct {
 	Partitions *int
 	Replicas   *int
+	Compact    *bool
+	Retention  *time.Duration
+	Segment    *time.Duration
 }
 
 // Emitter is a producer into kafka
@@ -118,7 +131,8 @@ type Output struct {
 
 // Persistence is where the processor stores state data
 type Persistence struct {
-	TopicDefinition `yaml:",inline"`
+	TopicDefinition         `yaml:",inline"`
+	TopicCreationDefinition `yaml:",inline"`
 }
 
 // Sink is a job that will sink a topic to an external source

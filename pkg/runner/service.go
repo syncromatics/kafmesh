@@ -5,15 +5,17 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Shopify/sarama"
-
 	pingv1 "github.com/syncromatics/kafmesh/internal/protos/kafmesh/ping/v1"
 	"github.com/syncromatics/kafmesh/internal/services"
 
+	"github.com/Shopify/sarama"
 	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 )
+
+// KafaConfigurator configures the kafka topics require to run the service
+type KafaConfigurator func(ctx context.Context, brokers []string) error
 
 // ServiceOptions are the options passed to services
 type ServiceOptions struct {
@@ -27,9 +29,10 @@ type Service struct {
 	protoWrapper *ProtoWrapper
 	server       *grpc.Server
 
-	mtx     sync.Mutex
-	running bool
-	runners []func(context.Context) func() error
+	mtx        sync.Mutex
+	configured bool
+	running    bool
+	runners    []func(context.Context) func() error
 }
 
 // NewService creates a new kafmesh service
@@ -46,11 +49,20 @@ func NewService(brokers []string, protoRegistry *Registry, grpcServer *grpc.Serv
 // ConfigureKafka waits for kafka to be ready and configures the topics
 // for this service. It will also check if topics it doesn't create exist
 // in the correct configuration.
-func (s *Service) ConfigureKafka(ctx context.Context) error {
+func (s *Service) ConfigureKafka(ctx context.Context, configurator KafaConfigurator) error {
+	s.mtx.Lock()
+	defer s.mtx.Unlock()
 	err := s.waitForKafkaToBeReady(ctx)
 	if err != nil {
 		return errors.Wrap(err, "failed to talk to kafka")
 	}
+
+	err = configurator(ctx, s.brokers)
+	if err != nil {
+		return errors.Wrap(err, "failed to configure kafka")
+	}
+
+	s.configured = true
 
 	return nil
 }
@@ -62,6 +74,14 @@ func (s *Service) Run(ctx context.Context) func() error {
 
 	return func() error {
 		s.mtx.Lock()
+		if !s.configured {
+			return errors.Errorf("ConfigureKafka was never called. Please call ConfigureKafka first")
+		}
+
+		if s.running {
+			return errors.Errorf("Run can only be called once.")
+		}
+
 		for _, r := range s.runners {
 			grp.Go(r(c))
 		}

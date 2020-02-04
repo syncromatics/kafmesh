@@ -87,6 +87,22 @@ func Generate(options Options) error {
 		return errors.Wrapf(err, "failed to generate package")
 	}
 
+	tOptions, err := buildTopicOption(options.Service, options.Components)
+	if err != nil {
+		return errors.Wrap(err, "failed to build topic options")
+	}
+
+	file, err = os.Create(path.Join(outputPath, "topics.km.go"))
+	if err != nil {
+		return errors.Wrapf(err, "failed to open topics file")
+	}
+	defer file.Close()
+
+	err = generateTopics(file, tOptions)
+	if err != nil {
+		return errors.Wrapf(err, "failed to generate topics")
+	}
+
 	return nil
 }
 

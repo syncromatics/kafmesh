@@ -5,6 +5,7 @@ import (
 	"os"
 	"path"
 	"testing"
+	"time"
 
 	"github.com/syncromatics/kafmesh/pkg/generator"
 	"github.com/syncromatics/kafmesh/pkg/models"
@@ -84,6 +85,12 @@ message DetailsEnriched {
 				Protobuf: []string{
 					"./protos",
 				},
+			},
+			Defaults: models.TopicDefaults{
+				Partition:   10,
+				Replication: 1,
+				Retention:   24 * time.Hour,
+				Segment:     12 * time.Hour,
 			},
 		},
 		RootPath:        tmpDir,
