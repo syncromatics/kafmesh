@@ -1,0 +1,10 @@
+{
+    "go.formatTool": "goimports",
+    "protoc": {
+        "options": [
+            "--proto_path=${workspaceRoot}/docs/protos",
+            "--proto_path=protos/v3",
+            "--proto_path=protos/v2"
+        ]
+    }
+}

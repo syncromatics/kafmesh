@@ -3,6 +3,7 @@ package models_test
 import (
 	"bytes"
 	"testing"
+	"time"
 
 	"github.com/syncromatics/kafmesh/pkg/models"
 
@@ -31,6 +32,8 @@ defaults:
   partition: 10
   replication: 3
   type : "protobuf"
+  retention: 240h
+  segment: 24h
 `
 
 	service, err := models.ParseService(bytes.NewBuffer([]byte(schema)))
@@ -60,6 +63,8 @@ defaults:
 			Partition:   10,
 			Replication: 3,
 			Type:        "protobuf",
+			Retention:   10 * 24 * time.Hour,
+			Segment:     24 * time.Hour,
 		},
 	}, service)
 }

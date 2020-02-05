@@ -2,6 +2,7 @@ package models
 
 import (
 	"io"
+	"time"
 
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
@@ -21,6 +22,7 @@ type Service struct {
 type OutputSettings struct {
 	Package string
 	Path    string
+	Module  string
 }
 
 // TopicDefaults are the default kafka settings for the service
@@ -28,6 +30,8 @@ type TopicDefaults struct {
 	Partition   int
 	Replication int
 	Type        string
+	Retention   time.Duration
+	Segment     time.Duration
 }
 
 // MessageDefinitions define where to locate the schema for the messages.

@@ -5,3 +5,9 @@ test: build
 	mkdir -p artifacts/
 	docker run -v $(PWD)/artifacts:/artifacts -v /var/run/docker.sock:/var/run/docker.sock testing
 	cd artifacts && curl -s https://codecov.io/bash | bash
+
+generate-protos:
+	mkdir -p internal/protos
+	protoc -I docs/protos \
+		docs/protos/kafmesh/ping/v1/*.proto \
+		--go_out=plugins=grpc:./internal/protos

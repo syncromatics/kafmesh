@@ -2,9 +2,17 @@ package models
 
 import (
 	"io"
+	"regexp"
+	"strings"
+	"time"
 
+	"github.com/iancoleman/strcase"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
+)
+
+var (
+	capitalsRegex = regexp.MustCompile(`[A-Z][^A-Z]*`)
 )
 
 // Component is a piece of a service that provides processors that accomplish a task
@@ -16,6 +24,7 @@ type Component struct {
 	Processors    []Processor
 	Sinks         []Sink
 	Synchronizers []Synchronizer
+	Views         []View
 
 	Persistence *Persistence
 }
@@ -27,14 +36,58 @@ type TopicDefinition struct {
 	Topic   *string
 }
 
+// ToTopicName extracts the topic name from the definition
+func (t TopicDefinition) ToTopicName() string {
+	if t.Topic != nil {
+		return *t.Topic
+	}
+
+	return t.Message
+}
+
+// ToSafeMessageTypeName generates a name that will pass go vet
+func (t TopicDefinition) ToSafeMessageTypeName() string {
+	builder := strings.Builder{}
+	nameFrags := strings.Split(t.Message, ".")
+	for _, f := range nameFrags {
+		builder.WriteString(strcase.ToCamel(f))
+	}
+
+	name := builder.String()
+	builder.Reset()
+
+	submatchall := capitalsRegex.FindAllString(name, -1)
+	for _, element := range submatchall {
+		switch element {
+		case "Id":
+			builder.WriteString("ID")
+		case "Api":
+			builder.WriteString("API")
+		default:
+			builder.WriteString(element)
+		}
+
+	}
+	return builder.String()
+}
+
 // TopicCreationDefinition describe how a topic should be created
 type TopicCreationDefinition struct {
 	Partitions *int
 	Replicas   *int
+	Compact    *bool
+	Retention  *time.Duration
+	Segment    *time.Duration
 }
 
 // Emitter is a producer into kafka
 type Emitter struct {
+	TopicDefinition         `yaml:",inline"`
+	TopicCreationDefinition `yaml:",inline"`
+}
+
+// View is a view into kafka
+type View struct {
 	TopicDefinition         `yaml:",inline"`
 	TopicCreationDefinition `yaml:",inline"`
 }
@@ -78,7 +131,8 @@ type Output struct {
 
 // Persistence is where the processor stores state data
 type Persistence struct {
-	TopicDefinition `yaml:",inline"`
+	TopicDefinition         `yaml:",inline"`
+	TopicCreationDefinition `yaml:",inline"`
 }
 
 // Sink is a job that will sink a topic to an external source

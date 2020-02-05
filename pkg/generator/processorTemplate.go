@@ -20,6 +20,8 @@ package {{ .Package }}
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 
 	"github.com/burdiyan/kafkautil"
 	"github.com/lovoo/goka"
@@ -35,7 +37,8 @@ import (
 )
 
 {{ with .Context -}}
-type {{ .Name }} interface {
+type {{ .Name }}_ProcessorContext interface {
+	Key() string
 	{{- range .Methods }}
 	{{.Name}}({{ .Args }}
 {{- end}}
@@ -43,7 +46,7 @@ type {{ .Name }} interface {
 {{- end }}
 
 {{ with .Interface -}}
-type {{ .Name }} interface {
+type {{ .Name }}_Processor interface {
 	{{- range .Methods }}
 	{{.Name}}({{ .Args }}) error
 {{- end}}
@@ -51,23 +54,32 @@ type {{ .Name }} interface {
 {{- end}}
 {{ $impl := "" }}
 {{ with .Context -}}
-type {{ .Name }}Impl struct {
+type {{ .Name }}_ProcessorContext_Impl struct {
 	ctx goka.Context
 }
-{{ $impl = print "new" .Name "Impl" }}
-func new{{ .Name }}Impl(ctx goka.Context) *{{ .Name }}Impl {
-	return &{{ .Name }}Impl{ctx}
+
+func new_{{ .Name }}_ProcessorContext_Impl(ctx goka.Context) *{{ .Name }}_ProcessorContext_Impl {
+	return &{{ .Name }}_ProcessorContext_Impl{ctx}
 }
 {{$c := .Name}}
-{{- range .Methods }}
-func (c *{{$c}}Impl) {{.Name}}({{ .Args }} {
+func (c *{{$c}}_ProcessorContext_Impl) Key() string {
+	return c.ctx.Key()
+}
+{{ range .Methods }}
+func (c *{{$c}}_ProcessorContext_Impl) {{.Name}}({{ .Args }} {
 {{- $t := . -}}
 {{- with (eq .Type "lookup" ) }}
 	v := c.ctx.Lookup("{{- $t.Topic -}}", key)
+	if v == nil {
+		return nil
+	}
 	return v.(*{{- $t.MessageType -}})
 {{- end -}}
 {{- with (eq .Type "join" ) }}
 	v := c.ctx.Join("{{- $t.Topic -}}")
+	if v == nil {
+		return nil
+	}
 	return v.(*{{- $t.MessageType -}})
 {{- end -}}
 {{- with (eq .Type "output" ) }}
@@ -78,15 +90,17 @@ func (c *{{$c}}Impl) {{.Name}}({{ .Args }} {
 {{- end -}}
 {{- with (eq .Type "state") }}
 	v := c.ctx.Value()
-	t := v.(*{{- $t.MessageType -}})
-	return t
+	if v == nil {
+		return &{{- $t.MessageType -}}{}
+	}
+	return v.(*{{- $t.MessageType -}})
 {{- end }}
 }
 {{ end}}
 {{- end}}
-
+{{ $c := .Context -}}
 {{ with .Interface -}}
-func Register_{{ .Name }}(options runner.ServiceOptions, service {{ .Name }}) (func(context.Context) func() error, error) {
+func Register_{{ .Name }}_Processor(options runner.ServiceOptions, service {{ .Name }}_Processor) (func(context.Context) func() error, error) {
 {{- end }}
 	brokers := options.Brokers
 	protoWrapper := options.ProtoWrapper
@@ -99,7 +113,15 @@ func Register_{{ .Name }}(options runner.ServiceOptions, service {{ .Name }}) (f
 		WriteBuffer:        opt.MiB * 1,
 	}
 
-	builder := storage.BuilderWithOptions("/tmp/storage", opts)
+	path := filepath.Join("/tmp/storage", "processor", "{{ .Group }}")
+
+	err := os.MkdirAll(path, os.ModePerm)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create processor db directory")
+	}
+
+	builder := storage.BuilderWithOptions(path, opts)
+
 {{ range .Codecs }}
 	c{{ .Index }}, err := protoWrapper.Codec("{{ .Topic }}", &{{ .Message }}{})
 	if err != nil {
@@ -112,7 +134,7 @@ func Register_{{ .Name }}(options runner.ServiceOptions, service {{ .Name }}) (f
 {{- with (eq .Type "input" ) }}
 		goka.Input(goka.Stream("{{ $e.Topic }}"), c{{ $e.Codec }}, func(ctx goka.Context, m interface{}) {
 			msg := m.(*{{ $e.Message }})
-			w := {{ $impl }}(ctx)
+			w := new_{{ $c.Name }}_ProcessorContext_Impl(ctx)
 			err := service.{{ $e.Func }}(w, msg)
 			if err != nil {
 				ctx.Fail(err)
@@ -204,7 +226,7 @@ type processorOptions struct {
 	Codecs    []codec
 }
 
-func generateProcessor(writer io.Writer, processor processorOptions) error {
+func generateProcessor(writer io.Writer, processor *processorOptions) error {
 	err := processorTemplate.Execute(writer, processor)
 	if err != nil {
 		return errors.Wrap(err, "failed to execute processor template")
@@ -212,7 +234,7 @@ func generateProcessor(writer io.Writer, processor processorOptions) error {
 	return nil
 }
 
-func buildProcessorOptions(pkg string, mod string, modelsPath string, processor models.Processor) (processorOptions, error) {
+func buildProcessorOptions(pkg string, mod string, modelsPath string, processor models.Processor) (*processorOptions, error) {
 	imports := map[string]int{}
 	importIndex := 0
 
@@ -231,10 +253,9 @@ func buildProcessorOptions(pkg string, mod string, modelsPath string, processor 
 	for _, s := range strings.Split(processor.GroupName, ".") {
 		iname.WriteString(strcase.ToCamel(s))
 	}
-	iname.WriteString("Processor")
 
 	options.Context = processorContext{
-		Name:    iname.String() + "Context",
+		Name:    iname.String(),
 		Methods: []contextMethod{},
 	}
 
@@ -245,7 +266,7 @@ func buildProcessorOptions(pkg string, mod string, modelsPath string, processor 
 
 	for _, input := range processor.Inputs {
 		var name strings.Builder
-		name.WriteString("HandleInput_")
+		name.WriteString("Handle")
 		nameFrags := strings.Split(input.Message, ".")
 		for _, f := range nameFrags[1:] {
 			name.WriteString(strcase.ToCamel(f))
@@ -268,12 +289,12 @@ func buildProcessorOptions(pkg string, mod string, modelsPath string, processor 
 		}
 
 		var args strings.Builder
-		args.WriteString("ctx " + options.Context.Name)
+		args.WriteString(fmt.Sprintf("ctx %s_ProcessorContext", options.Context.Name))
 		message := nameFrags[len(nameFrags)-1]
 		args.WriteString(fmt.Sprintf(", message *m%d.%s", i, strcase.ToCamel(message)))
 
 		method := interfaceMethod{
-			Name: name.String(),
+			Name: fmt.Sprintf("Handle%s", input.ToSafeMessageTypeName()),
 			Args: args.String(),
 		}
 		intr.Methods = append(intr.Methods, method)
@@ -283,14 +304,14 @@ func buildProcessorOptions(pkg string, mod string, modelsPath string, processor 
 			topic = *input.TopicDefinition.Topic
 		}
 
-		c, ok := codecs[message]
+		c, ok := codecs[topic]
 		if !ok {
 			c = codec{
 				Index:   codecIndex,
 				Topic:   topic,
 				Message: fmt.Sprintf("m%d.%s", i, strcase.ToCamel(message)),
 			}
-			codecs[message] = c
+			codecs[topic] = c
 			codecIndex++
 		}
 
@@ -299,7 +320,7 @@ func buildProcessorOptions(pkg string, mod string, modelsPath string, processor 
 			Topic:   topic,
 			Message: fmt.Sprintf("m%d.%s", i, strcase.ToCamel(message)),
 			Codec:   c.Index,
-			Func:    name.String(),
+			Func:    method.Name,
 		})
 	}
 	options.Interface = intr
@@ -348,14 +369,14 @@ func buildProcessorOptions(pkg string, mod string, modelsPath string, processor 
 		}
 		options.Context.Methods = append(options.Context.Methods, m)
 
-		c, ok := codecs[message]
+		c, ok := codecs[m.Topic]
 		if !ok {
 			c = codec{
 				Index:   codecIndex,
 				Topic:   m.Topic,
 				Message: fmt.Sprintf("m%d.%s", i, strcase.ToCamel(message)),
 			}
-			codecs[message] = c
+			codecs[m.Topic] = c
 			codecIndex++
 		}
 
@@ -411,14 +432,14 @@ func buildProcessorOptions(pkg string, mod string, modelsPath string, processor 
 
 		options.Context.Methods = append(options.Context.Methods, m)
 
-		c, ok := codecs[message]
+		c, ok := codecs[m.Topic]
 		if !ok {
 			c = codec{
 				Index:   codecIndex,
 				Topic:   m.Topic,
 				Message: fmt.Sprintf("m%d.%s", i, strcase.ToCamel(message)),
 			}
-			codecs[message] = c
+			codecs[m.Topic] = c
 			codecIndex++
 		}
 
@@ -472,14 +493,14 @@ func buildProcessorOptions(pkg string, mod string, modelsPath string, processor 
 
 		options.Context.Methods = append(options.Context.Methods, m)
 
-		c, ok := codecs[message]
+		c, ok := codecs[m.Topic]
 		if !ok {
 			c = codec{
 				Index:   codecIndex,
 				Topic:   m.Topic,
 				Message: fmt.Sprintf("m%d.%s", i, strcase.ToCamel(message)),
 			}
-			codecs[message] = c
+			codecs[m.Topic] = c
 			codecIndex++
 		}
 
@@ -527,14 +548,14 @@ func buildProcessorOptions(pkg string, mod string, modelsPath string, processor 
 			MessageType: fmt.Sprintf("m%d.%s", i, strcase.ToCamel(message)),
 		})
 
-		c, ok := codecs[message]
+		c, ok := codecs[options.Group+"-table"]
 		if !ok {
 			c = codec{
 				Index:   codecIndex,
 				Topic:   options.Group + "-table",
 				Message: fmt.Sprintf("m%d.%s", i, strcase.ToCamel(message)),
 			}
-			codecs[message] = c
+			codecs[options.Group+"-table"] = c
 			codecIndex++
 		}
 
@@ -559,5 +580,5 @@ func buildProcessorOptions(pkg string, mod string, modelsPath string, processor 
 
 	sort.Strings(options.Imports)
 
-	return options, nil
+	return &options, nil
 }

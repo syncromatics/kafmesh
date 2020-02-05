@@ -13,10 +13,10 @@ import (
 
 // Options for the kafmesh generator
 type Options struct {
-	Service    *models.Service
-	Components []*models.Component
-	RootPath   string
-	Mod        string
+	Service         *models.Service
+	Components      []*models.Component
+	RootPath        string
+	DefinitionsPath string
 }
 
 // Generate generates the kafmesh files
@@ -31,7 +31,7 @@ func Generate(options Options) error {
 	includes := []string{}
 	files := []string{}
 	for _, p := range options.Service.Messages.Protobuf {
-		protoPath := path.Join(options.RootPath, p)
+		protoPath := path.Join(options.DefinitionsPath, p)
 		includes = append(includes, protoPath)
 
 		fs, err := filepathx.Glob(path.Join(protoPath, "**/*.proto"))
@@ -39,27 +39,27 @@ func Generate(options Options) error {
 			return errors.Wrap(err, "failed to glob files")
 		}
 
-		for _, f := range fs {
-			fixed := strings.TrimPrefix(f, protoPath+"/")
-			files = append(files, fixed)
-		}
+		files = append(files, fs...)
 	}
 
 	args := append(includes, files...)
 
-	modelsPath := path.Join(options.RootPath, options.Service.Output.Path, "models")
-	err = os.MkdirAll(modelsPath, os.ModePerm)
+	modelsPath := path.Join(options.Service.Output.Path, "models")
+	err = os.MkdirAll(path.Join(options.RootPath, modelsPath), os.ModePerm)
 	if err != nil {
 		return errors.Wrap(err, "failed to create output models path")
 	}
 
 	args = append(args, "--go_out=.")
 
-	err = Protoc(protoOptions{
+	protocOptions := protoOptions{
 		Files:    files,
 		Includes: includes,
-		Output:   modelsPath,
-	})
+		Output:   path.Join(options.RootPath, modelsPath),
+	}
+
+	fmt.Printf("options:files: %s, includes: %s, output: %s\n", protocOptions.Files, protocOptions.Includes, protocOptions.Output)
+	err = Protoc(protocOptions)
 	if err != nil {
 		return errors.Wrapf(err, "failed to run protoc")
 	}
@@ -71,13 +71,13 @@ func Generate(options Options) error {
 	defer file.Close()
 
 	for _, c := range options.Components {
-		err = processComponent(options.RootPath, outputPath, options.Mod, modelsPath, c)
+		err = processComponent(options.RootPath, outputPath, options.Service.Output.Module, modelsPath, c)
 		if err != nil {
 			return errors.Wrapf(err, "failed to process component")
 		}
 	}
 
-	sOptions, err := buildServiceOptions(options.Service, options.Components, options.Mod)
+	sOptions, err := buildServiceOptions(options.Service, options.Components, options.Service.Output.Module)
 	if err != nil {
 		return errors.Wrapf(err, "failed to build options")
 	}
@@ -87,11 +87,27 @@ func Generate(options Options) error {
 		return errors.Wrapf(err, "failed to generate package")
 	}
 
+	tOptions, err := buildTopicOption(options.Service, options.Components)
+	if err != nil {
+		return errors.Wrap(err, "failed to build topic options")
+	}
+
+	file, err = os.Create(path.Join(outputPath, "topics.km.go"))
+	if err != nil {
+		return errors.Wrapf(err, "failed to open topics file")
+	}
+	defer file.Close()
+
+	err = generateTopics(file, tOptions)
+	if err != nil {
+		return errors.Wrapf(err, "failed to generate topics")
+	}
+
 	return nil
 }
 
 func processComponent(rootPath string, outputPath string, mod string, modelsPath string, component *models.Component) error {
-	mPath := strings.TrimPrefix(modelsPath, rootPath)
+	mPath := "/" + strings.TrimPrefix(modelsPath, rootPath)
 	componentPath := path.Join(outputPath, component.Name)
 	_, err := os.Stat(componentPath)
 	if os.IsNotExist(err) {
@@ -103,7 +119,7 @@ func processComponent(rootPath string, outputPath string, mod string, modelsPath
 
 	for _, p := range component.Processors {
 		fileName := strings.ReplaceAll(p.GroupName, ".", "_")
-		fileName = fmt.Sprintf("%s.km.go", fileName)
+		fileName = fmt.Sprintf("%s_processor.km.go", fileName)
 		file, err := os.Create(path.Join(componentPath, fileName))
 		if err != nil {
 			return errors.Wrapf(err, "failed to open service file")
@@ -118,6 +134,87 @@ func processComponent(rootPath string, outputPath string, mod string, modelsPath
 		err = generateProcessor(file, co)
 		if err != nil {
 			return errors.Wrap(err, "failed to generate processor")
+		}
+	}
+
+	for _, e := range component.Emitters {
+		fileName := strings.ReplaceAll(e.Message, ".", "_")
+		fileName = fmt.Sprintf("%s_emitter.km.go", fileName)
+		file, err := os.Create(path.Join(componentPath, fileName))
+		if err != nil {
+			return errors.Wrapf(err, "failed to open service file")
+		}
+		defer file.Close()
+
+		co, err := buildEmitterOptions(component.Name, mod, mPath, e)
+		if err != nil {
+			return errors.Wrap(err, "failed to build emitter options")
+		}
+
+		err = generateEmitter(file, co)
+		if err != nil {
+			return errors.Wrap(err, "failed to generate emitter")
+		}
+	}
+
+	for _, s := range component.Sinks {
+		fileName := strings.ReplaceAll(s.Name, " ", "_")
+		fileName = fmt.Sprintf("%s_sink.km.go", fileName)
+		fileName = strings.ToLower(fileName)
+		file, err := os.Create(path.Join(componentPath, fileName))
+		if err != nil {
+			return errors.Wrapf(err, "failed to open service file")
+		}
+		defer file.Close()
+
+		co, err := buildSinkOptions(component.Name, mod, mPath, s)
+		if err != nil {
+			return errors.Wrap(err, "failed to build sink options")
+		}
+
+		err = generateSink(file, co)
+		if err != nil {
+			return errors.Wrap(err, "failed to generate sink")
+		}
+	}
+
+	for _, v := range component.Views {
+		fileName := strings.ReplaceAll(v.Message, ".", "_")
+		fileName = fmt.Sprintf("%s_view.km.go", fileName)
+		file, err := os.Create(path.Join(componentPath, fileName))
+		if err != nil {
+			return errors.Wrapf(err, "failed to open service file")
+		}
+		defer file.Close()
+
+		co, err := buildViewOptions(component.Name, mod, mPath, v)
+		if err != nil {
+			return errors.Wrap(err, "failed to build view options")
+		}
+
+		err = generateView(file, co)
+		if err != nil {
+			return errors.Wrap(err, "failed to generate view")
+		}
+	}
+
+	for _, s := range component.Synchronizers {
+		fileName := strings.ReplaceAll(s.Message, ".", "_")
+		fileName = fmt.Sprintf("%s_synchronizer.km.go", fileName)
+		file, err := os.Create(path.Join(componentPath, fileName))
+		if err != nil {
+			return errors.Wrapf(err, "failed to open service file")
+		}
+		defer file.Close()
+
+		co, err := buildSynchronizerOptions(component.Name, mod, mPath, s)
+		if err != nil {
+			return errors.Wrap(err, "failed to build synchronizer options")
+		}
+
+		err = generateSynchronizer(file, co)
+		if err != nil {
+			return errors.Wrap(err, "failed to generate synchronizer")
 		}
 	}
 
