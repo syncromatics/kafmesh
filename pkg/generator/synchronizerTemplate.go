@@ -21,6 +21,7 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+	"fmt"
 
 	"github.com/burdiyan/kafkautil"
 	"github.com/lovoo/goka"
@@ -35,23 +36,20 @@ import (
 )
 
 type {{ .Name }}_Synchronizer_Message struct {
-	key string
-	value *{{ .MessageType }}
+	Key string
+	Value *{{ .MessageType }}
 }
 
-func New_{{ .Name }}_Synchronizer_Message(key string, value *{{ .MessageType }}) *{{ .Name }}_Synchronizer_Message {
-	return &{{ .Name }}_Synchronizer_Message{
-		key: key,
-		value: value,
-	}
+type impl_{{ .Name }}_Synchronizer_Message struct {
+	msg *{{ .Name }}_Synchronizer_Message
 }
 
-func (m *{{ .Name }}_Synchronizer_Message) Key() string {
-	return m.key
+func (m *impl_{{ .Name }}_Synchronizer_Message) Key() string {
+	return m.msg.Key
 }
 
-func (m *{{ .Name }}_Synchronizer_Message) Value() interface{} {
-	return m.value
+func (m *impl_{{ .Name }}_Synchronizer_Message) Value() interface{} {
+	return m.msg.Value
 }
 
 type {{ .Name }}_Synchronizer_Context interface {
@@ -59,6 +57,7 @@ type {{ .Name }}_Synchronizer_Context interface {
 	Get(string) (*{{ .MessageType }}, error)
 	Emit(*{{ .Name }}_Synchronizer_Message) error
 	EmitBulk(context.Context, []*{{ .Name }}_Synchronizer_Message) error
+	Delete(string) error
 }
 
 type {{ .Name }}_Synchronizer_Context_impl struct {
@@ -86,6 +85,10 @@ func (c *{{ .Name }}_Synchronizer_Context_impl) Get(key string) (*{{ .MessageTyp
 		return nil, errors.Wrap(err, "failed to get value from view")
 	}
 
+	if m == nil {
+		return nil, nil
+	}
+
 	msg, ok := m.(*{{ .MessageType }})
 	if !ok {
 		return nil, errors.Errorf("expecting message of type '*{{ .MessageType }}' got type '%t'", m)
@@ -95,15 +98,19 @@ func (c *{{ .Name }}_Synchronizer_Context_impl) Get(key string) (*{{ .MessageTyp
 }
 
 func (c *{{ .Name }}_Synchronizer_Context_impl) Emit(message *{{ .Name }}_Synchronizer_Message) error {
-	return c.emitter.Emit(message.Key(), message.Value())
+	return c.emitter.Emit(message.Key, message.Value)
 }
 
 func (c *{{ .Name }}_Synchronizer_Context_impl) EmitBulk(ctx context.Context, messages []*{{ .Name }}_Synchronizer_Message) error {
 	b := []runner.EmitMessage{}
 	for _, m := range messages {
-		b = append(b, m)
+		b = append(b, &impl_{{ .Name }}_Synchronizer_Message{msg: m})
 	}
 	return c.emitter.EmitBulk(ctx, b)
+}
+
+func (c *{{ .Name }}_Synchronizer_Context_impl) Delete(key string) error {
+	return c.emitter.Emit(key, nil)
 }
 
 type {{ .Name }}_Synchronizer interface {
@@ -164,6 +171,7 @@ func Register_{{ .Name }}_Synchronizer(options runner.ServiceOptions, sychronize
 		return func() error {
 			gctx, cancel := context.WithCancel(ctx)
 			grp, gctx := errgroup.WithContext(ctx)
+			defer cancel()
 
 			timer := time.NewTimer(0)
 			grp.Go(func() error {
@@ -174,6 +182,7 @@ func Register_{{ .Name }}_Synchronizer(options runner.ServiceOptions, sychronize
 					case <-timer.C:
 						err := sychronizer.Sync(c)
 						if err != nil {
+							fmt.Printf("sync error '%v'", err)
 							return err
 						}
 						timer = time.NewTimer(updateInterval)
@@ -183,15 +192,13 @@ func Register_{{ .Name }}_Synchronizer(options runner.ServiceOptions, sychronize
 
 			grp.Go(emitter.Watch(gctx))
 			grp.Go(func() error {
-				return view.Run(ctx)
+				return view.Run(gctx)
 			})
 
 			select {
 			case <- ctx.Done():
-				cancel()
 				return nil
 			case <- gctx.Done():
-				cancel()
 				err := grp.Wait()
 				return err
 			}
