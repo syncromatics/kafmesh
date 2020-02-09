@@ -29,7 +29,7 @@ func Generate(options Options) error {
 	}
 
 	includes := []string{}
-	files := []string{}
+	files := []file{}
 	for _, p := range options.Service.Messages.Protobuf {
 		protoPath := path.Join(options.DefinitionsPath, p)
 		includes = append(includes, protoPath)
@@ -39,10 +39,13 @@ func Generate(options Options) error {
 			return errors.Wrap(err, "failed to glob files")
 		}
 
-		files = append(files, fs...)
+		for _, f := range fs {
+			files = append(files, file{
+				root: protoPath,
+				path: f,
+			})
+		}
 	}
-
-	args := append(includes, files...)
 
 	modelsPath := path.Join(options.Service.Output.Path, "models")
 	err = os.MkdirAll(path.Join(options.RootPath, modelsPath), os.ModePerm)
@@ -50,15 +53,14 @@ func Generate(options Options) error {
 		return errors.Wrap(err, "failed to create output models path")
 	}
 
-	args = append(args, "--go_out=.")
-
 	protocOptions := protoOptions{
 		Files:    files,
 		Includes: includes,
 		Output:   path.Join(options.RootPath, modelsPath),
+		Module:   options.Service.Output.Module,
+		Path:     options.Service.Output.Path,
 	}
 
-	fmt.Printf("options:files: %s, includes: %s, output: %s\n", protocOptions.Files, protocOptions.Includes, protocOptions.Output)
 	err = Protoc(protocOptions)
 	if err != nil {
 		return errors.Wrapf(err, "failed to run protoc")
@@ -71,7 +73,7 @@ func Generate(options Options) error {
 	defer file.Close()
 
 	for _, c := range options.Components {
-		err = processComponent(options.RootPath, outputPath, options.Service.Output.Module, modelsPath, c)
+		err = processComponent(options.RootPath, outputPath, options.Service.Output.Module, modelsPath, options.Service, c)
 		if err != nil {
 			return errors.Wrapf(err, "failed to process component")
 		}
@@ -106,7 +108,7 @@ func Generate(options Options) error {
 	return nil
 }
 
-func processComponent(rootPath string, outputPath string, mod string, modelsPath string, component *models.Component) error {
+func processComponent(rootPath string, outputPath string, mod string, modelsPath string, service *models.Service, component *models.Component) error {
 	mPath := "/" + strings.TrimPrefix(modelsPath, rootPath)
 	componentPath := path.Join(outputPath, component.Name)
 	_, err := os.Stat(componentPath)
@@ -118,7 +120,7 @@ func processComponent(rootPath string, outputPath string, mod string, modelsPath
 	}
 
 	for _, p := range component.Processors {
-		fileName := strings.ReplaceAll(p.GroupName, ".", "_")
+		fileName := p.Name
 		fileName = fmt.Sprintf("%s_processor.km.go", fileName)
 		file, err := os.Create(path.Join(componentPath, fileName))
 		if err != nil {
@@ -126,7 +128,7 @@ func processComponent(rootPath string, outputPath string, mod string, modelsPath
 		}
 		defer file.Close()
 
-		co, err := buildProcessorOptions(component.Name, mod, mPath, p)
+		co, err := buildProcessorOptions(component.Name, mod, mPath, service, component, p)
 		if err != nil {
 			return errors.Wrap(err, "failed to build processor options")
 		}
@@ -146,7 +148,7 @@ func processComponent(rootPath string, outputPath string, mod string, modelsPath
 		}
 		defer file.Close()
 
-		co, err := buildEmitterOptions(component.Name, mod, mPath, e)
+		co, err := buildEmitterOptions(component.Name, mod, mPath, service, e)
 		if err != nil {
 			return errors.Wrap(err, "failed to build emitter options")
 		}
@@ -207,7 +209,7 @@ func processComponent(rootPath string, outputPath string, mod string, modelsPath
 		}
 		defer file.Close()
 
-		co, err := buildSynchronizerOptions(component.Name, mod, mPath, s)
+		co, err := buildSynchronizerOptions(component.Name, mod, mPath, service, s)
 		if err != nil {
 			return errors.Wrap(err, "failed to build synchronizer options")
 		}

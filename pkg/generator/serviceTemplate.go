@@ -1,6 +1,7 @@
 package generator
 
 import (
+	"fmt"
 	"io"
 	"path"
 	"strings"
@@ -26,7 +27,7 @@ import (
 {{- end }}
 )
 {{ range .Processors }}
-func Register_{{ .Name }}(service *runner.Service, processor {{ .Package }}.{{ .Name }}) error {
+func Register_{{ .ExportName }}(service *runner.Service, processor {{ .Package }}.{{ .Name }}) error {
 	r, err := {{ .Package }}.Register_{{ .Name }}(service.Options(), processor)
 	if err != nil {
 		return errors.Wrap(err, "failed to register processor")
@@ -90,7 +91,7 @@ func Register_{{ .Name }}_Sink(service *runner.Service, sink {{ .Package }}.{{ .
 {{ end -}}
 
 {{ range .Synchronizers }}
-func Register_{{ .Name }}_Synchronizer(service *runner.Service, synchronizer {{ .Package }}.{{ .Name }}_Synchronizer, updateInterval time.Duration) error {
+func Register_{{ .ExportName }}_Synchronizer(service *runner.Service, synchronizer {{ .Package }}.{{ .Name }}_Synchronizer, updateInterval time.Duration) error {
 	r, err := {{ .Package }}.Register_{{ .Name }}_Synchronizer(service.Options(), synchronizer, updateInterval)
 	if err != nil {
 		return errors.Wrap(err, "failed to register sychronizer")
@@ -108,8 +109,9 @@ func Register_{{ .Name }}_Synchronizer(service *runner.Service, synchronizer {{ 
 )
 
 type serviceProcessor struct {
-	Name    string
-	Package string
+	Name       string
+	ExportName string
+	Package    string
 }
 
 type serviceEmitter struct {
@@ -128,8 +130,9 @@ type serviceSink struct {
 }
 
 type serviceSynchronizer struct {
-	Name    string
-	Package string
+	Name       string
+	ExportName string
+	Package    string
 }
 
 type generateServiceOptions struct {
@@ -162,15 +165,10 @@ func buildServiceOptions(service *models.Service, components []*models.Component
 		options.Imports = append(options.Imports, path.Join(p, c.Name))
 
 		for _, p := range c.Processors {
-			var name strings.Builder
-			for _, s := range strings.Split(p.GroupName, ".") {
-				name.WriteString(strcase.ToCamel(s))
-			}
-			name.WriteString("_Processor")
-
 			proc := serviceProcessor{
-				Package: c.Name,
-				Name:    name.String(),
+				Package:    c.Name,
+				ExportName: fmt.Sprintf("%s_%s_Processor", c.ToSafeName(), p.ToSafeName()),
+				Name:       fmt.Sprintf("%s_Processor", p.ToSafeName()),
 			}
 			options.Processors = append(options.Processors, proc)
 		}
@@ -225,8 +223,9 @@ func buildServiceOptions(service *models.Service, components []*models.Component
 			}
 
 			proc := serviceSynchronizer{
-				Package: c.Name,
-				Name:    strings.TrimRight(name.String(), "_"),
+				Package:    c.Name,
+				ExportName: fmt.Sprintf("%s_%s", c.ToSafeName(), s.ToSafeName()),
+				Name:       fmt.Sprintf("%s", s.ToSafeName()),
 			}
 			options.Synchronizers = append(options.Synchronizers, proc)
 		}

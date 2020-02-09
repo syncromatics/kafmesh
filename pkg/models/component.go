@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"io"
 	"regexp"
 	"strings"
@@ -29,6 +30,30 @@ type Component struct {
 	Persistence *Persistence
 }
 
+// ToGroupName converts the component name to a kafka safe name to be used in group names
+func (c *Component) ToGroupName() string {
+	builder := strings.Builder{}
+	first := true
+	for _, f := range strings.Split(c.Name, " ") {
+		if first {
+			builder.WriteString(strcase.ToLowerCamel(f))
+			first = false
+			continue
+		}
+		builder.WriteString(strcase.ToCamel(f))
+	}
+	return builder.String()
+}
+
+// ToSafeName converts the component name to a go safe name
+func (c *Component) ToSafeName() string {
+	builder := strings.Builder{}
+	for _, f := range strings.Split(c.Name, " ") {
+		builder.WriteString(strcase.ToCamel(f))
+	}
+	return builder.String()
+}
+
 // TopicDefinition describes how to get a topic name and the type of message its record is
 type TopicDefinition struct {
 	Message string
@@ -37,12 +62,24 @@ type TopicDefinition struct {
 }
 
 // ToTopicName extracts the topic name from the definition
-func (t TopicDefinition) ToTopicName() string {
+func (t TopicDefinition) ToTopicName(service *Service) string {
 	if t.Topic != nil {
 		return *t.Topic
 	}
 
-	return t.Message
+	builder := strings.Builder{}
+	for _, f := range strings.Split(t.Message, ".") {
+		builder.WriteString(strcase.ToLowerCamel(f))
+		builder.WriteString(".")
+	}
+
+	m := strings.TrimRight(builder.String(), ".")
+
+	if len(strings.Split(t.Message, ".")) == 2 {
+		return fmt.Sprintf("%s.%s", service.ToTopicName(), m)
+	}
+
+	return m
 }
 
 // ToSafeMessageTypeName generates a name that will pass go vet
@@ -71,6 +108,23 @@ func (t TopicDefinition) ToSafeMessageTypeName() string {
 	return builder.String()
 }
 
+// ToPackage gets the package of the topic message
+func (t TopicDefinition) ToPackage(service *Service) string {
+	builder := strings.Builder{}
+	builder.WriteString(service.Output.Module)
+	builder.WriteString("/")
+	builder.WriteString(service.Output.Path)
+	builder.WriteString("/models/")
+
+	frags := strings.Split(t.ToTopicName(service), ".")
+	for _, f := range frags[:len(frags)-1] {
+		builder.WriteString(f)
+		builder.WriteString("/")
+	}
+
+	return strings.TrimRight(builder.String(), "/")
+}
+
 // TopicCreationDefinition describe how a topic should be created
 type TopicCreationDefinition struct {
 	Partitions *int
@@ -94,8 +148,9 @@ type View struct {
 
 // Processor processes kafka messages backed by a consumer group and sometimes with persistence
 type Processor struct {
-	GroupName   string `yaml:"groupName"`
-	Description string
+	Name              string
+	GroupNameOverride *string `yaml:"groupName"`
+	Description       string
 
 	Inputs  []Input
 	Lookups []Lookup
@@ -103,6 +158,24 @@ type Processor struct {
 	Outputs []Output
 
 	Persistence *Persistence
+}
+
+// ToSafeName get a go safe name
+func (p *Processor) ToSafeName() string {
+	builder := strings.Builder{}
+	for _, f := range strings.Split(p.Name, " ") {
+		builder.WriteString(strcase.ToCamel(f))
+	}
+	return builder.String()
+}
+
+// GroupName gets the  consumer group name of the topic
+func (p *Processor) GroupName(service *Service, component *Component) string {
+	if p.GroupNameOverride != nil {
+		return *p.GroupNameOverride
+	}
+
+	return fmt.Sprintf("%s.%s.%s", service.ToTopicName(), component.ToGroupName(), strcase.ToLowerCamel(p.Name))
 }
 
 // Input is an edge of a processor that will take in messages from a topic
@@ -144,9 +217,19 @@ type Sink struct {
 
 // Synchronizer is a job that will sync an external source into kafka
 type Synchronizer struct {
+	Name                    string
 	TopicDefinition         `yaml:",inline"`
 	TopicCreationDefinition `yaml:",inline"`
 	Description             string
+}
+
+// ToSafeName get a go safe name
+func (p *Synchronizer) ToSafeName() string {
+	builder := strings.Builder{}
+	for _, f := range strings.Split(p.Name, " ") {
+		builder.WriteString(strcase.ToCamel(f))
+	}
+	return builder.String()
 }
 
 // ParseComponent will parse the yaml into a component

@@ -1,12 +1,12 @@
 package generator
 
 import (
-	"fmt"
 	"io"
 	"strings"
 	"text/template"
 
 	"github.com/iancoleman/strcase"
+
 	"github.com/pkg/errors"
 	"github.com/syncromatics/kafmesh/pkg/models"
 )
@@ -32,7 +32,7 @@ import (
 
 	"github.com/syncromatics/kafmesh/pkg/runner"
 
-	{{ .Import }}
+	"{{ .Import }}"
 )
 
 type {{ .Name }}_Synchronizer_Message struct {
@@ -224,9 +224,10 @@ func generateSynchronizer(writer io.Writer, synchronizer *synchronizerOptions) e
 	return nil
 }
 
-func buildSynchronizerOptions(pkg string, mod string, modelsPath string, synchronizer models.Synchronizer) (*synchronizerOptions, error) {
+func buildSynchronizerOptions(pkg string, mod string, modelsPath string, service *models.Service, synchronizer models.Synchronizer) (*synchronizerOptions, error) {
 	options := &synchronizerOptions{
 		Package: pkg,
+		Name:    synchronizer.ToSafeName(),
 	}
 
 	var name strings.Builder
@@ -235,24 +236,8 @@ func buildSynchronizerOptions(pkg string, mod string, modelsPath string, synchro
 		name.WriteString(strcase.ToCamel(f))
 	}
 
-	topic := synchronizer.Message
-	if synchronizer.TopicDefinition.Topic != nil {
-		topic = *synchronizer.TopicDefinition.Topic
-	}
-
-	options.TopicName = topic
-	options.Name = name.String()
-
-	var mPkg strings.Builder
-	for _, p := range nameFrags[:len(nameFrags)-1] {
-		mPkg.WriteString("/")
-		mPkg.WriteString(p)
-	}
-
-	imp := strings.TrimPrefix(mPkg.String(), "/")
-	d := strings.Split(imp, "/")
-	options.Import = fmt.Sprintf("%s \"%s%s/%s\"", d[len(d)-1], mod, modelsPath, imp)
-
+	options.TopicName = synchronizer.ToTopicName(service)
+	options.Import = synchronizer.ToPackage(service)
 	options.MessageType = nameFrags[len(nameFrags)-2] + "." + strcase.ToCamel(nameFrags[len(nameFrags)-1])
 
 	return options, nil

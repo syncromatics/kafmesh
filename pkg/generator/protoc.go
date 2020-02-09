@@ -7,14 +7,22 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"strings"
 
 	"github.com/pkg/errors"
 )
 
 type protoOptions struct {
 	Includes []string
-	Files    []string
+	Files    []file
 	Output   string
+	Module   string
+	Path     string
+}
+
+type file struct {
+	root string
+	path string
 }
 
 // Protoc is a wrapper around the protec executable
@@ -40,13 +48,21 @@ func Protoc(options protoOptions) error {
 	}
 
 	packages := map[string][]string{}
+	modules := []string{}
+
 	for _, f := range options.Files {
-		p := filepath.Dir(f)
+		p := filepath.Dir(f.path)
 		_, ok := packages[p]
 		if !ok {
 			packages[p] = []string{}
 		}
-		packages[p] = append(packages[p], f)
+		packages[p] = append(packages[p], f.path)
+
+		r := strings.ReplaceAll(f.path, f.root, "")
+		m := filepath.Dir(r)
+		m = fmt.Sprintf("M%s=%s/%s/models%s", strings.TrimLeft(r, "/"), options.Module, options.Path, m)
+
+		modules = append(modules, m)
 	}
 
 	for _, files := range packages {
@@ -54,7 +70,7 @@ func Protoc(options protoOptions) error {
 		for _, f := range files {
 			pargs = append(pargs, f)
 		}
-		pargs = append(pargs, "--go_out=plugins=grpc:"+options.Output)
+		pargs = append(pargs, fmt.Sprintf("--go_out=%s,plugins=grpc:%s", strings.Join(modules, ","), options.Output))
 
 		errBuf := bytes.NewBuffer([]byte{})
 
@@ -67,6 +83,10 @@ func Protoc(options protoOptions) error {
 		_, err = cmd.Output()
 		if err != nil {
 			return errors.Wrapf(err, "failed to run protoc: %s", string(errBuf.Bytes()))
+		}
+
+		if cmd.ProcessState.ExitCode() != 0 {
+			return errors.Errorf("protoc did not return 0")
 		}
 	}
 
