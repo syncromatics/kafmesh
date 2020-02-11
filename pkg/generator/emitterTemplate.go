@@ -1,7 +1,6 @@
 package generator
 
 import (
-	"fmt"
 	"io"
 	"strings"
 	"text/template"
@@ -25,7 +24,7 @@ import (
 
 	"github.com/syncromatics/kafmesh/pkg/runner"
 
-	{{ .Import }}
+	"{{ .Import }}"
 )
 
 type {{ .Name }}_Emitter interface {
@@ -111,7 +110,7 @@ func generateEmitter(writer io.Writer, emitter *emitterOptions) error {
 	return nil
 }
 
-func buildEmitterOptions(pkg string, mod string, modelsPath string, emitter models.Emitter) (*emitterOptions, error) {
+func buildEmitterOptions(pkg string, mod string, modelsPath string, service *models.Service, emitter models.Emitter) (*emitterOptions, error) {
 	options := &emitterOptions{
 		Package: pkg,
 	}
@@ -122,24 +121,9 @@ func buildEmitterOptions(pkg string, mod string, modelsPath string, emitter mode
 		name.WriteString(strcase.ToCamel(f))
 	}
 
-	topic := emitter.Message
-	if emitter.TopicDefinition.Topic != nil {
-		topic = *emitter.TopicDefinition.Topic
-	}
-
-	options.TopicName = topic
+	options.TopicName = emitter.ToTopicName(service)
 	options.Name = name.String()
-
-	var mPkg strings.Builder
-	for _, p := range nameFrags[:len(nameFrags)-1] {
-		mPkg.WriteString("/")
-		mPkg.WriteString(p)
-	}
-
-	imp := strings.TrimPrefix(mPkg.String(), "/")
-	d := strings.Split(imp, "/")
-	options.Import = fmt.Sprintf("%s \"%s%s/%s\"", d[len(d)-1], mod, modelsPath, imp)
-
+	options.Import = emitter.ToPackage(service)
 	options.MessageType = nameFrags[len(nameFrags)-2] + "." + strcase.ToCamel(nameFrags[len(nameFrags)-1])
 
 	return options, nil

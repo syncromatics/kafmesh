@@ -20,7 +20,8 @@ emitters:
     partitions: 10
 
 processors:
-  - groupName: kafmesh.deviceId.enrichedDetail
+  - name: proc
+    groupName: kafmesh.deviceId.enrichedDetail
     description: Provides enriched device details with customer information.
     inputs:
       - message: kafmesh.deviceId.detail
@@ -61,6 +62,7 @@ synchronizers:
 
 	partition := 10
 	topicType := "protobuf"
+	groupName := "kafmesh.deviceId.enrichedDetail"
 	assert.Equal(t, &models.Component{
 		Name:        "details",
 		Description: "The details component handles the flow for device details.",
@@ -79,8 +81,9 @@ synchronizers:
 
 		Processors: []models.Processor{
 			models.Processor{
-				GroupName:   "kafmesh.deviceId.enrichedDetail",
-				Description: "Provides enriched device details with customer information.",
+				Name:              "proc",
+				GroupNameOverride: &groupName,
+				Description:       "Provides enriched device details with customer information.",
 
 				Inputs: []models.Input{
 					models.Input{
@@ -176,4 +179,20 @@ func Test_TopicDefinition_ToSafeMessageTypeName(t *testing.T) {
 
 	name = topic.ToSafeMessageTypeName()
 	assert.Equal(t, "DeviceAPI", name)
+}
+
+func Test_TopicDefinition_TopicName(t *testing.T) {
+	topic := models.TopicDefinition{
+		Message: "deviceId.Customer",
+	}
+
+	name := topic.ToSafeMessageTypeName()
+	assert.Equal(t, "DeviceIDCustomer", name)
+
+	topic = models.TopicDefinition{
+		Message: "device.Api",
+	}
+
+	name = topic.ToTopicName(&models.Service{Name: "test service"})
+	assert.Equal(t, "testService.device.api", name)
 }

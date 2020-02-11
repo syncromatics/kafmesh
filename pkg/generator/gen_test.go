@@ -76,6 +76,7 @@ message DetailsEnriched {
 
 	options := generator.Options{
 		Service: &models.Service{
+			Name: "testService",
 			Output: models.OutputSettings{
 				Path:    "internal/kafmesh",
 				Package: "kafmesh",
@@ -100,7 +101,7 @@ message DetailsEnriched {
 				Name: "details",
 				Processors: []models.Processor{
 					models.Processor{
-						GroupName: "testMesh.testId.test2",
+						Name: "enricher",
 						Inputs: []models.Input{
 							models.Input{
 								TopicDefinition: models.TopicDefinition{
@@ -165,6 +166,7 @@ message DetailsEnriched {
 				},
 				Synchronizers: []models.Synchronizer{
 					models.Synchronizer{
+						Name: "test to database",
 						TopicDefinition: models.TopicDefinition{
 							Message: "testMesh.testId.test",
 						},

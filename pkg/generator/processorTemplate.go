@@ -234,7 +234,7 @@ func generateProcessor(writer io.Writer, processor *processorOptions) error {
 	return nil
 }
 
-func buildProcessorOptions(pkg string, mod string, modelsPath string, processor models.Processor) (*processorOptions, error) {
+func buildProcessorOptions(pkg string, mod string, modelsPath string, service *models.Service, component *models.Component, processor models.Processor) (*processorOptions, error) {
 	imports := map[string]int{}
 	importIndex := 0
 
@@ -244,23 +244,18 @@ func buildProcessorOptions(pkg string, mod string, modelsPath string, processor 
 	options := processorOptions{
 		Package: pkg,
 		Imports: []string{},
-		Group:   processor.GroupName,
+		Group:   processor.GroupName(service, component),
 		Edges:   []edge{},
 		Codecs:  []codec{},
 	}
 
-	var iname strings.Builder
-	for _, s := range strings.Split(processor.GroupName, ".") {
-		iname.WriteString(strcase.ToCamel(s))
-	}
-
 	options.Context = processorContext{
-		Name:    iname.String(),
+		Name:    processor.ToSafeName(),
 		Methods: []contextMethod{},
 	}
 
 	intr := processorInterface{
-		Name:    iname.String(),
+		Name:    processor.ToSafeName(),
 		Methods: []interfaceMethod{},
 	}
 
@@ -278,7 +273,7 @@ func buildProcessorOptions(pkg string, mod string, modelsPath string, processor 
 			mPkg.WriteString(p)
 		}
 
-		modulePackage := strings.TrimPrefix(mPkg.String(), "/")
+		modulePackage := input.ToPackage(service)
 
 		i, ok := imports[modulePackage]
 		if !ok {
@@ -299,11 +294,7 @@ func buildProcessorOptions(pkg string, mod string, modelsPath string, processor 
 		}
 		intr.Methods = append(intr.Methods, method)
 
-		topic := input.Message
-		if input.TopicDefinition.Topic != nil {
-			topic = *input.TopicDefinition.Topic
-		}
-
+		topic := input.ToTopicName(service)
 		c, ok := codecs[topic]
 		if !ok {
 			c = codec{
@@ -339,7 +330,7 @@ func buildProcessorOptions(pkg string, mod string, modelsPath string, processor 
 			mPkg.WriteString(p)
 		}
 
-		modulePackage := strings.TrimPrefix(mPkg.String(), "/")
+		modulePackage := lookup.ToPackage(service)
 
 		i, ok := imports[modulePackage]
 		if !ok {
@@ -362,11 +353,8 @@ func buildProcessorOptions(pkg string, mod string, modelsPath string, processor 
 			MessageType: fmt.Sprintf("m%d.%s", i, strcase.ToCamel(message)),
 		}
 
-		if lookup.TopicDefinition.Topic != nil {
-			m.Topic = *lookup.TopicDefinition.Topic
-		} else {
-			m.Topic = lookup.Message
-		}
+		m.Topic = lookup.ToTopicName(service)
+
 		options.Context.Methods = append(options.Context.Methods, m)
 
 		c, ok := codecs[m.Topic]
@@ -401,7 +389,7 @@ func buildProcessorOptions(pkg string, mod string, modelsPath string, processor 
 			mPkg.WriteString(p)
 		}
 
-		modulePackage := strings.TrimPrefix(mPkg.String(), "/")
+		modulePackage := join.ToPackage(service)
 
 		i, ok := imports[modulePackage]
 		if !ok {
@@ -424,11 +412,7 @@ func buildProcessorOptions(pkg string, mod string, modelsPath string, processor 
 			MessageType: fmt.Sprintf("m%d.%s", i, strcase.ToCamel(message)),
 		}
 
-		if join.TopicDefinition.Topic != nil {
-			m.Topic = *join.TopicDefinition.Topic
-		} else {
-			m.Topic = join.Message
-		}
+		m.Topic = join.ToTopicName(service)
 
 		options.Context.Methods = append(options.Context.Methods, m)
 
@@ -464,7 +448,7 @@ func buildProcessorOptions(pkg string, mod string, modelsPath string, processor 
 			mPkg.WriteString(p)
 		}
 
-		modulePackage := strings.TrimPrefix(mPkg.String(), "/")
+		modulePackage := output.ToPackage(service)
 
 		i, ok := imports[modulePackage]
 		if !ok {
@@ -485,11 +469,8 @@ func buildProcessorOptions(pkg string, mod string, modelsPath string, processor 
 			},
 			Type: "output",
 		}
-		if output.TopicDefinition.Topic != nil {
-			m.Topic = *output.TopicDefinition.Topic
-		} else {
-			m.Topic = output.Message
-		}
+
+		m.Topic = output.ToTopicName(service)
 
 		options.Context.Methods = append(options.Context.Methods, m)
 
@@ -520,7 +501,7 @@ func buildProcessorOptions(pkg string, mod string, modelsPath string, processor 
 			mPkg.WriteString(p)
 		}
 
-		modulePackage := strings.TrimPrefix(mPkg.String(), "/")
+		modulePackage := processor.Persistence.ToPackage(service)
 
 		i, ok := imports[modulePackage]
 		if !ok {
@@ -574,7 +555,7 @@ func buildProcessorOptions(pkg string, mod string, modelsPath string, processor 
 	})
 
 	for k, v := range imports {
-		imp := fmt.Sprintf("m%d \"%s%s/%s\"", v, mod, modelsPath, k)
+		imp := fmt.Sprintf("m%d \"%s\"", v, k)
 		options.Imports = append(options.Imports, imp)
 	}
 

@@ -9,7 +9,7 @@ import (
 )
 
 func validateProcessors(tmpDir string, t *testing.T) {
-	s, err := ioutil.ReadFile(path.Join(tmpDir, "internal", "kafmesh", "details", "testMesh_testId_test2_processor.km.go"))
+	s, err := ioutil.ReadFile(path.Join(tmpDir, "internal", "kafmesh", "details", "enricher_processor.km.go"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -40,7 +40,7 @@ import (
 	m1 "test/internal/kafmesh/models/testMesh/testSerial"
 )
 
-type TestMeshTestIdTest2_ProcessorContext interface {
+type Enricher_ProcessorContext interface {
 	Key() string
 	Lookup_TestSerialDetails(key string) *m1.Details
 	Join_TestSerialDetails() *m1.Details
@@ -49,24 +49,24 @@ type TestMeshTestIdTest2_ProcessorContext interface {
 	State() *m1.DetailsState
 }
 
-type TestMeshTestIdTest2_Processor interface {
-	HandleTestMeshTestIDTest(ctx TestMeshTestIdTest2_ProcessorContext, message *m0.Test) error
-	HandleTestMeshTestIDTest2(ctx TestMeshTestIdTest2_ProcessorContext, message *m0.Test2) error
+type Enricher_Processor interface {
+	HandleTestMeshTestIDTest(ctx Enricher_ProcessorContext, message *m0.Test) error
+	HandleTestMeshTestIDTest2(ctx Enricher_ProcessorContext, message *m0.Test2) error
 }
 
-type TestMeshTestIdTest2_ProcessorContext_Impl struct {
+type Enricher_ProcessorContext_Impl struct {
 	ctx goka.Context
 }
 
-func new_TestMeshTestIdTest2_ProcessorContext_Impl(ctx goka.Context) *TestMeshTestIdTest2_ProcessorContext_Impl {
-	return &TestMeshTestIdTest2_ProcessorContext_Impl{ctx}
+func new_Enricher_ProcessorContext_Impl(ctx goka.Context) *Enricher_ProcessorContext_Impl {
+	return &Enricher_ProcessorContext_Impl{ctx}
 }
 
-func (c *TestMeshTestIdTest2_ProcessorContext_Impl) Key() string {
+func (c *Enricher_ProcessorContext_Impl) Key() string {
 	return c.ctx.Key()
 }
 
-func (c *TestMeshTestIdTest2_ProcessorContext_Impl) Lookup_TestSerialDetails(key string) *m1.Details {
+func (c *Enricher_ProcessorContext_Impl) Lookup_TestSerialDetails(key string) *m1.Details {
 	v := c.ctx.Lookup("testMesh.testSerial.details", key)
 	if v == nil {
 		return nil
@@ -74,7 +74,7 @@ func (c *TestMeshTestIdTest2_ProcessorContext_Impl) Lookup_TestSerialDetails(key
 	return v.(*m1.Details)
 }
 
-func (c *TestMeshTestIdTest2_ProcessorContext_Impl) Join_TestSerialDetails() *m1.Details {
+func (c *Enricher_ProcessorContext_Impl) Join_TestSerialDetails() *m1.Details {
 	v := c.ctx.Join("testMesh.testSerial.details")
 	if v == nil {
 		return nil
@@ -82,15 +82,15 @@ func (c *TestMeshTestIdTest2_ProcessorContext_Impl) Join_TestSerialDetails() *m1
 	return v.(*m1.Details)
 }
 
-func (c *TestMeshTestIdTest2_ProcessorContext_Impl) Output_TestSerialDetailsEnriched(key string, message *m1.DetailsEnriched) {
+func (c *Enricher_ProcessorContext_Impl) Output_TestSerialDetailsEnriched(key string, message *m1.DetailsEnriched) {
 	c.ctx.Emit("testMesh.testSerial.detailsEnriched", key, message)
 }
 
-func (c *TestMeshTestIdTest2_ProcessorContext_Impl) SaveState(state *m1.DetailsState) {
+func (c *Enricher_ProcessorContext_Impl) SaveState(state *m1.DetailsState) {
 	c.ctx.SetValue(state)
 }
 
-func (c *TestMeshTestIdTest2_ProcessorContext_Impl) State() *m1.DetailsState {
+func (c *Enricher_ProcessorContext_Impl) State() *m1.DetailsState {
 	v := c.ctx.Value()
 	if v == nil {
 		return &m1.DetailsState{}
@@ -98,7 +98,7 @@ func (c *TestMeshTestIdTest2_ProcessorContext_Impl) State() *m1.DetailsState {
 	return v.(*m1.DetailsState)
 }
 
-func Register_TestMeshTestIdTest2_Processor(options runner.ServiceOptions, service TestMeshTestIdTest2_Processor) (func(context.Context) func() error, error) {
+func Register_Enricher_Processor(options runner.ServiceOptions, service Enricher_Processor) (func(context.Context) func() error, error) {
 	brokers := options.Brokers
 	protoWrapper := options.ProtoWrapper
 
@@ -110,7 +110,7 @@ func Register_TestMeshTestIdTest2_Processor(options runner.ServiceOptions, servi
 		WriteBuffer:        opt.MiB * 1,
 	}
 
-	path := filepath.Join("/tmp/storage", "processor", "testMesh.testId.test2")
+	path := filepath.Join("/tmp/storage", "processor", "testService.details.enricher")
 
 	err := os.MkdirAll(path, os.ModePerm)
 	if err != nil {
@@ -140,7 +140,7 @@ func Register_TestMeshTestIdTest2_Processor(options runner.ServiceOptions, servi
 		return nil, errors.Wrap(err, "failed to create codec")
 	}
 
-	c4, err := protoWrapper.Codec("testMesh.testId.test2-table", &m1.DetailsState{})
+	c4, err := protoWrapper.Codec("testService.details.enricher-table", &m1.DetailsState{})
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create codec")
 	}
@@ -148,7 +148,7 @@ func Register_TestMeshTestIdTest2_Processor(options runner.ServiceOptions, servi
 	edges := []goka.Edge{
 		goka.Input(goka.Stream("testMesh.testId.test"), c0, func(ctx goka.Context, m interface{}) {
 			msg := m.(*m0.Test)
-			w := new_TestMeshTestIdTest2_ProcessorContext_Impl(ctx)
+			w := new_Enricher_ProcessorContext_Impl(ctx)
 			err := service.HandleTestMeshTestIDTest(w, msg)
 			if err != nil {
 				ctx.Fail(err)
@@ -156,7 +156,7 @@ func Register_TestMeshTestIdTest2_Processor(options runner.ServiceOptions, servi
 		}),
 		goka.Input(goka.Stream("testMesh.testId.test2"), c1, func(ctx goka.Context, m interface{}) {
 			msg := m.(*m0.Test2)
-			w := new_TestMeshTestIdTest2_ProcessorContext_Impl(ctx)
+			w := new_Enricher_ProcessorContext_Impl(ctx)
 			err := service.HandleTestMeshTestIDTest2(w, msg)
 			if err != nil {
 				ctx.Fail(err)
@@ -167,7 +167,7 @@ func Register_TestMeshTestIdTest2_Processor(options runner.ServiceOptions, servi
 		goka.Output(goka.Stream("testMesh.testSerial.detailsEnriched"), c3),
 		goka.Persist(c4),
 	}
-	group := goka.DefineGroup(goka.Group("testMesh.testId.test2"), edges...)
+	group := goka.DefineGroup(goka.Group("testService.details.enricher"), edges...)
 
 	processor, err := goka.NewProcessor(brokers,
 		group,

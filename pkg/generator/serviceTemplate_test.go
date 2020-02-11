@@ -31,8 +31,8 @@ import (
 	"test/internal/kafmesh/details"
 )
 
-func Register_TestMeshTestIdTest2_Processor(service *runner.Service, processor details.TestMeshTestIdTest2_Processor) error {
-	r, err := details.Register_TestMeshTestIdTest2_Processor(service.Options(), processor)
+func Register_Details_Enricher_Processor(service *runner.Service, processor details.Enricher_Processor) error {
+	r, err := details.Register_Enricher_Processor(service.Options(), processor)
 	if err != nil {
 		return errors.Wrap(err, "failed to register processor")
 	}
@@ -87,8 +87,8 @@ func Register_EnrichedDataPostgres_Sink(service *runner.Service, sink details.En
 	return nil
 }
 
-func Register_TestIdTest_Synchronizer(service *runner.Service, synchronizer details.TestIdTest_Synchronizer, updateInterval time.Duration) error {
-	r, err := details.Register_TestIdTest_Synchronizer(service.Options(), synchronizer, updateInterval)
+func Register_Details_TestToDatabase_Synchronizer(service *runner.Service, synchronizer details.TestToDatabase_Synchronizer, updateInterval time.Duration) error {
+	r, err := details.Register_TestToDatabase_Synchronizer(service.Options(), synchronizer, updateInterval)
 	if err != nil {
 		return errors.Wrap(err, "failed to register sychronizer")
 	}

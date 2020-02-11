@@ -2,8 +2,10 @@ package models
 
 import (
 	"io"
+	"strings"
 	"time"
 
+	"github.com/iancoleman/strcase"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
 )
@@ -51,4 +53,19 @@ func ParseService(reader io.Reader) (*Service, error) {
 	}
 
 	return service, nil
+}
+
+// ToTopicName is a safe name to use for kafka topics
+func (s *Service) ToTopicName() string {
+	builder := strings.Builder{}
+	first := true
+	for _, f := range strings.Split(s.Name, " ") {
+		if first {
+			builder.WriteString(strcase.ToLowerCamel(f))
+			first = false
+			continue
+		}
+		builder.WriteString(strcase.ToCamel(f))
+	}
+	return builder.String()
 }

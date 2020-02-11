@@ -73,7 +73,7 @@ func buildTopicOption(service *models.Service, components []*models.Component) (
 	for _, c := range components {
 		for _, p := range c.Processors {
 			for _, input := range p.Inputs {
-				name := input.ToTopicName()
+				name := input.ToTopicName(service)
 				topic, ok := topics[name]
 				if !ok {
 					topic = &topicDefinition{}
@@ -82,7 +82,7 @@ func buildTopicOption(service *models.Service, components []*models.Component) (
 			}
 
 			for _, output := range p.Outputs {
-				name := output.ToTopicName()
+				name := output.ToTopicName(service)
 				topic, ok := topics[name]
 				if !ok {
 					topic = &topicDefinition{}
@@ -96,7 +96,7 @@ func buildTopicOption(service *models.Service, components []*models.Component) (
 			}
 
 			for _, join := range p.Joins {
-				name := join.ToTopicName()
+				name := join.ToTopicName(service)
 				topic, ok := topics[name]
 				if !ok {
 					topic = &topicDefinition{}
@@ -105,7 +105,7 @@ func buildTopicOption(service *models.Service, components []*models.Component) (
 			}
 
 			for _, lookup := range p.Lookups {
-				name := lookup.ToTopicName()
+				name := lookup.ToTopicName(service)
 				topic, ok := topics[name]
 				if !ok {
 					topic = &topicDefinition{}
@@ -117,7 +117,7 @@ func buildTopicOption(service *models.Service, components []*models.Component) (
 				continue
 			}
 
-			name := p.GroupName + "-table"
+			name := p.GroupName(service, c) + "-table"
 			topic, ok := topics[name]
 			if !ok {
 				topic = &topicDefinition{}
@@ -134,7 +134,7 @@ func buildTopicOption(service *models.Service, components []*models.Component) (
 		}
 
 		for _, e := range c.Emitters {
-			name := e.ToTopicName()
+			name := e.ToTopicName(service)
 			topic, ok := topics[name]
 			if !ok {
 				topic = &topicDefinition{}
@@ -148,7 +148,7 @@ func buildTopicOption(service *models.Service, components []*models.Component) (
 		}
 
 		for _, v := range c.Views {
-			name := v.ToTopicName()
+			name := v.ToTopicName(service)
 			topic, ok := topics[name]
 			if !ok {
 				topic = &topicDefinition{}
@@ -157,7 +157,7 @@ func buildTopicOption(service *models.Service, components []*models.Component) (
 		}
 
 		for _, s := range c.Sinks {
-			name := s.ToTopicName()
+			name := s.ToTopicName(service)
 			topic, ok := topics[name]
 			if !ok {
 				topic = &topicDefinition{}
@@ -166,7 +166,7 @@ func buildTopicOption(service *models.Service, components []*models.Component) (
 		}
 
 		for _, s := range c.Synchronizers {
-			name := s.ToTopicName()
+			name := s.ToTopicName(service)
 			topic, ok := topics[name]
 			if !ok {
 				topic = &topicDefinition{}

@@ -38,40 +38,40 @@ import (
 
 	"github.com/syncromatics/kafmesh/pkg/runner"
 
-	testId "test/internal/kafmesh/models/testMesh/testId"
+	"test/internal/kafmesh/models/testMesh/testId"
 )
 
-type TestIdTest_Synchronizer_Message struct {
+type TestToDatabase_Synchronizer_Message struct {
 	Key string
 	Value *testId.Test
 }
 
-type impl_TestIdTest_Synchronizer_Message struct {
-	msg *TestIdTest_Synchronizer_Message
+type impl_TestToDatabase_Synchronizer_Message struct {
+	msg *TestToDatabase_Synchronizer_Message
 }
 
-func (m *impl_TestIdTest_Synchronizer_Message) Key() string {
+func (m *impl_TestToDatabase_Synchronizer_Message) Key() string {
 	return m.msg.Key
 }
 
-func (m *impl_TestIdTest_Synchronizer_Message) Value() interface{} {
+func (m *impl_TestToDatabase_Synchronizer_Message) Value() interface{} {
 	return m.msg.Value
 }
 
-type TestIdTest_Synchronizer_Context interface {
+type TestToDatabase_Synchronizer_Context interface {
 	Keys() ([]string, error)
 	Get(string) (*testId.Test, error)
-	Emit(*TestIdTest_Synchronizer_Message) error
-	EmitBulk(context.Context, []*TestIdTest_Synchronizer_Message) error
+	Emit(*TestToDatabase_Synchronizer_Message) error
+	EmitBulk(context.Context, []*TestToDatabase_Synchronizer_Message) error
 	Delete(string) error
 }
 
-type TestIdTest_Synchronizer_Context_impl struct {
+type TestToDatabase_Synchronizer_Context_impl struct {
 	view *goka.View
 	emitter *runner.Emitter
 }
 
-func (c *TestIdTest_Synchronizer_Context_impl) Keys() ([]string, error) {
+func (c *TestToDatabase_Synchronizer_Context_impl) Keys() ([]string, error) {
 	it, err := c.view.Iterator()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get iterator")
@@ -85,7 +85,7 @@ func (c *TestIdTest_Synchronizer_Context_impl) Keys() ([]string, error) {
 	return keys, nil
 }
 
-func (c *TestIdTest_Synchronizer_Context_impl) Get(key string) (*testId.Test, error) {
+func (c *TestToDatabase_Synchronizer_Context_impl) Get(key string) (*testId.Test, error) {
 	m, err := c.view.Get(key)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get value from view")
@@ -103,27 +103,27 @@ func (c *TestIdTest_Synchronizer_Context_impl) Get(key string) (*testId.Test, er
 	return msg, nil
 }
 
-func (c *TestIdTest_Synchronizer_Context_impl) Emit(message *TestIdTest_Synchronizer_Message) error {
+func (c *TestToDatabase_Synchronizer_Context_impl) Emit(message *TestToDatabase_Synchronizer_Message) error {
 	return c.emitter.Emit(message.Key, message.Value)
 }
 
-func (c *TestIdTest_Synchronizer_Context_impl) EmitBulk(ctx context.Context, messages []*TestIdTest_Synchronizer_Message) error {
+func (c *TestToDatabase_Synchronizer_Context_impl) EmitBulk(ctx context.Context, messages []*TestToDatabase_Synchronizer_Message) error {
 	b := []runner.EmitMessage{}
 	for _, m := range messages {
-		b = append(b, &impl_TestIdTest_Synchronizer_Message{msg: m})
+		b = append(b, &impl_TestToDatabase_Synchronizer_Message{msg: m})
 	}
 	return c.emitter.EmitBulk(ctx, b)
 }
 
-func (c *TestIdTest_Synchronizer_Context_impl) Delete(key string) error {
+func (c *TestToDatabase_Synchronizer_Context_impl) Delete(key string) error {
 	return c.emitter.Emit(key, nil)
 }
 
-type TestIdTest_Synchronizer interface {
-	Sync(TestIdTest_Synchronizer_Context) error
+type TestToDatabase_Synchronizer interface {
+	Sync(TestToDatabase_Synchronizer_Context) error
 }
 
-func Register_TestIdTest_Synchronizer(options runner.ServiceOptions, sychronizer TestIdTest_Synchronizer, updateInterval time.Duration) (func(context.Context) func() error, error) {
+func Register_TestToDatabase_Synchronizer(options runner.ServiceOptions, sychronizer TestToDatabase_Synchronizer, updateInterval time.Duration) (func(context.Context) func() error, error) {
 	brokers := options.Brokers
 	protoWrapper := options.ProtoWrapper
 
@@ -168,7 +168,7 @@ func Register_TestIdTest_Synchronizer(options runner.ServiceOptions, sychronizer
 
 	emitter := runner.NewEmitter(e)
 
-	c := &TestIdTest_Synchronizer_Context_impl{
+	c := &TestToDatabase_Synchronizer_Context_impl{
 		view:    view,
 		emitter: emitter,
 	}

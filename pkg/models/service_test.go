@@ -68,3 +68,12 @@ defaults:
 		},
 	}, service)
 }
+
+func Test_Service_ToTopicName(t *testing.T) {
+	service := &models.Service{
+		Name: "enplug service",
+	}
+
+	name := service.ToTopicName()
+	assert.Equal(t, "enplugService", name)
+}
