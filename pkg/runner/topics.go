@@ -78,6 +78,9 @@ func ConfigureTopics(ctx context.Context, brokers []string, topics []Topic) erro
 				ReplicationFactor: int16(topic.Replicas),
 				ConfigEntries:     config,
 			}, false)
+			if err != nil && strings.Contains(err.Error(), "Topic with this name already exists") {
+				continue
+			}
 			if err != nil {
 				return errors.Wrap(err, "failed to create topic")
 			}
