@@ -30,6 +30,7 @@ import (
 type {{ .Name }}_Emitter interface {
 	Emit(message {{ .Name }}_Emitter_Message) error
 	EmitBulk(ctx context.Context, messages []{{ .Name }}_Emitter_Message) error
+	Delete(key string) error
 }
 
 type {{ .Name }}_Emitter_impl struct {
@@ -90,6 +91,10 @@ func (e *{{ .Name }}_Emitter_impl) EmitBulk(ctx context.Context, messages []{{ .
 		b = append(b, &impl_{{ .Name }}_Emitter_Message{msg: m})
 	}
 	return e.emitter.EmitBulk(ctx, b)
+}
+
+func (e *{{ .Name }}_Emitter_impl) Delete(key string) error {
+	return e.emitter.Emit(key, nil)
 }
 `))
 )

@@ -37,6 +37,7 @@ import (
 type TestSerialDetails_Emitter interface {
 	Emit(message TestSerialDetails_Emitter_Message) error
 	EmitBulk(ctx context.Context, messages []TestSerialDetails_Emitter_Message) error
+	Delete(key string) error
 }
 
 type TestSerialDetails_Emitter_impl struct {
@@ -97,6 +98,10 @@ func (e *TestSerialDetails_Emitter_impl) EmitBulk(ctx context.Context, messages 
 		b = append(b, &impl_TestSerialDetails_Emitter_Message{msg: m})
 	}
 	return e.emitter.EmitBulk(ctx, b)
+}
+
+func (e *TestSerialDetails_Emitter_impl) Delete(key string) error {
+	return e.emitter.Emit(key, nil)
 }
 `
 )
