@@ -1,7 +1,6 @@
 package generator
 
 import (
-	"fmt"
 	"io"
 	"strings"
 	"text/template"
@@ -29,7 +28,7 @@ import (
 
 	"github.com/syncromatics/kafmesh/pkg/runner"
 
-	{{ .Import }}
+	"{{ .Import }}"
 )
 
 type {{ .Name }}_View interface {
@@ -126,7 +125,7 @@ func generateView(writer io.Writer, view *viewOptions) error {
 	return nil
 }
 
-func buildViewOptions(pkg string, mod string, modelsPath string, view models.View) (*viewOptions, error) {
+func buildViewOptions(pkg string, mod string, modelsPath string, service *models.Service, view models.View) (*viewOptions, error) {
 	options := &viewOptions{
 		Package: pkg,
 	}
@@ -137,24 +136,9 @@ func buildViewOptions(pkg string, mod string, modelsPath string, view models.Vie
 		name.WriteString(strcase.ToCamel(f))
 	}
 
-	topic := view.Message
-	if view.TopicDefinition.Topic != nil {
-		topic = *view.TopicDefinition.Topic
-	}
-
-	options.TopicName = topic
+	options.TopicName = view.ToTopicName(service)
 	options.Name = name.String()
-
-	var mPkg strings.Builder
-	for _, p := range nameFrags[:len(nameFrags)-1] {
-		mPkg.WriteString("/")
-		mPkg.WriteString(p)
-	}
-
-	imp := strings.TrimPrefix(mPkg.String(), "/")
-	d := strings.Split(imp, "/")
-	options.Import = fmt.Sprintf("%s \"%s%s/%s\"", d[len(d)-1], mod, modelsPath, imp)
-
+	options.Import = view.ToPackage(service)
 	options.MessageType = nameFrags[len(nameFrags)-2] + "." + strcase.ToCamel(nameFrags[len(nameFrags)-1])
 
 	return options, nil
