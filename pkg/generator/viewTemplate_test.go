@@ -35,7 +35,7 @@ import (
 
 	"github.com/syncromatics/kafmesh/pkg/runner"
 
-	testSerial "test/internal/kafmesh/models/testMesh/testSerial"
+	"test/internal/kafmesh/models/testMesh/testSerial"
 )
 
 type TestSerialDetailsEnriched_View interface {

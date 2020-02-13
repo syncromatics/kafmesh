@@ -189,7 +189,7 @@ func processComponent(rootPath string, outputPath string, mod string, modelsPath
 		}
 		defer file.Close()
 
-		co, err := buildViewOptions(component.Name, mod, mPath, v)
+		co, err := buildViewOptions(component.Name, mod, mPath, service, v)
 		if err != nil {
 			return errors.Wrap(err, "failed to build view options")
 		}
