@@ -47,6 +47,7 @@ func ConfigureTopics(ctx context.Context, brokers []string, topics []Topic) erro
 			topic.Create = true
 			topic.Segment = 1 * time.Hour
 			topic.Retention = 1 * time.Hour
+			topic.Partitions = 10
 		}
 
 		definition, exists := descriptions[topic.Name]
