@@ -4,7 +4,9 @@ go 1.13
 
 require (
 	github.com/Shopify/sarama v1.24.1
+	github.com/avast/retry-go v2.5.0+incompatible // indirect
 	github.com/bsm/sarama-cluster v2.1.15+incompatible
+	github.com/burdiyan/kafkautil v0.0.0-20190131162249-eaf83ed22d5b
 	github.com/emicklei/proto v1.9.0
 	github.com/facebookgo/ensure v0.0.0-20200202191622-63f1cf65ac4c // indirect
 	github.com/facebookgo/stack v0.0.0-20160209184415-751773369052 // indirect

@@ -105,6 +105,11 @@ func Generate(options Options) error {
 		return errors.Wrapf(err, "failed to generate topics")
 	}
 
+	err = generateMocks(outputPath)
+	if err != nil {
+		return errors.Wrapf(err, "failed to generate mocks")
+	}
+
 	return nil
 }
 

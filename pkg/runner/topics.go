@@ -3,6 +3,7 @@ package runner
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -23,6 +24,8 @@ type Topic struct {
 
 // ConfigureTopics configures and checks topics in the slice passed.
 func ConfigureTopics(ctx context.Context, brokers []string, topics []Topic) error {
+	_, testMode := os.LookupEnv("KAFMESH_TEST_MODE")
+
 	config := sarama.NewConfig()
 	config.Version = sarama.MaxVersion
 
@@ -39,6 +42,14 @@ func ConfigureTopics(ctx context.Context, brokers []string, topics []Topic) erro
 	errs := []string{}
 
 	for _, topic := range topics {
+		if testMode {
+			topic.Replicas = 1
+			topic.Create = true
+			topic.Segment = 1 * time.Hour
+			topic.Retention = 1 * time.Hour
+			topic.Partitions = 10
+		}
+
 		definition, exists := descriptions[topic.Name]
 		if !exists && !topic.Create {
 			errs = append(errs, fmt.Sprintf("topic '%s' does not exist and is not created in this service", topic.Name))
@@ -67,6 +78,9 @@ func ConfigureTopics(ctx context.Context, brokers []string, topics []Topic) erro
 				ReplicationFactor: int16(topic.Replicas),
 				ConfigEntries:     config,
 			}, false)
+			if err != nil && strings.Contains(err.Error(), "Topic with this name already exists") {
+				continue
+			}
 			if err != nil {
 				return errors.Wrap(err, "failed to create topic")
 			}
