@@ -67,6 +67,11 @@ func (t TopicDefinition) ToTopicName(service *Service) string {
 		return *t.Topic
 	}
 
+	return t.ToFullMessageType(service)
+}
+
+// ToFullMessageType extracts the full message type from the definition
+func (t TopicDefinition) ToFullMessageType(service *Service) string {
 	builder := strings.Builder{}
 	for _, f := range strings.Split(t.Message, ".") {
 		builder.WriteString(strcase.ToLowerCamel(f))
@@ -116,7 +121,7 @@ func (t TopicDefinition) ToPackage(service *Service) string {
 	builder.WriteString(service.Output.Path)
 	builder.WriteString("/models/")
 
-	frags := strings.Split(t.ToTopicName(service), ".")
+	frags := strings.Split(t.ToFullMessageType(service), ".")
 	for _, f := range frags[:len(frags)-1] {
 		builder.WriteString(f)
 		builder.WriteString("/")
