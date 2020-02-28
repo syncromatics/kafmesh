@@ -32,10 +32,8 @@ func Generate(options Options) error {
 	includes := []string{}
 	files := []file{}
 	for _, p := range options.Service.Messages.Protobuf {
-		protoPath := path.Join(options.DefinitionsPath, p)
-		if runtime.GOOS == "windows" {
-			protoPath = strings.ReplaceAll(protoPath, "/", "\\")
-		}
+		protoPath := p
+		protoPath = path.Join(options.DefinitionsPath, p)
 
 		includes = append(includes, protoPath)
 
