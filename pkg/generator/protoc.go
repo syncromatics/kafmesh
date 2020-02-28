@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -70,9 +71,17 @@ func Protoc(options protoOptions) error {
 		for _, f := range files {
 			pargs = append(pargs, f)
 		}
-		pargs = append(pargs, fmt.Sprintf("--go_out=%s,plugins=grpc:%s", strings.Join(modules, ","), options.Output))
+
+		output := options.Output
+		if runtime.GOOS == "windows" {
+			output = strings.ReplaceAll(output, "/", "\\")
+		}
+
+		pargs = append(pargs, fmt.Sprintf("--go_out=%s,plugins=grpc:%s", strings.Join(modules, ","), output))
 
 		errBuf := bytes.NewBuffer([]byte{})
+
+		fmt.Println(strings.Join(pargs, " "))
 
 		cmd := exec.Command("protoc", pargs...)
 		cmd.Env = []string{
