@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"path/filepath"
 	"runtime"
 	"strings"
 
@@ -33,13 +34,27 @@ func Generate(options Options) error {
 	files := []file{}
 	for _, p := range options.Service.Messages.Protobuf {
 		protoPath := p
-		protoPath = path.Join(options.DefinitionsPath, p)
+		if runtime.GOOS == "windows" {
+			protoPath = strings.ReplaceAll(protoPath, "/", "\\")
+		}
+		protoPath = path.Join(options.DefinitionsPath, protoPath)
+		if runtime.GOOS == "windows" {
+			protoPath = strings.ReplaceAll(protoPath, "/", "\\")
+		}
+		protoPath, err = filepath.Abs(protoPath)
+		if err != nil {
+			return errors.Wrapf(err, "failed to get absolute path from protopath '%s'", protoPath)
+		}
 
 		includes = append(includes, protoPath)
 
 		fs, err := filepathx.Glob(path.Join(protoPath, "**/*.proto"))
 		if err != nil {
 			return errors.Wrap(err, "failed to glob files")
+		}
+
+		if len(fs) == 0 {
+			return errors.Errorf("no proto files found in '%s'", protoPath)
 		}
 
 		for _, f := range fs {

@@ -45,10 +45,6 @@ func Protoc(options protoOptions) error {
 	args := []string{}
 	for _, i := range options.Includes {
 		args = append(args, "-I")
-
-		if runtime.GOOS == "windows" {
-			i = strings.ReplaceAll(i, "/", "\\")
-		}
 		args = append(args, i)
 	}
 
@@ -62,11 +58,6 @@ func Protoc(options protoOptions) error {
 			packages[p] = []string{}
 		}
 		packages[p] = append(packages[p], f.path)
-
-		if runtime.GOOS == "windows" {
-			f.path = strings.ReplaceAll(f.path, "/", "\\")
-			f.root = strings.ReplaceAll(f.root, "/", "\\")
-		}
 
 		r := strings.ReplaceAll(f.path, f.root, "")
 		m := filepath.Dir(r)
@@ -89,9 +80,6 @@ func Protoc(options protoOptions) error {
 		pargs = append(pargs, fmt.Sprintf("--go_out=%s,plugins=grpc:%s", strings.Join(modules, ","), output))
 
 		errBuf := bytes.NewBuffer([]byte{})
-
-		fmt.Println(strings.Join(pargs, " "))
-
 		cmd := exec.Command("protoc", pargs...)
 		cmd.Env = []string{
 			fmt.Sprintf("PATH=%s:%s:", pathenv, goBin),
