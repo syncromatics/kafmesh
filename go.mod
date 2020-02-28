@@ -11,7 +11,8 @@ require (
 	github.com/facebookgo/ensure v0.0.0-20200202191622-63f1cf65ac4c // indirect
 	github.com/facebookgo/stack v0.0.0-20160209184415-751773369052 // indirect
 	github.com/facebookgo/subset v0.0.0-20200203212716-c811ad88dec4 // indirect
-	github.com/golang/protobuf v1.3.3
+	github.com/golang/mock v1.4.1 // indirect
+	github.com/golang/protobuf v1.3.4
 	github.com/iancoleman/strcase v0.0.0-20191112232945-16388991a334
 	github.com/klauspost/cpuid v1.2.3 // indirect
 	github.com/lovoo/goka v0.1.3

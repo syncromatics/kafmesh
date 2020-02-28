@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"runtime"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -32,6 +33,10 @@ func Generate(options Options) error {
 	files := []file{}
 	for _, p := range options.Service.Messages.Protobuf {
 		protoPath := path.Join(options.DefinitionsPath, p)
+		if runtime.GOOS == "windows" {
+			protoPath = strings.ReplaceAll(protoPath, "/", "\\")
+		}
+
 		includes = append(includes, protoPath)
 
 		fs, err := filepathx.Glob(path.Join(protoPath, "**/*.proto"))
@@ -40,6 +45,9 @@ func Generate(options Options) error {
 		}
 
 		for _, f := range fs {
+			if runtime.GOOS == "windows" {
+				f = strings.ReplaceAll(f, "/", "\\")
+			}
 			files = append(files, file{
 				root: protoPath,
 				path: f,

@@ -1,6 +1,7 @@
 package generator_test
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
@@ -16,7 +17,8 @@ func Test_Generator(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	tmpDir = path.Join("/tmp", "genTest")
+
+	fmt.Println(tmpDir)
 
 	protoDir := path.Join(tmpDir, "protos")
 	err = os.MkdirAll(protoDir, os.ModePerm)
@@ -74,6 +76,7 @@ message DetailsEnriched {
 	string name = 1;
 }`), os.ModePerm)
 
+	newPath := path.Join(tmpDir, "defin")
 	options := generator.Options{
 		Service: &models.Service{
 			Name: "testService",
@@ -84,7 +87,7 @@ message DetailsEnriched {
 			},
 			Messages: models.MessageDefinitions{
 				Protobuf: []string{
-					"./protos",
+					"../protos",
 				},
 			},
 			Defaults: models.TopicDefaults{
@@ -94,8 +97,8 @@ message DetailsEnriched {
 				Segment:     12 * time.Hour,
 			},
 		},
-		RootPath:        tmpDir,
-		DefinitionsPath: tmpDir,
+		RootPath:        newPath,
+		DefinitionsPath: newPath,
 		Components: []*models.Component{
 			&models.Component{
 				Name: "details",
@@ -181,10 +184,10 @@ message DetailsEnriched {
 		t.Fatal(err)
 	}
 
-	validateProcessors(tmpDir, t)
-	validateEmitter(tmpDir, t)
-	validateSink(tmpDir, t)
-	validateView(tmpDir, t)
-	validateSynchronizer(tmpDir, t)
-	validateService(tmpDir, t)
+	validateProcessors(newPath, t)
+	validateEmitter(newPath, t)
+	validateSink(newPath, t)
+	validateView(newPath, t)
+	validateSynchronizer(newPath, t)
+	validateService(newPath, t)
 }
