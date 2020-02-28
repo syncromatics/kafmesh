@@ -60,8 +60,16 @@ func Protoc(options protoOptions) error {
 		packages[p] = append(packages[p], f.path)
 
 		r := strings.ReplaceAll(f.path, f.root, "")
+		r = strings.TrimLeft(r, "\\")
+		r = strings.TrimLeft(r, "/")
+
 		m := filepath.Dir(r)
-		m = fmt.Sprintf("M%s=%s/%s/models%s", strings.TrimLeft(r, "/"), options.Module, options.Path, m)
+		m = fmt.Sprintf("%s/%s/models/%s", options.Module, options.Path, m)
+		m = strings.ReplaceAll(m, "\\", "/")
+
+		r = strings.ReplaceAll(r, "\\", "/")
+
+		m = fmt.Sprintf("M%s=%s", strings.TrimLeft(r, "/"), m)
 
 		modules = append(modules, m)
 	}

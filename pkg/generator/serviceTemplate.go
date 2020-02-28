@@ -18,7 +18,9 @@ var (
 package {{ .Package }}
 
 import (
+{{- $length := len .Sinks -}} {{- if ne $length 0 }}
 	"time"
+{{- end }}
 
 	"github.com/pkg/errors"
 	"github.com/syncromatics/kafmesh/pkg/runner"
