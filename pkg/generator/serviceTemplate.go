@@ -18,7 +18,7 @@ var (
 package {{ .Package }}
 
 import (
-{{- $length := len .Sinks -}} {{- if ne $length 0 }}
+{{- $sinkLength := len .Sinks -}} {{- $syncLength := len .Synchronizers -}} {{- if or (ne $sinkLength 0) (ne $syncLength 0) }}
 	"time"
 {{- end }}
 
