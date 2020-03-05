@@ -93,7 +93,7 @@ func Register_EnrichedDataPostgres_Sink(options runner.ServiceOptions, sink Enri
 	d := &impl_EnrichedDataPostgres_Sink{
 		sink: sink,
 		codec: codec,
-		group: "enricheddatapostgres-sink",
+		group: "testService.details.enricheddatapostgres-sink",
 		topic: "testMesh.testSerial.detailsEnriched",
 		maxBufferSize: maxBufferSize,
 		interval: interval,

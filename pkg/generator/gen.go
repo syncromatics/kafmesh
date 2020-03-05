@@ -195,7 +195,7 @@ func processComponent(rootPath string, outputPath string, mod string, modelsPath
 		}
 		defer file.Close()
 
-		co, err := buildSinkOptions(component.Name, mod, mPath, s)
+		co, err := buildSinkOptions(component.Name, mod, mPath, s, service, component)
 		if err != nil {
 			return errors.Wrap(err, "failed to build sink options")
 		}

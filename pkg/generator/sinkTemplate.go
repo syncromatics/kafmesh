@@ -119,7 +119,7 @@ func generateSink(writer io.Writer, sink *sinkOptions) error {
 	return nil
 }
 
-func buildSinkOptions(pkg string, mod string, modelsPath string, sink models.Sink) (*sinkOptions, error) {
+func buildSinkOptions(pkg string, mod string, modelsPath string, sink models.Sink, service *models.Service, component *models.Component) (*sinkOptions, error) {
 	options := &sinkOptions{
 		Package: pkg,
 	}
@@ -138,7 +138,7 @@ func buildSinkOptions(pkg string, mod string, modelsPath string, sink models.Sin
 
 	options.TopicName = topic
 	options.Name = name.String()
-	options.GroupName = fmt.Sprintf("%s-sink", strings.ToLower(options.Name))
+	options.GroupName = fmt.Sprintf("%s.%s.%s-sink", service.Name, component.Name, strings.ToLower(options.Name))
 
 	var mPkg strings.Builder
 	for _, p := range nameFrags[:len(nameFrags)-1] {
