@@ -53,6 +53,7 @@ func (m *impl_{{ .Name }}_Synchronizer_Message) Value() interface{} {
 }
 
 type {{ .Name }}_Synchronizer_Context interface {
+	context.Context
 	Keys() ([]string, error)
 	Get(string) (*{{ .MessageType }}, error)
 	Emit(*{{ .Name }}_Synchronizer_Message) error
@@ -61,6 +62,7 @@ type {{ .Name }}_Synchronizer_Context interface {
 }
 
 type {{ .Name }}_Synchronizer_Context_impl struct {
+	context.Context
 	view *goka.View
 	emitter *runner.Emitter
 }
@@ -117,7 +119,7 @@ type {{ .Name }}_Synchronizer interface {
 	Sync({{ .Name }}_Synchronizer_Context) error
 }
 
-func Register_{{ .Name }}_Synchronizer(options runner.ServiceOptions, sychronizer {{ .Name }}_Synchronizer, updateInterval time.Duration) (func(context.Context) func() error, error) {
+func Register_{{ .Name }}_Synchronizer(options runner.ServiceOptions, sychronizer {{ .Name }}_Synchronizer, updateInterval time.Duration, syncTimeout time.Duration) (func(context.Context) func() error, error) {
 	brokers := options.Brokers
 	protoWrapper := options.ProtoWrapper
 
@@ -162,11 +164,6 @@ func Register_{{ .Name }}_Synchronizer(options runner.ServiceOptions, sychronize
 
 	emitter := runner.NewEmitter(e)
 
-	c := &{{ .Name }}_Synchronizer_Context_impl{
-		view:    view,
-		emitter: emitter,
-	}
-
 	return func(ctx context.Context) func() error {
 		return func() error {
 			gctx, cancel := context.WithCancel(ctx)
@@ -180,11 +177,19 @@ func Register_{{ .Name }}_Synchronizer(options runner.ServiceOptions, sychronize
 					case <-gctx.Done():
 						return nil
 					case <-timer.C:
+						newContext, cancel := context.WithTimeout(gctx, syncTimeout)
+						c := &{{ .Name }}_Synchronizer_Context_impl{
+							Context: newContext,
+							view:    view,
+							emitter: emitter,
+						}
 						err := sychronizer.Sync(c)
 						if err != nil {
+							cancel()
 							fmt.Printf("sync error '%v'", err)
 							return err
 						}
+						cancel()
 						timer = time.NewTimer(updateInterval)
 					}
 				}

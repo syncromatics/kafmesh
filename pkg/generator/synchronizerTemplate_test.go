@@ -59,6 +59,7 @@ func (m *impl_TestToDatabase_Synchronizer_Message) Value() interface{} {
 }
 
 type TestToDatabase_Synchronizer_Context interface {
+	context.Context
 	Keys() ([]string, error)
 	Get(string) (*testId.Test, error)
 	Emit(*TestToDatabase_Synchronizer_Message) error
@@ -67,6 +68,7 @@ type TestToDatabase_Synchronizer_Context interface {
 }
 
 type TestToDatabase_Synchronizer_Context_impl struct {
+	context.Context
 	view *goka.View
 	emitter *runner.Emitter
 }
@@ -123,7 +125,7 @@ type TestToDatabase_Synchronizer interface {
 	Sync(TestToDatabase_Synchronizer_Context) error
 }
 
-func Register_TestToDatabase_Synchronizer(options runner.ServiceOptions, sychronizer TestToDatabase_Synchronizer, updateInterval time.Duration) (func(context.Context) func() error, error) {
+func Register_TestToDatabase_Synchronizer(options runner.ServiceOptions, sychronizer TestToDatabase_Synchronizer, updateInterval time.Duration, syncTimeout time.Duration) (func(context.Context) func() error, error) {
 	brokers := options.Brokers
 	protoWrapper := options.ProtoWrapper
 
@@ -168,11 +170,6 @@ func Register_TestToDatabase_Synchronizer(options runner.ServiceOptions, sychron
 
 	emitter := runner.NewEmitter(e)
 
-	c := &TestToDatabase_Synchronizer_Context_impl{
-		view:    view,
-		emitter: emitter,
-	}
-
 	return func(ctx context.Context) func() error {
 		return func() error {
 			gctx, cancel := context.WithCancel(ctx)
@@ -186,11 +183,19 @@ func Register_TestToDatabase_Synchronizer(options runner.ServiceOptions, sychron
 					case <-gctx.Done():
 						return nil
 					case <-timer.C:
+						newContext, cancel := context.WithTimeout(gctx, syncTimeout)
+						c := &TestToDatabase_Synchronizer_Context_impl{
+							Context: newContext,
+							view:    view,
+							emitter: emitter,
+						}
 						err := sychronizer.Sync(c)
 						if err != nil {
+							cancel()
 							fmt.Printf("sync error '%v'", err)
 							return err
 						}
+						cancel()
 						timer = time.NewTimer(updateInterval)
 					}
 				}
