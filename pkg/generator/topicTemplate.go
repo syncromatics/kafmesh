@@ -174,7 +174,7 @@ func buildTopicOption(service *models.Service, components []*models.Component) (
 			}
 
 			compact := true
-			topic.Compact = &compact
+			s.TopicCreationDefinition.Compact = &compact
 
 			err := updateTopicCreate(topic, s.TopicCreationDefinition)
 			if err != nil {
