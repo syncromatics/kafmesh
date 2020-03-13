@@ -35,88 +35,22 @@ import (
 	"{{ .Import }}"
 )
 
-type {{ .Name }}_Synchronizer_Message struct {
-	Key string
-	Value *{{ .MessageType }}
-}
-
-type impl_{{ .Name }}_Synchronizer_Message struct {
-	msg *{{ .Name }}_Synchronizer_Message
-}
-
-func (m *impl_{{ .Name }}_Synchronizer_Message) Key() string {
-	return m.msg.Key
-}
-
-func (m *impl_{{ .Name }}_Synchronizer_Message) Value() interface{} {
-	return m.msg.Value
-}
-
 type {{ .Name }}_Synchronizer_Context interface {
 	context.Context
-	Keys() ([]string, error)
-	Get(string) (*{{ .MessageType }}, error)
-	Emit(*{{ .Name }}_Synchronizer_Message) error
-	EmitBulk(context.Context, []*{{ .Name }}_Synchronizer_Message) error
-	Delete(string) error
-}
-
-type {{ .Name }}_Synchronizer_Context_impl struct {
-	context.Context
-	view *goka.View
-	emitter *runner.Emitter
-}
-
-func (c *{{ .Name }}_Synchronizer_Context_impl) Keys() ([]string, error) {
-	it, err := c.view.Iterator()
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get iterator")
-	}
-
-	keys := []string{}
-	for it.Next() {
-		keys = append(keys, it.Key())
-	}
-
-	return keys, nil
-}
-
-func (c *{{ .Name }}_Synchronizer_Context_impl) Get(key string) (*{{ .MessageType }}, error) {
-	m, err := c.view.Get(key)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get value from view")
-	}
-
-	if m == nil {
-		return nil, nil
-	}
-
-	msg, ok := m.(*{{ .MessageType }})
-	if !ok {
-		return nil, errors.Errorf("expecting message of type '*{{ .MessageType }}' got type '%t'", m)
-	}
-
-	return msg, nil
-}
-
-func (c *{{ .Name }}_Synchronizer_Context_impl) Emit(message *{{ .Name }}_Synchronizer_Message) error {
-	return c.emitter.Emit(message.Key, message.Value)
-}
-
-func (c *{{ .Name }}_Synchronizer_Context_impl) EmitBulk(ctx context.Context, messages []*{{ .Name }}_Synchronizer_Message) error {
-	b := []runner.EmitMessage{}
-	for _, m := range messages {
-		b = append(b, &impl_{{ .Name }}_Synchronizer_Message{msg: m})
-	}
-	return c.emitter.EmitBulk(ctx, b)
-}
-
-func (c *{{ .Name }}_Synchronizer_Context_impl) Delete(key string) error {
-	return c.emitter.Emit(key, nil)
+	Update(string, *{{ .MessageType }}) error
 }
 
 type {{ .Name }}_Synchronizer interface {
 	Sync({{ .Name }}_Synchronizer_Context) error
+}
+
+type contextWrap_{{ .Name }} struct {
+	context.Context
+	job *runner.ProtoSynchronizerJob
+}
+
+func (c *contextWrap_{{ .Name }}) Update(key string, msg *{{ .MessageType }}) error {
+	return c.job.Update(key, msg)
 }
 
 func Register_{{ .Name }}_Synchronizer(options runner.ServiceOptions, sychronizer {{ .Name }}_Synchronizer, updateInterval time.Duration, syncTimeout time.Duration) (func(context.Context) func() error, error) {
@@ -178,15 +112,18 @@ func Register_{{ .Name }}_Synchronizer(options runner.ServiceOptions, sychronize
 						return nil
 					case <-timer.C:
 						newContext, cancel := context.WithTimeout(gctx, syncTimeout)
-						c := &{{ .Name }}_Synchronizer_Context_impl{
-							Context: newContext,
-							view:    view,
-							emitter: emitter,
-						}
-						err := sychronizer.Sync(c)
+						c := runner.NewProtoSynchronizerJob(newContext, view, emitter)
+						cw := &contextWrap_{{ .Name }}{newContext, c}
+						err := sychronizer.Sync(cw)
 						if err != nil {
 							cancel()
 							fmt.Printf("sync error '%v'", err)
+							return err
+						}
+						err = c.Finish()
+						if err != nil {
+							cancel()
+							fmt.Printf("sync finish error '%v'", err)
 							return err
 						}
 						cancel()

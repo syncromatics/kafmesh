@@ -2,6 +2,7 @@ package generator
 
 import (
 	"io"
+	"sort"
 	"text/template"
 	"time"
 
@@ -219,7 +220,17 @@ func buildTopicOption(service *models.Service, components []*models.Component) (
 		} else {
 			topic.Segment = *tp.Segment
 		}
+
+		if tp.Compact == nil {
+			topic.Compact = false
+		} else {
+			topic.Compact = *tp.Compact
+		}
 	}
+
+	sort.Slice(t, func(i, j int) bool {
+		return t[i].Name < t[j].Name
+	})
 
 	return &topicOptions{
 		Package: service.Output.Package,
