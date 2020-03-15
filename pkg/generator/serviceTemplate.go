@@ -18,7 +18,7 @@ var (
 package {{ .Package }}
 
 import (
-{{- $sinkLength := len .Sinks -}} {{- $syncLength := len .Synchronizers -}} {{- if or (ne $sinkLength 0) (ne $syncLength 0) }}
+{{- $sinkLength := len .Sinks -}} {{- $syncLength := len .ViewSources -}} {{- if or (ne $sinkLength 0) (ne $syncLength 0) }}
 	"time"
 {{- end }}
 
@@ -92,11 +92,11 @@ func Register_{{ .Name }}_Sink(service *runner.Service, sink {{ .Package }}.{{ .
 }
 {{ end -}}
 
-{{ range .Synchronizers }}
-func Register_{{ .ExportName }}_Synchronizer(service *runner.Service, synchronizer {{ .Package }}.{{ .Name }}_Synchronizer, updateInterval time.Duration) error {
-	r, err := {{ .Package }}.Register_{{ .Name }}_Synchronizer(service.Options(), synchronizer, updateInterval)
+{{ range .ViewSources }}
+func Register_{{ .ExportName }}_ViewSource(service *runner.Service, viewSource {{ .Package }}.{{ .Name }}_ViewSource, updateInterval time.Duration, syncTimeout time.Duration) error {
+	r, err := {{ .Package }}.Register_{{ .Name }}_ViewSource(service.Options(), viewSource, updateInterval, syncTimeout)
 	if err != nil {
-		return errors.Wrap(err, "failed to register sychronizer")
+		return errors.Wrap(err, "failed to register viewSource")
 	}
 
 	err = service.RegisterRunner(r)
@@ -131,20 +131,20 @@ type serviceSink struct {
 	Package string
 }
 
-type serviceSynchronizer struct {
+type serviceViewSource struct {
 	Name       string
 	ExportName string
 	Package    string
 }
 
 type generateServiceOptions struct {
-	Package       string
-	Imports       []string
-	Processors    []serviceProcessor
-	Emitters      []serviceEmitter
-	Views         []serviceView
-	Sinks         []serviceSink
-	Synchronizers []serviceSynchronizer
+	Package     string
+	Imports     []string
+	Processors  []serviceProcessor
+	Emitters    []serviceEmitter
+	Views       []serviceView
+	Sinks       []serviceSink
+	ViewSources []serviceViewSource
 }
 
 func generateService(writer io.Writer, options generateServiceOptions) error {
@@ -217,19 +217,19 @@ func buildServiceOptions(service *models.Service, components []*models.Component
 			options.Sinks = append(options.Sinks, proc)
 		}
 
-		for _, s := range c.Synchronizers {
+		for _, s := range c.ViewSources {
 			var name strings.Builder
 			nameFrags := strings.Split(s.Message, ".")
 			for _, f := range nameFrags[1:] {
 				name.WriteString(strcase.ToCamel(f))
 			}
 
-			proc := serviceSynchronizer{
+			proc := serviceViewSource{
 				Package:    c.Name,
 				ExportName: fmt.Sprintf("%s_%s", c.ToSafeName(), s.ToSafeName()),
 				Name:       fmt.Sprintf("%s", s.ToSafeName()),
 			}
-			options.Synchronizers = append(options.Synchronizers, proc)
+			options.ViewSources = append(options.ViewSources, proc)
 		}
 	}
 

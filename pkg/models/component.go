@@ -21,11 +21,11 @@ type Component struct {
 	Name        string
 	Description string
 
-	Emitters      []Emitter
-	Processors    []Processor
-	Sinks         []Sink
-	Synchronizers []Synchronizer
-	Views         []View
+	Emitters    []Emitter
+	Processors  []Processor
+	Sinks       []Sink
+	ViewSources []ViewSource `yaml:"viewSources"`
+	Views       []View
 
 	Persistence *Persistence
 }
@@ -220,8 +220,8 @@ type Sink struct {
 	TopicDefinition `yaml:",inline"`
 }
 
-// Synchronizer is a job that will sync an external source into kafka
-type Synchronizer struct {
+// ViewSource is a job that will sync an external source into a kafka view
+type ViewSource struct {
 	Name                    string
 	TopicDefinition         `yaml:",inline"`
 	TopicCreationDefinition `yaml:",inline"`
@@ -229,7 +229,7 @@ type Synchronizer struct {
 }
 
 // ToSafeName get a go safe name
-func (p *Synchronizer) ToSafeName() string {
+func (p *ViewSource) ToSafeName() string {
 	builder := strings.Builder{}
 	for _, f := range strings.Split(p.Name, " ") {
 		builder.WriteString(strcase.ToCamel(f))

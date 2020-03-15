@@ -87,10 +87,10 @@ func Register_EnrichedDataPostgres_Sink(service *runner.Service, sink details.En
 	return nil
 }
 
-func Register_Details_TestToDatabase_Synchronizer(service *runner.Service, synchronizer details.TestToDatabase_Synchronizer, updateInterval time.Duration) error {
-	r, err := details.Register_TestToDatabase_Synchronizer(service.Options(), synchronizer, updateInterval)
+func Register_Details_TestToDatabase_ViewSource(service *runner.Service, viewSource details.TestToDatabase_ViewSource, updateInterval time.Duration, syncTimeout time.Duration) error {
+	r, err := details.Register_TestToDatabase_ViewSource(service.Options(), viewSource, updateInterval, syncTimeout)
 	if err != nil {
-		return errors.Wrap(err, "failed to register sychronizer")
+		return errors.Wrap(err, "failed to register viewSource")
 	}
 
 	err = service.RegisterRunner(r)

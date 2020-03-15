@@ -167,8 +167,8 @@ message DetailsEnriched {
 						},
 					},
 				},
-				Synchronizers: []models.Synchronizer{
-					models.Synchronizer{
+				ViewSources: []models.ViewSource{
+					models.ViewSource{
 						Name: "test to database",
 						TopicDefinition: models.TopicDefinition{
 							Message: "testMesh.testId.test",
@@ -188,7 +188,7 @@ message DetailsEnriched {
 	validateEmitter(newPath, t)
 	validateSink(newPath, t)
 	validateView(newPath, t)
-	validateSynchronizer(newPath, t)
+	validateViewSource(newPath, t)
 	validateService(newPath, t)
 	validateTopic(newPath, t)
 }

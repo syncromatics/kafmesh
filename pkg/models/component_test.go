@@ -48,7 +48,7 @@ sinks:
     description: Sinks enriched device details to the warehouse database.
     type: protobuf
 
-synchronizers:
+viewSources:
   - message: kafmesh.deviceId.customer
     type: protobuf
     description: Synchronizes the assigned devices in the database with kafka
@@ -150,8 +150,8 @@ synchronizers:
 			},
 		},
 
-		Synchronizers: []models.Synchronizer{
-			models.Synchronizer{
+		ViewSources: []models.ViewSource{
+			models.ViewSource{
 				TopicDefinition: models.TopicDefinition{
 					Message: "kafmesh.deviceId.customer",
 					Type:    &topicType,

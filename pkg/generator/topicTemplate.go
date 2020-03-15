@@ -166,7 +166,7 @@ func buildTopicOption(service *models.Service, components []*models.Component) (
 			}
 		}
 
-		for _, s := range c.Synchronizers {
+		for _, s := range c.ViewSources {
 			name := s.ToTopicName(service)
 			topic, ok := topics[name]
 			if !ok {
