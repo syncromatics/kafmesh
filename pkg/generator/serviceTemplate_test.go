@@ -100,5 +100,19 @@ func Register_Details_TestToDatabase_ViewSource(service *runner.Service, viewSou
 
 	return nil
 }
+
+func Register_Details_TestToApi_ViewSink(service *runner.Service, viewSink details.TestToApi_ViewSink, updateInterval time.Duration, syncTimeout time.Duration) error {
+	r, err := details.Register_TestToApi_ViewSink(service.Options(), viewSink, updateInterval, syncTimeout)
+	if err != nil {
+		return errors.Wrap(err, "failed to register viewSink")
+	}
+
+	err = service.RegisterRunner(r)
+	if err != nil {
+		return errors.Wrap(err, "failed to register runner with service")
+	}
+
+	return nil
+}
 `
 )

@@ -145,8 +145,8 @@ message DetailsEnriched {
 						},
 					},
 				},
-				Emitters: []models.Emitter{
-					models.Emitter{
+				Sources: []models.Source{
+					models.Source{
 						TopicDefinition: models.TopicDefinition{
 							Message: "testMesh.testSerial.details",
 						},

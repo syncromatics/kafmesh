@@ -107,6 +107,22 @@ func Register_{{ .ExportName }}_ViewSource(service *runner.Service, viewSource {
 	return nil
 }
 {{ end -}}
+
+{{ range .ViewSinks }}
+func Register_{{ .ExportName }}_ViewSink(service *runner.Service, viewSink {{ .Package }}.{{ .Name }}_ViewSink, updateInterval time.Duration, syncTimeout time.Duration) error {
+	r, err := {{ .Package }}.Register_{{ .Name }}_ViewSink(service.Options(), viewSink, updateInterval, syncTimeout)
+	if err != nil {
+		return errors.Wrap(err, "failed to register viewSink")
+	}
+
+	err = service.RegisterRunner(r)
+	if err != nil {
+		return errors.Wrap(err, "failed to register runner with service")
+	}
+
+	return nil
+}
+{{ end -}}
 `))
 )
 
@@ -137,6 +153,12 @@ type serviceViewSource struct {
 	Package    string
 }
 
+type serviceViewSink struct {
+	Name       string
+	ExportName string
+	Package    string
+}
+
 type generateServiceOptions struct {
 	Package     string
 	Imports     []string
@@ -145,6 +167,7 @@ type generateServiceOptions struct {
 	Views       []serviceView
 	Sinks       []serviceSink
 	ViewSources []serviceViewSource
+	ViewSinks   []serviceViewSink
 }
 
 func generateService(writer io.Writer, options generateServiceOptions) error {
@@ -175,7 +198,7 @@ func buildServiceOptions(service *models.Service, components []*models.Component
 			options.Processors = append(options.Processors, proc)
 		}
 
-		for _, e := range c.Emitters {
+		for _, e := range c.Sources {
 			var name strings.Builder
 			nameFrags := strings.Split(e.Message, ".")
 			for _, f := range nameFrags[1:] {
@@ -230,6 +253,21 @@ func buildServiceOptions(service *models.Service, components []*models.Component
 				Name:       fmt.Sprintf("%s", s.ToSafeName()),
 			}
 			options.ViewSources = append(options.ViewSources, proc)
+		}
+
+		for _, s := range c.ViewSinks {
+			var name strings.Builder
+			nameFrags := strings.Split(s.Message, ".")
+			for _, f := range nameFrags[1:] {
+				name.WriteString(strcase.ToCamel(f))
+			}
+
+			proc := serviceViewSink{
+				Package:    c.Name,
+				ExportName: fmt.Sprintf("%s_%s", c.ToSafeName(), s.ToSafeName()),
+				Name:       fmt.Sprintf("%s", s.ToSafeName()),
+			}
+			options.ViewSinks = append(options.ViewSinks, proc)
 		}
 	}
 

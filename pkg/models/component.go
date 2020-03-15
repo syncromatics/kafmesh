@@ -21,7 +21,7 @@ type Component struct {
 	Name        string
 	Description string
 
-	Emitters    []Emitter
+	Sources     []Source
 	Processors  []Processor
 	Sinks       []Sink
 	Views       []View
@@ -140,8 +140,8 @@ type TopicCreationDefinition struct {
 	Segment    *time.Duration
 }
 
-// Emitter is a producer into kafka
-type Emitter struct {
+// Source is a producer into kafka
+type Source struct {
 	TopicDefinition         `yaml:",inline"`
 	TopicCreationDefinition `yaml:",inline"`
 }

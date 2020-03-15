@@ -134,7 +134,7 @@ func buildTopicOption(service *models.Service, components []*models.Component) (
 			}
 		}
 
-		for _, e := range c.Emitters {
+		for _, e := range c.Sources {
 			name := e.ToTopicName(service)
 			topic, ok := topics[name]
 			if !ok {

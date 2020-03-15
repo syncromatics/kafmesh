@@ -9,7 +9,7 @@ import (
 )
 
 func validateEmitter(tmpDir string, t *testing.T) {
-	s, err := ioutil.ReadFile(path.Join(tmpDir, "internal", "kafmesh", "details", "testMesh_testSerial_details_emitter.km.go"))
+	s, err := ioutil.ReadFile(path.Join(tmpDir, "internal", "kafmesh", "details", "testMesh_testSerial_details_source.km.go"))
 	if err != nil {
 		t.Fatal(err)
 	}

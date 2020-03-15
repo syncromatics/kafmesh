@@ -165,23 +165,23 @@ func processComponent(rootPath string, outputPath string, mod string, modelsPath
 		}
 	}
 
-	for _, e := range component.Emitters {
+	for _, e := range component.Sources {
 		fileName := strings.ReplaceAll(e.Message, ".", "_")
-		fileName = fmt.Sprintf("%s_emitter.km.go", fileName)
+		fileName = fmt.Sprintf("%s_source.km.go", fileName)
 		file, err := os.Create(path.Join(componentPath, fileName))
 		if err != nil {
 			return errors.Wrapf(err, "failed to open service file")
 		}
 		defer file.Close()
 
-		co, err := buildEmitterOptions(component.Name, mod, mPath, service, e)
+		co, err := buildSourceOptions(component.Name, mod, mPath, service, e)
 		if err != nil {
-			return errors.Wrap(err, "failed to build emitter options")
+			return errors.Wrap(err, "failed to build source options")
 		}
 
-		err = generateEmitter(file, co)
+		err = generateSource(file, co)
 		if err != nil {
-			return errors.Wrap(err, "failed to generate emitter")
+			return errors.Wrap(err, "failed to generate source")
 		}
 	}
 

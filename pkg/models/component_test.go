@@ -14,7 +14,7 @@ func Test_ComponentParse(t *testing.T) {
 name: details
 description: The details component handles the flow for device details.
 
-emitters:
+sources:
   - message: kafmesh.deviceId.detail
     type: protobuf
     partitions: 10
@@ -73,8 +73,8 @@ viewSinks:
 		Name:        "details",
 		Description: "The details component handles the flow for device details.",
 
-		Emitters: []models.Emitter{
-			models.Emitter{
+		Sources: []models.Source{
+			models.Source{
 				TopicDefinition: models.TopicDefinition{
 					Message: "kafmesh.deviceId.detail",
 					Type:    &topicType,
