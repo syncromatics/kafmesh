@@ -24,8 +24,9 @@ type Component struct {
 	Emitters    []Emitter
 	Processors  []Processor
 	Sinks       []Sink
-	ViewSources []ViewSource `yaml:"viewSources"`
 	Views       []View
+	ViewSources []ViewSource `yaml:"viewSources"`
+	ViewSinks   []ViewSink   `yaml:"viewSinks"`
 
 	Persistence *Persistence
 }
@@ -230,6 +231,23 @@ type ViewSource struct {
 
 // ToSafeName get a go safe name
 func (p *ViewSource) ToSafeName() string {
+	builder := strings.Builder{}
+	for _, f := range strings.Split(p.Name, " ") {
+		builder.WriteString(strcase.ToCamel(f))
+	}
+	return builder.String()
+}
+
+// ViewSink is a job that will sync a kafka view to an external destination
+type ViewSink struct {
+	Name                    string
+	TopicDefinition         `yaml:",inline"`
+	TopicCreationDefinition `yaml:",inline"`
+	Description             string
+}
+
+// ToSafeName get a go safe name
+func (p *ViewSink) ToSafeName() string {
 	builder := strings.Builder{}
 	for _, f := range strings.Split(p.Name, " ") {
 		builder.WriteString(strcase.ToCamel(f))

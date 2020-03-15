@@ -182,6 +182,15 @@ func buildTopicOption(service *models.Service, components []*models.Component) (
 				return nil, err
 			}
 		}
+
+		for _, s := range c.ViewSinks {
+			name := s.ToTopicName(service)
+			topic, ok := topics[name]
+			if !ok {
+				topic = &topicDefinition{}
+				topics[name] = topic
+			}
+		}
 	}
 
 	t := []*runner.Topic{}

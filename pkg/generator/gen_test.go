@@ -175,6 +175,14 @@ message DetailsEnriched {
 						},
 					},
 				},
+				ViewSinks: []models.ViewSink{
+					models.ViewSink{
+						Name: "test to api",
+						TopicDefinition: models.TopicDefinition{
+							Message: "testMesh.testId.test",
+						},
+					},
+				},
 			},
 		},
 	}
@@ -189,6 +197,7 @@ message DetailsEnriched {
 	validateSink(newPath, t)
 	validateView(newPath, t)
 	validateViewSource(newPath, t)
+	validateViewSink(newPath, t)
 	validateService(newPath, t)
 	validateTopic(newPath, t)
 }

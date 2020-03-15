@@ -246,5 +246,25 @@ func processComponent(rootPath string, outputPath string, mod string, modelsPath
 		}
 	}
 
+	for _, s := range component.ViewSinks {
+		fileName := strings.ReplaceAll(s.Message, ".", "_")
+		fileName = fmt.Sprintf("%s_viewSink.km.go", fileName)
+		file, err := os.Create(path.Join(componentPath, fileName))
+		if err != nil {
+			return errors.Wrapf(err, "failed to open service file")
+		}
+		defer file.Close()
+
+		co, err := buildViewSinkOptions(component.Name, mod, mPath, service, s)
+		if err != nil {
+			return errors.Wrap(err, "failed to build viewSink options")
+		}
+
+		err = generateViewSink(file, co)
+		if err != nil {
+			return errors.Wrap(err, "failed to generate viewSink")
+		}
+	}
+
 	return nil
 }

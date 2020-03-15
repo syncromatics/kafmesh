@@ -53,6 +53,12 @@ viewSources:
     type: protobuf
     description: Synchronizes the assigned devices in the database with kafka
     partitions: 10
+
+viewSinks:
+  - message: kafmesh.deviceId.detail
+    type: protobuf
+    description: Synchronizes the device details to an api
+    partitions: 10
 `
 
 	component, err := models.ParseComponent(bytes.NewBuffer([]byte(schema)))
@@ -160,6 +166,18 @@ viewSources:
 					Partitions: &partition,
 				},
 				Description: "Synchronizes the assigned devices in the database with kafka",
+			},
+		},
+		ViewSinks: []models.ViewSink{
+			models.ViewSink{
+				TopicDefinition: models.TopicDefinition{
+					Message: "kafmesh.deviceId.detail",
+					Type:    &topicType,
+				},
+				TopicCreationDefinition: models.TopicCreationDefinition{
+					Partitions: &partition,
+				},
+				Description: "Synchronizes the device details to an api",
 			},
 		},
 	}, component)
