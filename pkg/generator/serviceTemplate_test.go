@@ -45,8 +45,8 @@ func Register_Details_Enricher_Processor(service *runner.Service, processor deta
 	return nil
 }
 
-func New_TestSerialDetails_Emitter(service *runner.Service) (details.TestSerialDetails_Emitter, error) {
-	e, err := details.New_TestSerialDetails_Emitter(service.Options())
+func New_TestSerialDetails_Source(service *runner.Service) (details.TestSerialDetails_Source, error) {
+	e, err := details.New_TestSerialDetails_Source(service.Options())
 	if err != nil {
 		return nil, err
 	}

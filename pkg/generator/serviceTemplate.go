@@ -44,9 +44,9 @@ func Register_{{ .ExportName }}(service *runner.Service, processor {{ .Package }
 }
 {{ end -}}
 
-{{ range .Emitters }}
-func New_{{ .Name }}_Emitter(service *runner.Service) ({{ .Package }}.{{ .Name }}_Emitter, error) {
-	e, err := {{ .Package }}.New_{{ .Name }}_Emitter(service.Options())
+{{ range .Sources }}
+func New_{{ .Name }}_Source(service *runner.Service) ({{ .Package }}.{{ .Name }}_Source, error) {
+	e, err := {{ .Package }}.New_{{ .Name }}_Source(service.Options())
 	if err != nil {
 		return nil, err
 	}
@@ -132,7 +132,7 @@ type serviceProcessor struct {
 	Package    string
 }
 
-type serviceEmitter struct {
+type serviceSource struct {
 	Name    string
 	Package string
 }
@@ -163,7 +163,7 @@ type generateServiceOptions struct {
 	Package     string
 	Imports     []string
 	Processors  []serviceProcessor
-	Emitters    []serviceEmitter
+	Sources     []serviceSource
 	Views       []serviceView
 	Sinks       []serviceSink
 	ViewSources []serviceViewSource
@@ -205,11 +205,11 @@ func buildServiceOptions(service *models.Service, components []*models.Component
 				name.WriteString(strcase.ToCamel(f))
 			}
 
-			proc := serviceEmitter{
+			proc := serviceSource{
 				Package: c.Name,
 				Name:    strings.TrimRight(name.String(), "_"),
 			}
-			options.Emitters = append(options.Emitters, proc)
+			options.Sources = append(options.Sources, proc)
 		}
 
 		for _, v := range c.Views {

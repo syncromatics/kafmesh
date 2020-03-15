@@ -27,34 +27,34 @@ import (
 	"{{ .Import }}"
 )
 
-type {{ .Name }}_Emitter interface {
-	Emit(message {{ .Name }}_Emitter_Message) error
-	EmitBulk(ctx context.Context, messages []{{ .Name }}_Emitter_Message) error
+type {{ .Name }}_Source interface {
+	Emit(message {{ .Name }}_Source_Message) error
+	EmitBulk(ctx context.Context, messages []{{ .Name }}_Source_Message) error
 	Delete(key string) error
 }
 
-type {{ .Name }}_Emitter_impl struct {
+type {{ .Name }}_Source_impl struct {
 	emitter *runner.Emitter
 }
 
-type {{ .Name }}_Emitter_Message struct {
+type {{ .Name }}_Source_Message struct {
 	Key string
 	Value *{{ .MessageType }}
 }
 
-type impl_{{ .Name }}_Emitter_Message struct {
-	msg {{ .Name }}_Emitter_Message
+type impl_{{ .Name }}_Source_Message struct {
+	msg {{ .Name }}_Source_Message
 }
 
-func (m *impl_{{ .Name }}_Emitter_Message) Key() string {
+func (m *impl_{{ .Name }}_Source_Message) Key() string {
 	return m.msg.Key
 }
 
-func (m *impl_{{ .Name }}_Emitter_Message) Value() interface{} {
+func (m *impl_{{ .Name }}_Source_Message) Value() interface{} {
 	return m.msg.Value
 }
 
-func New_{{ .Name }}_Emitter(options runner.ServiceOptions) (*{{ .Name }}_Emitter_impl, error) {
+func New_{{ .Name }}_Source(options runner.ServiceOptions) (*{{ .Name }}_Source_impl, error) {
 	brokers := options.Brokers
 	protoWrapper := options.ProtoWrapper
 
@@ -69,31 +69,31 @@ func New_{{ .Name }}_Emitter(options runner.ServiceOptions) (*{{ .Name }}_Emitte
 		goka.WithEmitterHasher(kafkautil.MurmurHasher))
 
 	if err != nil {
-		return nil, errors.Wrap(err, "failed creating emitter")
+		return nil, errors.Wrap(err, "failed creating source")
 	}
 
-	return &{{ .Name }}_Emitter_impl{
+	return &{{ .Name }}_Source_impl{
 		emitter: runner.NewEmitter(emitter),
 	}, nil
 }
 
-func (e *{{ .Name }}_Emitter_impl) Watch(ctx context.Context) func() error {
+func (e *{{ .Name }}_Source_impl) Watch(ctx context.Context) func() error {
 	return e.emitter.Watch(ctx)
 }
 
-func (e *{{ .Name }}_Emitter_impl) Emit(message {{ .Name }}_Emitter_Message) error {
+func (e *{{ .Name }}_Source_impl) Emit(message {{ .Name }}_Source_Message) error {
 	return e.emitter.Emit(message.Key, message.Value)
 }
 
-func (e *{{ .Name }}_Emitter_impl) EmitBulk(ctx context.Context, messages []{{ .Name }}_Emitter_Message) error {
+func (e *{{ .Name }}_Source_impl) EmitBulk(ctx context.Context, messages []{{ .Name }}_Source_Message) error {
 	b := []runner.EmitMessage{}
 	for _, m := range messages {
-		b = append(b, &impl_{{ .Name }}_Emitter_Message{msg: m})
+		b = append(b, &impl_{{ .Name }}_Source_Message{msg: m})
 	}
 	return e.emitter.EmitBulk(ctx, b)
 }
 
-func (e *{{ .Name }}_Emitter_impl) Delete(key string) error {
+func (e *{{ .Name }}_Source_impl) Delete(key string) error {
 	return e.emitter.Emit(key, nil)
 }
 `))

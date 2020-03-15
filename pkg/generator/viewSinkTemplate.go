@@ -122,7 +122,7 @@ func Register_{{ .Name }}_ViewSink(options runner.ServiceOptions, sychronizer {{
 						return nil
 					case <-timer.C:
 						newContext, cancel := context.WithTimeout(gctx, syncTimeout)
-						c := &{{ .Name }}_ViewSync_Context_impl{
+						c := &{{ .Name }}_ViewSink_Context_impl{
 							Context: newContext,
 							view:    view,
 						}

@@ -128,7 +128,7 @@ func Register_TestToApi_ViewSink(options runner.ServiceOptions, sychronizer Test
 						return nil
 					case <-timer.C:
 						newContext, cancel := context.WithTimeout(gctx, syncTimeout)
-						c := &TestToApi_ViewSync_Context_impl{
+						c := &TestToApi_ViewSink_Context_impl{
 							Context: newContext,
 							view:    view,
 						}
