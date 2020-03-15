@@ -41,88 +41,22 @@ import (
 	"test/internal/kafmesh/models/testMesh/testId"
 )
 
-type TestToDatabase_Synchronizer_Message struct {
-	Key string
-	Value *testId.Test
-}
-
-type impl_TestToDatabase_Synchronizer_Message struct {
-	msg *TestToDatabase_Synchronizer_Message
-}
-
-func (m *impl_TestToDatabase_Synchronizer_Message) Key() string {
-	return m.msg.Key
-}
-
-func (m *impl_TestToDatabase_Synchronizer_Message) Value() interface{} {
-	return m.msg.Value
-}
-
 type TestToDatabase_Synchronizer_Context interface {
 	context.Context
-	Keys() ([]string, error)
-	Get(string) (*testId.Test, error)
-	Emit(*TestToDatabase_Synchronizer_Message) error
-	EmitBulk(context.Context, []*TestToDatabase_Synchronizer_Message) error
-	Delete(string) error
-}
-
-type TestToDatabase_Synchronizer_Context_impl struct {
-	context.Context
-	view *goka.View
-	emitter *runner.Emitter
-}
-
-func (c *TestToDatabase_Synchronizer_Context_impl) Keys() ([]string, error) {
-	it, err := c.view.Iterator()
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get iterator")
-	}
-
-	keys := []string{}
-	for it.Next() {
-		keys = append(keys, it.Key())
-	}
-
-	return keys, nil
-}
-
-func (c *TestToDatabase_Synchronizer_Context_impl) Get(key string) (*testId.Test, error) {
-	m, err := c.view.Get(key)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get value from view")
-	}
-
-	if m == nil {
-		return nil, nil
-	}
-
-	msg, ok := m.(*testId.Test)
-	if !ok {
-		return nil, errors.Errorf("expecting message of type '*testId.Test' got type '%t'", m)
-	}
-
-	return msg, nil
-}
-
-func (c *TestToDatabase_Synchronizer_Context_impl) Emit(message *TestToDatabase_Synchronizer_Message) error {
-	return c.emitter.Emit(message.Key, message.Value)
-}
-
-func (c *TestToDatabase_Synchronizer_Context_impl) EmitBulk(ctx context.Context, messages []*TestToDatabase_Synchronizer_Message) error {
-	b := []runner.EmitMessage{}
-	for _, m := range messages {
-		b = append(b, &impl_TestToDatabase_Synchronizer_Message{msg: m})
-	}
-	return c.emitter.EmitBulk(ctx, b)
-}
-
-func (c *TestToDatabase_Synchronizer_Context_impl) Delete(key string) error {
-	return c.emitter.Emit(key, nil)
+	Update(string, *testId.Test) error
 }
 
 type TestToDatabase_Synchronizer interface {
 	Sync(TestToDatabase_Synchronizer_Context) error
+}
+
+type contextWrap_TestToDatabase struct {
+	context.Context
+	job *runner.ProtoSynchronizerJob
+}
+
+func (c *contextWrap_TestToDatabase) Update(key string, msg *testId.Test) error {
+	return c.job.Update(key, msg)
 }
 
 func Register_TestToDatabase_Synchronizer(options runner.ServiceOptions, sychronizer TestToDatabase_Synchronizer, updateInterval time.Duration, syncTimeout time.Duration) (func(context.Context) func() error, error) {
@@ -184,15 +118,18 @@ func Register_TestToDatabase_Synchronizer(options runner.ServiceOptions, sychron
 						return nil
 					case <-timer.C:
 						newContext, cancel := context.WithTimeout(gctx, syncTimeout)
-						c := &TestToDatabase_Synchronizer_Context_impl{
-							Context: newContext,
-							view:    view,
-							emitter: emitter,
-						}
-						err := sychronizer.Sync(c)
+						c := runner.NewProtoSynchronizerJob(newContext, view, emitter)
+						cw := &contextWrap_TestToDatabase{newContext, c}
+						err := sychronizer.Sync(cw)
 						if err != nil {
 							cancel()
 							fmt.Printf("sync error '%v'", err)
+							return err
+						}
+						err = c.Finish()
+						if err != nil {
+							cancel()
+							fmt.Printf("sync finish error '%v'", err)
 							return err
 						}
 						cancel()

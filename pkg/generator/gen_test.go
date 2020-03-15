@@ -190,4 +190,5 @@ message DetailsEnriched {
 	validateView(newPath, t)
 	validateSynchronizer(newPath, t)
 	validateService(newPath, t)
+	validateTopic(newPath, t)
 }
