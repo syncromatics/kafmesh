@@ -45,8 +45,8 @@ func Register_Details_Enricher_Processor(service *runner.Service, processor deta
 	return nil
 }
 
-func New_TestSerialDetails_Emitter(service *runner.Service) (details.TestSerialDetails_Emitter, error) {
-	e, err := details.New_TestSerialDetails_Emitter(service.Options())
+func New_TestSerialDetails_Source(service *runner.Service) (details.TestSerialDetails_Source, error) {
+	e, err := details.New_TestSerialDetails_Source(service.Options())
 	if err != nil {
 		return nil, err
 	}
@@ -87,10 +87,24 @@ func Register_EnrichedDataPostgres_Sink(service *runner.Service, sink details.En
 	return nil
 }
 
-func Register_Details_TestToDatabase_Synchronizer(service *runner.Service, synchronizer details.TestToDatabase_Synchronizer, updateInterval time.Duration) error {
-	r, err := details.Register_TestToDatabase_Synchronizer(service.Options(), synchronizer, updateInterval)
+func Register_Details_TestToDatabase_ViewSource(service *runner.Service, viewSource details.TestToDatabase_ViewSource, updateInterval time.Duration, syncTimeout time.Duration) error {
+	r, err := details.Register_TestToDatabase_ViewSource(service.Options(), viewSource, updateInterval, syncTimeout)
 	if err != nil {
-		return errors.Wrap(err, "failed to register sychronizer")
+		return errors.Wrap(err, "failed to register viewSource")
+	}
+
+	err = service.RegisterRunner(r)
+	if err != nil {
+		return errors.Wrap(err, "failed to register runner with service")
+	}
+
+	return nil
+}
+
+func Register_Details_TestToApi_ViewSink(service *runner.Service, viewSink details.TestToApi_ViewSink, updateInterval time.Duration, syncTimeout time.Duration) error {
+	r, err := details.Register_TestToApi_ViewSink(service.Options(), viewSink, updateInterval, syncTimeout)
+	if err != nil {
+		return errors.Wrap(err, "failed to register viewSink")
 	}
 
 	err = service.RegisterRunner(r)

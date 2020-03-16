@@ -14,7 +14,7 @@ func Test_ComponentParse(t *testing.T) {
 name: details
 description: The details component handles the flow for device details.
 
-emitters:
+sources:
   - message: kafmesh.deviceId.detail
     type: protobuf
     partitions: 10
@@ -48,10 +48,16 @@ sinks:
     description: Sinks enriched device details to the warehouse database.
     type: protobuf
 
-synchronizers:
+viewSources:
   - message: kafmesh.deviceId.customer
     type: protobuf
     description: Synchronizes the assigned devices in the database with kafka
+    partitions: 10
+
+viewSinks:
+  - message: kafmesh.deviceId.detail
+    type: protobuf
+    description: Synchronizes the device details to an api
     partitions: 10
 `
 
@@ -67,8 +73,8 @@ synchronizers:
 		Name:        "details",
 		Description: "The details component handles the flow for device details.",
 
-		Emitters: []models.Emitter{
-			models.Emitter{
+		Sources: []models.Source{
+			models.Source{
 				TopicDefinition: models.TopicDefinition{
 					Message: "kafmesh.deviceId.detail",
 					Type:    &topicType,
@@ -150,8 +156,8 @@ synchronizers:
 			},
 		},
 
-		Synchronizers: []models.Synchronizer{
-			models.Synchronizer{
+		ViewSources: []models.ViewSource{
+			models.ViewSource{
 				TopicDefinition: models.TopicDefinition{
 					Message: "kafmesh.deviceId.customer",
 					Type:    &topicType,
@@ -160,6 +166,18 @@ synchronizers:
 					Partitions: &partition,
 				},
 				Description: "Synchronizes the assigned devices in the database with kafka",
+			},
+		},
+		ViewSinks: []models.ViewSink{
+			models.ViewSink{
+				TopicDefinition: models.TopicDefinition{
+					Message: "kafmesh.deviceId.detail",
+					Type:    &topicType,
+				},
+				TopicCreationDefinition: models.TopicCreationDefinition{
+					Partitions: &partition,
+				},
+				Description: "Synchronizes the device details to an api",
 			},
 		},
 	}, component)

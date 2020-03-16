@@ -9,7 +9,7 @@ import (
 )
 
 func validateEmitter(tmpDir string, t *testing.T) {
-	s, err := ioutil.ReadFile(path.Join(tmpDir, "internal", "kafmesh", "details", "testMesh_testSerial_details_emitter.km.go"))
+	s, err := ioutil.ReadFile(path.Join(tmpDir, "internal", "kafmesh", "details", "testMesh_testSerial_details_source.km.go"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -34,34 +34,34 @@ import (
 	"test/internal/kafmesh/models/testMesh/testSerial"
 )
 
-type TestSerialDetails_Emitter interface {
-	Emit(message TestSerialDetails_Emitter_Message) error
-	EmitBulk(ctx context.Context, messages []TestSerialDetails_Emitter_Message) error
+type TestSerialDetails_Source interface {
+	Emit(message TestSerialDetails_Source_Message) error
+	EmitBulk(ctx context.Context, messages []TestSerialDetails_Source_Message) error
 	Delete(key string) error
 }
 
-type TestSerialDetails_Emitter_impl struct {
+type TestSerialDetails_Source_impl struct {
 	emitter *runner.Emitter
 }
 
-type TestSerialDetails_Emitter_Message struct {
+type TestSerialDetails_Source_Message struct {
 	Key string
 	Value *testSerial.Details
 }
 
-type impl_TestSerialDetails_Emitter_Message struct {
-	msg TestSerialDetails_Emitter_Message
+type impl_TestSerialDetails_Source_Message struct {
+	msg TestSerialDetails_Source_Message
 }
 
-func (m *impl_TestSerialDetails_Emitter_Message) Key() string {
+func (m *impl_TestSerialDetails_Source_Message) Key() string {
 	return m.msg.Key
 }
 
-func (m *impl_TestSerialDetails_Emitter_Message) Value() interface{} {
+func (m *impl_TestSerialDetails_Source_Message) Value() interface{} {
 	return m.msg.Value
 }
 
-func New_TestSerialDetails_Emitter(options runner.ServiceOptions) (*TestSerialDetails_Emitter_impl, error) {
+func New_TestSerialDetails_Source(options runner.ServiceOptions) (*TestSerialDetails_Source_impl, error) {
 	brokers := options.Brokers
 	protoWrapper := options.ProtoWrapper
 
@@ -76,31 +76,31 @@ func New_TestSerialDetails_Emitter(options runner.ServiceOptions) (*TestSerialDe
 		goka.WithEmitterHasher(kafkautil.MurmurHasher))
 
 	if err != nil {
-		return nil, errors.Wrap(err, "failed creating emitter")
+		return nil, errors.Wrap(err, "failed creating source")
 	}
 
-	return &TestSerialDetails_Emitter_impl{
+	return &TestSerialDetails_Source_impl{
 		emitter: runner.NewEmitter(emitter),
 	}, nil
 }
 
-func (e *TestSerialDetails_Emitter_impl) Watch(ctx context.Context) func() error {
+func (e *TestSerialDetails_Source_impl) Watch(ctx context.Context) func() error {
 	return e.emitter.Watch(ctx)
 }
 
-func (e *TestSerialDetails_Emitter_impl) Emit(message TestSerialDetails_Emitter_Message) error {
+func (e *TestSerialDetails_Source_impl) Emit(message TestSerialDetails_Source_Message) error {
 	return e.emitter.Emit(message.Key, message.Value)
 }
 
-func (e *TestSerialDetails_Emitter_impl) EmitBulk(ctx context.Context, messages []TestSerialDetails_Emitter_Message) error {
+func (e *TestSerialDetails_Source_impl) EmitBulk(ctx context.Context, messages []TestSerialDetails_Source_Message) error {
 	b := []runner.EmitMessage{}
 	for _, m := range messages {
-		b = append(b, &impl_TestSerialDetails_Emitter_Message{msg: m})
+		b = append(b, &impl_TestSerialDetails_Source_Message{msg: m})
 	}
 	return e.emitter.EmitBulk(ctx, b)
 }
 
-func (e *TestSerialDetails_Emitter_impl) Delete(key string) error {
+func (e *TestSerialDetails_Source_impl) Delete(key string) error {
 	return e.emitter.Emit(key, nil)
 }
 `

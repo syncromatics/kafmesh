@@ -8,18 +8,18 @@ import (
 	"github.com/pkg/errors"
 )
 
-// ProtoSynchronizerJob executes a protobuf synchronize
-type ProtoSynchronizerJob struct {
+// ProtoViewSourceJob executes a protobuf synchronize
+type ProtoViewSourceJob struct {
 	context.Context
 	view     *goka.View
 	emitter  *Emitter
 	keysSeen map[string]struct{}
 }
 
-// NewProtoSynchronizerJob creates a new proto synchronizer job
-func NewProtoSynchronizerJob(ctx context.Context, view *goka.View, emitter *Emitter) *ProtoSynchronizerJob {
+// NewProtoViewSourceJob creates a new proto view source job
+func NewProtoViewSourceJob(ctx context.Context, view *goka.View, emitter *Emitter) *ProtoViewSourceJob {
 	keysSeen := map[string]struct{}{}
-	return &ProtoSynchronizerJob{
+	return &ProtoViewSourceJob{
 		ctx,
 		view,
 		emitter,
@@ -28,7 +28,7 @@ func NewProtoSynchronizerJob(ctx context.Context, view *goka.View, emitter *Emit
 }
 
 // Update adds a key/value pair to the job
-func (s *ProtoSynchronizerJob) Update(key string, msg proto.Message) error {
+func (s *ProtoViewSourceJob) Update(key string, msg proto.Message) error {
 	s.keysSeen[key] = struct{}{}
 
 	current, err := s.view.Get(key)
@@ -56,7 +56,7 @@ func (s *ProtoSynchronizerJob) Update(key string, msg proto.Message) error {
 }
 
 // Finish the job and run deletes
-func (s *ProtoSynchronizerJob) Finish() error {
+func (s *ProtoViewSourceJob) Finish() error {
 	currentKeys, err := s.keys()
 	if err != nil {
 		return errors.Wrap(err, "failed to get current keys")
@@ -77,7 +77,7 @@ func (s *ProtoSynchronizerJob) Finish() error {
 	return nil
 }
 
-func (s *ProtoSynchronizerJob) keys() ([]string, error) {
+func (s *ProtoViewSourceJob) keys() ([]string, error) {
 	it, err := s.view.Iterator()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get iterator")

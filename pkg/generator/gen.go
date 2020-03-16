@@ -165,23 +165,23 @@ func processComponent(rootPath string, outputPath string, mod string, modelsPath
 		}
 	}
 
-	for _, e := range component.Emitters {
+	for _, e := range component.Sources {
 		fileName := strings.ReplaceAll(e.Message, ".", "_")
-		fileName = fmt.Sprintf("%s_emitter.km.go", fileName)
+		fileName = fmt.Sprintf("%s_source.km.go", fileName)
 		file, err := os.Create(path.Join(componentPath, fileName))
 		if err != nil {
 			return errors.Wrapf(err, "failed to open service file")
 		}
 		defer file.Close()
 
-		co, err := buildEmitterOptions(component.Name, mod, mPath, service, e)
+		co, err := buildSourceOptions(component.Name, mod, mPath, service, e)
 		if err != nil {
-			return errors.Wrap(err, "failed to build emitter options")
+			return errors.Wrap(err, "failed to build source options")
 		}
 
-		err = generateEmitter(file, co)
+		err = generateSource(file, co)
 		if err != nil {
-			return errors.Wrap(err, "failed to generate emitter")
+			return errors.Wrap(err, "failed to generate source")
 		}
 	}
 
@@ -226,23 +226,43 @@ func processComponent(rootPath string, outputPath string, mod string, modelsPath
 		}
 	}
 
-	for _, s := range component.Synchronizers {
+	for _, s := range component.ViewSources {
 		fileName := strings.ReplaceAll(s.Message, ".", "_")
-		fileName = fmt.Sprintf("%s_synchronizer.km.go", fileName)
+		fileName = fmt.Sprintf("%s_viewSource.km.go", fileName)
 		file, err := os.Create(path.Join(componentPath, fileName))
 		if err != nil {
 			return errors.Wrapf(err, "failed to open service file")
 		}
 		defer file.Close()
 
-		co, err := buildSynchronizerOptions(component.Name, mod, mPath, service, s)
+		co, err := buildViewSourceOptions(component.Name, mod, mPath, service, s)
 		if err != nil {
-			return errors.Wrap(err, "failed to build synchronizer options")
+			return errors.Wrap(err, "failed to build viewSource options")
 		}
 
-		err = generateSynchronizer(file, co)
+		err = generateViewSource(file, co)
 		if err != nil {
-			return errors.Wrap(err, "failed to generate synchronizer")
+			return errors.Wrap(err, "failed to generate viewSource")
+		}
+	}
+
+	for _, s := range component.ViewSinks {
+		fileName := strings.ReplaceAll(s.Message, ".", "_")
+		fileName = fmt.Sprintf("%s_viewSink.km.go", fileName)
+		file, err := os.Create(path.Join(componentPath, fileName))
+		if err != nil {
+			return errors.Wrapf(err, "failed to open service file")
+		}
+		defer file.Close()
+
+		co, err := buildViewSinkOptions(component.Name, mod, mPath, service, s)
+		if err != nil {
+			return errors.Wrap(err, "failed to build viewSink options")
+		}
+
+		err = generateViewSink(file, co)
+		if err != nil {
+			return errors.Wrap(err, "failed to generate viewSink")
 		}
 	}
 

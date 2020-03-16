@@ -145,8 +145,8 @@ message DetailsEnriched {
 						},
 					},
 				},
-				Emitters: []models.Emitter{
-					models.Emitter{
+				Sources: []models.Source{
+					models.Source{
 						TopicDefinition: models.TopicDefinition{
 							Message: "testMesh.testSerial.details",
 						},
@@ -167,9 +167,17 @@ message DetailsEnriched {
 						},
 					},
 				},
-				Synchronizers: []models.Synchronizer{
-					models.Synchronizer{
+				ViewSources: []models.ViewSource{
+					models.ViewSource{
 						Name: "test to database",
+						TopicDefinition: models.TopicDefinition{
+							Message: "testMesh.testId.test",
+						},
+					},
+				},
+				ViewSinks: []models.ViewSink{
+					models.ViewSink{
+						Name: "test to api",
 						TopicDefinition: models.TopicDefinition{
 							Message: "testMesh.testId.test",
 						},
@@ -188,7 +196,8 @@ message DetailsEnriched {
 	validateEmitter(newPath, t)
 	validateSink(newPath, t)
 	validateView(newPath, t)
-	validateSynchronizer(newPath, t)
+	validateViewSource(newPath, t)
+	validateViewSink(newPath, t)
 	validateService(newPath, t)
 	validateTopic(newPath, t)
 }
