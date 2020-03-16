@@ -9,7 +9,7 @@ import (
 )
 
 func validateViewSink(tmpDir string, t *testing.T) {
-	s, err := ioutil.ReadFile(path.Join(tmpDir, "internal", "kafmesh", "details", "testMesh_testId_test_viewSink.km.go"))
+	s, err := ioutil.ReadFile(path.Join(tmpDir, "internal", "kafmesh", "details", "testId_test_viewSink.km.go"))
 	if err != nil {
 		t.Fatal(err)
 	}

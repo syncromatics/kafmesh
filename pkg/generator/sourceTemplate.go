@@ -2,10 +2,8 @@ package generator
 
 import (
 	"io"
-	"strings"
 	"text/template"
 
-	"github.com/iancoleman/strcase"
 	"github.com/pkg/errors"
 	"github.com/syncromatics/kafmesh/pkg/models"
 )
@@ -120,16 +118,10 @@ func buildSourceOptions(pkg string, mod string, modelsPath string, service *mode
 		Package: pkg,
 	}
 
-	var name strings.Builder
-	nameFrags := strings.Split(source.Message, ".")
-	for _, f := range nameFrags[1:] {
-		name.WriteString(strcase.ToCamel(f))
-	}
-
 	options.TopicName = source.ToTopicName(service)
-	options.Name = name.String()
+	options.Name = source.ToSafeMessageTypeName()
 	options.Import = source.ToPackage(service)
-	options.MessageType = nameFrags[len(nameFrags)-2] + "." + strcase.ToCamel(nameFrags[len(nameFrags)-1])
+	options.MessageType = source.ToMessageTypeWithPackage()
 
 	return options, nil
 }

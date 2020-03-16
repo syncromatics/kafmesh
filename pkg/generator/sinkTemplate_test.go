@@ -31,7 +31,7 @@ import (
 
 	"github.com/syncromatics/kafmesh/pkg/runner"
 
-	testSerial "test/internal/kafmesh/models/testMesh/testSerial"
+	"test/internal/kafmesh/models/testMesh/testSerial"
 )
 
 type EnrichedDataPostgres_Sink interface {
@@ -93,7 +93,7 @@ func Register_EnrichedDataPostgres_Sink(options runner.ServiceOptions, sink Enri
 	d := &impl_EnrichedDataPostgres_Sink{
 		sink: sink,
 		codec: codec,
-		group: "testService.details.enricheddatapostgres-sink",
+		group: "testMesh.details.enricheddatapostgres-sink",
 		topic: "testMesh.testSerial.detailsEnriched",
 		maxBufferSize: maxBufferSize,
 		interval: interval,

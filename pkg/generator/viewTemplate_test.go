@@ -9,7 +9,7 @@ import (
 )
 
 func validateView(tmpDir string, t *testing.T) {
-	s, err := ioutil.ReadFile(path.Join(tmpDir, "internal", "kafmesh", "details", "testMesh_testSerial_detailsEnriched_view.km.go"))
+	s, err := ioutil.ReadFile(path.Join(tmpDir, "internal", "kafmesh", "details", "testSerial_detailsEnriched_view.km.go"))
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -319,6 +319,7 @@ func buildProcessorOptions(pkg string, mod string, modelsPath string, service *m
 	for _, lookup := range processor.Lookups {
 		var name strings.Builder
 		name.WriteString("Lookup_")
+
 		nameFrags := strings.Split(lookup.Message, ".")
 		for _, f := range nameFrags[1:] {
 			name.WriteString(strcase.ToCamel(f))
@@ -346,7 +347,7 @@ func buildProcessorOptions(pkg string, mod string, modelsPath string, service *m
 
 		m := contextMethod{
 			interfaceMethod: interfaceMethod{
-				Name: name.String(),
+				Name: fmt.Sprintf("Lookup_%s", lookup.ToSafeMessageTypeName()),
 				Args: args.String(),
 			},
 			Type:        "lookup",
@@ -405,7 +406,7 @@ func buildProcessorOptions(pkg string, mod string, modelsPath string, service *m
 
 		m := contextMethod{
 			interfaceMethod: interfaceMethod{
-				Name: name.String(),
+				Name: fmt.Sprintf("Join_%s", join.ToSafeMessageTypeName()),
 				Args: args.String(),
 			},
 			Type:        "join",
@@ -464,7 +465,7 @@ func buildProcessorOptions(pkg string, mod string, modelsPath string, service *m
 
 		m := contextMethod{
 			interfaceMethod: interfaceMethod{
-				Name: name.String(),
+				Name: fmt.Sprintf("Output_%s", output.ToSafeMessageTypeName()),
 				Args: args.String(),
 			},
 			Type: "output",

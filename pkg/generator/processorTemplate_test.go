@@ -50,8 +50,8 @@ type Enricher_ProcessorContext interface {
 }
 
 type Enricher_Processor interface {
-	HandleTestMeshTestIDTest(ctx Enricher_ProcessorContext, message *m0.Test) error
-	HandleTestMeshTestIDTest2(ctx Enricher_ProcessorContext, message *m0.Test2) error
+	HandleTestIDTest(ctx Enricher_ProcessorContext, message *m0.Test) error
+	HandleTestIDTest2(ctx Enricher_ProcessorContext, message *m0.Test2) error
 }
 
 type Enricher_ProcessorContext_Impl struct {
@@ -110,7 +110,7 @@ func Register_Enricher_Processor(options runner.ServiceOptions, service Enricher
 		WriteBuffer:        opt.MiB * 1,
 	}
 
-	path := filepath.Join("/tmp/storage", "processor", "testService.details.enricher")
+	path := filepath.Join("/tmp/storage", "processor", "testMesh.details.enricher")
 
 	err := os.MkdirAll(path, os.ModePerm)
 	if err != nil {
@@ -140,7 +140,7 @@ func Register_Enricher_Processor(options runner.ServiceOptions, service Enricher
 		return nil, errors.Wrap(err, "failed to create codec")
 	}
 
-	c4, err := protoWrapper.Codec("testService.details.enricher-table", &m1.DetailsState{})
+	c4, err := protoWrapper.Codec("testMesh.details.enricher-table", &m1.DetailsState{})
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create codec")
 	}
@@ -149,7 +149,7 @@ func Register_Enricher_Processor(options runner.ServiceOptions, service Enricher
 		goka.Input(goka.Stream("testMesh.testId.test"), c0, func(ctx goka.Context, m interface{}) {
 			msg := m.(*m0.Test)
 			w := new_Enricher_ProcessorContext_Impl(ctx)
-			err := service.HandleTestMeshTestIDTest(w, msg)
+			err := service.HandleTestIDTest(w, msg)
 			if err != nil {
 				ctx.Fail(err)
 			}
@@ -157,7 +157,7 @@ func Register_Enricher_Processor(options runner.ServiceOptions, service Enricher
 		goka.Input(goka.Stream("testMesh.testId.test2"), c1, func(ctx goka.Context, m interface{}) {
 			msg := m.(*m0.Test2)
 			w := new_Enricher_ProcessorContext_Impl(ctx)
-			err := service.HandleTestMeshTestIDTest2(w, msg)
+			err := service.HandleTestIDTest2(w, msg)
 			if err != nil {
 				ctx.Fail(err)
 			}
@@ -167,7 +167,7 @@ func Register_Enricher_Processor(options runner.ServiceOptions, service Enricher
 		goka.Output(goka.Stream("testMesh.testSerial.detailsEnriched"), c3),
 		goka.Persist(c4),
 	}
-	group := goka.DefineGroup(goka.Group("testService.details.enricher"), edges...)
+	group := goka.DefineGroup(goka.Group("testMesh.details.enricher"), edges...)
 
 	processor, err := goka.NewProcessor(brokers,
 		group,

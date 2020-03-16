@@ -32,6 +32,15 @@ import (
 var (
 	topics = []runner.Topic{
 		runner.Topic {
+			Name:       "testMesh.details.enricher-table",
+			Partitions: 10,
+			Replicas:   1,
+			Compact:    true,
+			Retention:  86400000 * time.Millisecond,
+			Segment:    43200000 * time.Millisecond,
+			Create:     true,
+		},
+		runner.Topic {
 			Name:       "testMesh.testId.test",
 			Partitions: 10,
 			Replicas:   1,
@@ -63,15 +72,6 @@ var (
 			Partitions: 10,
 			Replicas:   1,
 			Compact:    false,
-			Retention:  86400000 * time.Millisecond,
-			Segment:    43200000 * time.Millisecond,
-			Create:     true,
-		},
-		runner.Topic {
-			Name:       "testService.details.enricher-table",
-			Partitions: 10,
-			Replicas:   1,
-			Compact:    true,
 			Retention:  86400000 * time.Millisecond,
 			Segment:    43200000 * time.Millisecond,
 			Create:     true,

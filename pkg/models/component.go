@@ -131,6 +131,13 @@ func (t TopicDefinition) ToPackage(service *Service) string {
 	return strings.TrimRight(builder.String(), "/")
 }
 
+// ToMessageTypeWithPackage gets the message type with package
+func (t TopicDefinition) ToMessageTypeWithPackage() string {
+	nameFrags := strings.Split(t.Message, ".")
+
+	return nameFrags[len(nameFrags)-2] + "." + strcase.ToCamel(nameFrags[len(nameFrags)-1])
+}
+
 // TopicCreationDefinition describe how a topic should be created
 type TopicCreationDefinition struct {
 	Partitions *int
@@ -219,6 +226,15 @@ type Sink struct {
 	Name            string
 	Description     string
 	TopicDefinition `yaml:",inline"`
+}
+
+// ToSafeName get a go safe name
+func (p *Sink) ToSafeName() string {
+	builder := strings.Builder{}
+	for _, f := range strings.Split(p.Name, " ") {
+		builder.WriteString(strcase.ToCamel(f))
+	}
+	return builder.String()
 }
 
 // ViewSource is a job that will sync an external source into a kafka view

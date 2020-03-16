@@ -6,7 +6,6 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/iancoleman/strcase"
 	"github.com/pkg/errors"
 	"github.com/syncromatics/kafmesh/pkg/models"
 )
@@ -25,7 +24,7 @@ import (
 
 	"github.com/syncromatics/kafmesh/pkg/runner"
 
-	{{ .Import }}
+	"{{ .Import }}"
 )
 
 type {{ .Name }}_Sink interface {
@@ -124,33 +123,11 @@ func buildSinkOptions(pkg string, mod string, modelsPath string, sink models.Sin
 		Package: pkg,
 	}
 
-	var name strings.Builder
-	nameFrags := strings.Split(sink.Name, " ")
-	for _, f := range nameFrags {
-		name.WriteString(strcase.ToCamel(f))
-	}
-	nameFrags = strings.Split(sink.Message, ".")
-
-	topic := sink.Message
-	if sink.TopicDefinition.Topic != nil {
-		topic = *sink.TopicDefinition.Topic
-	}
-
-	options.TopicName = topic
-	options.Name = name.String()
+	options.TopicName = sink.ToTopicName(service)
+	options.Name = sink.ToSafeName()
 	options.GroupName = fmt.Sprintf("%s.%s.%s-sink", service.Name, component.Name, strings.ToLower(options.Name))
-
-	var mPkg strings.Builder
-	for _, p := range nameFrags[:len(nameFrags)-1] {
-		mPkg.WriteString("/")
-		mPkg.WriteString(p)
-	}
-
-	imp := strings.TrimPrefix(mPkg.String(), "/")
-	d := strings.Split(imp, "/")
-	options.Import = fmt.Sprintf("%s \"%s%s/%s\"", d[len(d)-1], mod, modelsPath, imp)
-
-	options.MessageType = nameFrags[len(nameFrags)-2] + "." + strcase.ToCamel(nameFrags[len(nameFrags)-1])
+	options.Import = sink.ToPackage(service)
+	options.MessageType = sink.ToMessageTypeWithPackage()
 
 	return options, nil
 }

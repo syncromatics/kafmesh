@@ -4,10 +4,8 @@ import (
 	"fmt"
 	"io"
 	"path"
-	"strings"
 	"text/template"
 
-	"github.com/iancoleman/strcase"
 	"github.com/pkg/errors"
 	"github.com/syncromatics/kafmesh/pkg/models"
 )
@@ -45,7 +43,7 @@ func Register_{{ .ExportName }}(service *runner.Service, processor {{ .Package }
 {{ end -}}
 
 {{ range .Sources }}
-func New_{{ .Name }}_Source(service *runner.Service) ({{ .Package }}.{{ .Name }}_Source, error) {
+func New_{{ .ExportName }}_Source(service *runner.Service) ({{ .Package }}.{{ .Name }}_Source, error) {
 	e, err := {{ .Package }}.New_{{ .Name }}_Source(service.Options())
 	if err != nil {
 		return nil, err
@@ -61,7 +59,7 @@ func New_{{ .Name }}_Source(service *runner.Service) ({{ .Package }}.{{ .Name }}
 {{ end -}}
 
 {{ range .Views }}
-func New_{{ .Name }}_View(service *runner.Service) ({{ .Package }}.{{ .Name }}_View, error) {
+func New_{{ .ExportName }}_View(service *runner.Service) ({{ .Package }}.{{ .Name }}_View, error) {
 	v, err := {{ .Package }}.New_{{ .Name }}_View(service.Options())
 	if err != nil {
 		return nil, err
@@ -133,13 +131,15 @@ type serviceProcessor struct {
 }
 
 type serviceSource struct {
-	Name    string
-	Package string
+	Name       string
+	ExportName string
+	Package    string
 }
 
 type serviceView struct {
-	Name    string
-	Package string
+	Name       string
+	ExportName string
+	Package    string
 }
 
 type serviceSink struct {
@@ -199,54 +199,32 @@ func buildServiceOptions(service *models.Service, components []*models.Component
 		}
 
 		for _, e := range c.Sources {
-			var name strings.Builder
-			nameFrags := strings.Split(e.Message, ".")
-			for _, f := range nameFrags[1:] {
-				name.WriteString(strcase.ToCamel(f))
-			}
-
 			proc := serviceSource{
-				Package: c.Name,
-				Name:    strings.TrimRight(name.String(), "_"),
+				Package:    c.Name,
+				ExportName: fmt.Sprintf("%s_%s", c.ToSafeName(), e.ToSafeMessageTypeName()),
+				Name:       e.ToSafeMessageTypeName(),
 			}
 			options.Sources = append(options.Sources, proc)
 		}
 
 		for _, v := range c.Views {
-			var name strings.Builder
-			nameFrags := strings.Split(v.Message, ".")
-			for _, f := range nameFrags[1:] {
-				name.WriteString(strcase.ToCamel(f))
-			}
-
 			proc := serviceView{
-				Package: c.Name,
-				Name:    strings.TrimRight(name.String(), "_"),
+				Package:    c.Name,
+				ExportName: fmt.Sprintf("%s_%s", c.ToSafeName(), v.ToSafeMessageTypeName()),
+				Name:       v.ToSafeMessageTypeName(),
 			}
 			options.Views = append(options.Views, proc)
 		}
 
 		for _, s := range c.Sinks {
-			var name strings.Builder
-			nameFrags := strings.Split(s.Name, " ")
-			for _, f := range nameFrags {
-				name.WriteString(strcase.ToCamel(f))
-			}
-
 			proc := serviceSink{
 				Package: c.Name,
-				Name:    name.String(),
+				Name:    s.ToSafeName(),
 			}
 			options.Sinks = append(options.Sinks, proc)
 		}
 
 		for _, s := range c.ViewSources {
-			var name strings.Builder
-			nameFrags := strings.Split(s.Message, ".")
-			for _, f := range nameFrags[1:] {
-				name.WriteString(strcase.ToCamel(f))
-			}
-
 			proc := serviceViewSource{
 				Package:    c.Name,
 				ExportName: fmt.Sprintf("%s_%s", c.ToSafeName(), s.ToSafeName()),
@@ -256,12 +234,6 @@ func buildServiceOptions(service *models.Service, components []*models.Component
 		}
 
 		for _, s := range c.ViewSinks {
-			var name strings.Builder
-			nameFrags := strings.Split(s.Message, ".")
-			for _, f := range nameFrags[1:] {
-				name.WriteString(strcase.ToCamel(f))
-			}
-
 			proc := serviceViewSink{
 				Package:    c.Name,
 				ExportName: fmt.Sprintf("%s_%s", c.ToSafeName(), s.ToSafeName()),

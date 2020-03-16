@@ -79,7 +79,7 @@ message DetailsEnriched {
 	newPath := path.Join(tmpDir, "defin")
 	options := generator.Options{
 		Service: &models.Service{
-			Name: "testService",
+			Name: "testMesh",
 			Output: models.OutputSettings{
 				Path:    "internal/kafmesh",
 				Package: "kafmesh",
@@ -108,39 +108,39 @@ message DetailsEnriched {
 						Inputs: []models.Input{
 							models.Input{
 								TopicDefinition: models.TopicDefinition{
-									Message: "testMesh.testId.test",
+									Message: "testId.test",
 								},
 							},
 							models.Input{
 								TopicDefinition: models.TopicDefinition{
-									Message: "testMesh.testId.test2",
+									Message: "testId.test2",
 								},
 							},
 						},
 						Lookups: []models.Lookup{
 							models.Lookup{
 								TopicDefinition: models.TopicDefinition{
-									Message: "testMesh.testSerial.details",
+									Message: "testSerial.details",
 								},
 							},
 						},
 						Joins: []models.Join{
 							models.Join{
 								TopicDefinition: models.TopicDefinition{
-									Message: "testMesh.testSerial.details",
+									Message: "testSerial.details",
 								},
 							},
 						},
 						Outputs: []models.Output{
 							models.Output{
 								TopicDefinition: models.TopicDefinition{
-									Message: "testMesh.testSerial.detailsEnriched",
+									Message: "testSerial.detailsEnriched",
 								},
 							},
 						},
 						Persistence: &models.Persistence{
 							TopicDefinition: models.TopicDefinition{
-								Message: "testMesh.testSerial.detailsState",
+								Message: "testSerial.detailsState",
 							},
 						},
 					},
@@ -148,7 +148,7 @@ message DetailsEnriched {
 				Sources: []models.Source{
 					models.Source{
 						TopicDefinition: models.TopicDefinition{
-							Message: "testMesh.testSerial.details",
+							Message: "testSerial.details",
 						},
 					},
 				},
@@ -156,14 +156,14 @@ message DetailsEnriched {
 					models.Sink{
 						Name: "Enriched Data Postgres",
 						TopicDefinition: models.TopicDefinition{
-							Message: "testMesh.testSerial.detailsEnriched",
+							Message: "testSerial.detailsEnriched",
 						},
 					},
 				},
 				Views: []models.View{
 					models.View{
 						TopicDefinition: models.TopicDefinition{
-							Message: "testMesh.testSerial.detailsEnriched",
+							Message: "testSerial.detailsEnriched",
 						},
 					},
 				},
@@ -171,7 +171,7 @@ message DetailsEnriched {
 					models.ViewSource{
 						Name: "test to database",
 						TopicDefinition: models.TopicDefinition{
-							Message: "testMesh.testId.test",
+							Message: "testId.test",
 						},
 					},
 				},
@@ -179,7 +179,7 @@ message DetailsEnriched {
 					models.ViewSink{
 						Name: "test to api",
 						TopicDefinition: models.TopicDefinition{
-							Message: "testMesh.testId.test",
+							Message: "testId.test",
 						},
 					},
 				},

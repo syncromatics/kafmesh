@@ -45,7 +45,7 @@ func Register_Details_Enricher_Processor(service *runner.Service, processor deta
 	return nil
 }
 
-func New_TestSerialDetails_Source(service *runner.Service) (details.TestSerialDetails_Source, error) {
+func New_Details_TestSerialDetails_Source(service *runner.Service) (details.TestSerialDetails_Source, error) {
 	e, err := details.New_TestSerialDetails_Source(service.Options())
 	if err != nil {
 		return nil, err
@@ -59,7 +59,7 @@ func New_TestSerialDetails_Source(service *runner.Service) (details.TestSerialDe
 	return e, nil
 }
 
-func New_TestSerialDetailsEnriched_View(service *runner.Service) (details.TestSerialDetailsEnriched_View, error) {
+func New_Details_TestSerialDetailsEnriched_View(service *runner.Service) (details.TestSerialDetailsEnriched_View, error) {
 	v, err := details.New_TestSerialDetailsEnriched_View(service.Options())
 	if err != nil {
 		return nil, err
