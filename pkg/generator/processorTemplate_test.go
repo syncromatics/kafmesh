@@ -26,6 +26,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/burdiyan/kafkautil"
 	"github.com/lovoo/goka"
@@ -42,6 +43,7 @@ import (
 
 type Enricher_ProcessorContext interface {
 	Key() string
+	Timestamp() time.Time
 	Lookup_TestSerialDetails(key string) *m1.Details
 	Join_TestSerialDetails() *m1.Details
 	Output_TestSerialDetailsEnriched(key string, message *m1.DetailsEnriched)
@@ -64,6 +66,10 @@ func new_Enricher_ProcessorContext_Impl(ctx goka.Context) *Enricher_ProcessorCon
 
 func (c *Enricher_ProcessorContext_Impl) Key() string {
 	return c.ctx.Key()
+}
+
+func (c *Enricher_ProcessorContext_Impl) Timestamp() time.Time {
+	return c.ctx.Timestamp()
 }
 
 func (c *Enricher_ProcessorContext_Impl) Lookup_TestSerialDetails(key string) *m1.Details {

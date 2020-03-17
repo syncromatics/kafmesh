@@ -22,6 +22,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/burdiyan/kafkautil"
 	"github.com/lovoo/goka"
@@ -39,6 +40,7 @@ import (
 {{ with .Context -}}
 type {{ .Name }}_ProcessorContext interface {
 	Key() string
+	Timestamp() time.Time
 	{{- range .Methods }}
 	{{.Name}}({{ .Args }}
 {{- end}}
@@ -64,6 +66,10 @@ func new_{{ .Name }}_ProcessorContext_Impl(ctx goka.Context) *{{ .Name }}_Proces
 {{$c := .Name}}
 func (c *{{$c}}_ProcessorContext_Impl) Key() string {
 	return c.ctx.Key()
+}
+
+func (c *{{$c}}_ProcessorContext_Impl) Timestamp() time.Time {
+	return c.ctx.Timestamp()
 }
 {{ range .Methods }}
 func (c *{{$c}}_ProcessorContext_Impl) {{.Name}}({{ .Args }} {
