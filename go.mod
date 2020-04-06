@@ -12,18 +12,20 @@ require (
 	github.com/facebookgo/stack v0.0.0-20160209184415-751773369052 // indirect
 	github.com/facebookgo/subset v0.0.0-20200203212716-c811ad88dec4 // indirect
 	github.com/gogo/protobuf v1.3.1
-	github.com/golang/mock v1.4.1 // indirect
+	github.com/golang/mock v1.4.1
 	github.com/golang/protobuf v1.3.4
 	github.com/iancoleman/strcase v0.0.0-20191112232945-16388991a334
+	github.com/jinzhu/copier v0.0.0-20190924061706-b57f9002281a
 	github.com/klauspost/cpuid v1.2.3 // indirect
 	github.com/lovoo/goka v0.1.3
+	github.com/opentracing/opentracing-go v1.1.0
 	github.com/pkg/errors v0.8.1
 	github.com/samuel/go-zookeeper v0.0.0-20190923202752-2cc03de413da // indirect
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stretchr/testify v1.4.0
 	github.com/syncromatics/proto-schema-registry v0.7.1
-	github.com/syndtr/goleveldb v1.0.0 // indirect
+	github.com/syndtr/goleveldb v1.0.0
 	github.com/wvanbergen/kazoo-go v0.0.0-20180202103751-f72d8611297a // indirect
 	github.com/yargevad/filepathx v0.0.0-20161019152617-907099cb5a62
 	golang.org/x/net v0.0.0-20191009170851-d66e71096ffb // indirect

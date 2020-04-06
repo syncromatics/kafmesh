@@ -1,0 +1,158 @@
+syntax = "proto3";
+
+package kafmesh.discover.v1;
+
+import "google/protobuf/duration.proto";
+
+option csharp_namespace = "Kafmesh.Discover.V1";
+option go_package = "discoverv1";
+
+service Discover {
+    rpc GetServiceInfo(DiscoverRequest) returns (DiscoverResponse);
+}
+
+message DiscoverRequest {
+}
+
+message DiscoverResponse {
+    string goStruct = 1;
+    string serviceName = 2;
+    string serviceDescription = 3;
+    Component component = 4;
+}
+
+message Component {
+    string name = 1;
+    string description = 2;
+    repeated Source sources = 3;
+    repeated Processor processors = 4;
+    repeated Sink sinks = 5;
+    repeated View views = 6;
+    repeated ViewSource viewSources = 7;
+    repeated ViewSink viewSinks = 8;
+    Persistence persistence = 9;
+}
+
+message Defaults {
+    int64 partition = 1;
+    int64 replication = 2;
+    string type = 3;
+    google.protobuf.Duration retention = 4;
+    google.protobuf.Duration segment = 5;
+}
+
+message DiscoverInfo {
+    string serviceName = 1;
+    string serviceDescription = 2;
+    Component component = 3;
+}
+
+message Input {
+    TopicDefinition topicDefinition = 1;
+}
+
+message Join {
+    TopicDefinition topicDefinition = 1;
+}
+
+message Lookup {
+    TopicDefinition topicDefinition = 1;
+}
+
+message MessageDefinitions {
+    repeated string protobuf = 1;
+    repeated string avro = 2;
+}
+
+message Messages {
+    repeated string protobuf = 1;
+    repeated string avro = 2;
+}
+
+message Output {
+    TopicDefinition topicDefinition = 1;
+    string description = 2;
+}
+
+message OutputSettings {
+    string package = 1;
+    string path = 2;
+    string module = 3;
+}
+
+message Persistence {
+    TopicDefinition topicDefinition = 1;
+    TopicCreationDefinition topicCreationDefinition = 2;
+}
+
+message Processor {
+    string name = 1;
+    string groupNameOverride = 2;
+    string description = 3;
+    repeated Input inputs = 4;
+    repeated Lookup lookups = 5;
+    repeated Join joins = 6;
+    repeated Output outputs = 7;
+    Persistence persistence = 8;
+}
+
+message Service {
+    string name = 1;
+    string description = 2;
+    repeated string components = 3;
+    OutputSettings output = 4;
+    TopicDefaults defaults = 5;
+    MessageDefinitions messages = 6;
+}
+
+message Sink {
+    string name = 1;
+    string description = 2;
+    TopicDefinition topicDefinition = 3;
+}
+
+message Source {
+    TopicDefinition topicDefinition = 1;
+    TopicCreationDefinition topicCreationDefinition = 2;
+}
+
+message TopicCreationDefinition {
+    int64 partitions = 1;
+    int64 replicas = 2;
+    bool compact = 3;
+    google.protobuf.Duration retention = 4;
+    google.protobuf.Duration segment = 5;
+}
+
+message TopicDefaults {
+    int64 partition = 1;
+    int64 replication = 2;
+    string type = 3;
+    google.protobuf.Duration retention = 4;
+    google.protobuf.Duration segment = 5;
+}
+
+message TopicDefinition {
+    string message = 1;
+    string type = 2;
+    string topic = 3;
+}
+
+message View {
+    TopicDefinition topicDefinition = 1;
+    TopicCreationDefinition topicCreationDefinition = 2;
+}
+
+message ViewSink {
+    string name = 1;
+    TopicDefinition topicDefinition = 2;
+    TopicCreationDefinition topicCreationDefinition = 3;
+    string description = 4;
+}
+
+message ViewSource {
+    string name = 1;
+    TopicDefinition topicDefinition = 2;
+    TopicCreationDefinition topicCreationDefinition = 3;
+    string description = 4;
+}

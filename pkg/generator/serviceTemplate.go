@@ -38,6 +38,8 @@ func Register_{{ .ExportName }}(service *runner.Service, processor {{ .Package }
 		return errors.Wrap(err, "failed to register runner with service")
 	}
 
+	{{ .Package }}.Register_{{ .Name }}_With_Discover(service)
+
 	return nil
 }
 {{ end -}}
@@ -168,6 +170,7 @@ type generateServiceOptions struct {
 	Sinks       []serviceSink
 	ViewSources []serviceViewSource
 	ViewSinks   []serviceViewSink
+
 }
 
 func generateService(writer io.Writer, options generateServiceOptions) error {

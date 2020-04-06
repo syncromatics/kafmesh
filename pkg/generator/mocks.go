@@ -26,6 +26,10 @@ func generateMocks(fullOutputDir string) error {
 			continue
 		}
 
+		if strings.Contains(d.Name(),"discover"){
+			continue
+		}
+
 		full := path.Join(fullOutputDir, d.Name())
 
 		files, err := ioutil.ReadDir(full)

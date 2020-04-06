@@ -11,6 +11,9 @@ generate-protos:
 	protoc -I docs/protos \
 		docs/protos/kafmesh/ping/v1/*.proto \
 		--go_out=plugins=grpc:./internal/protos
+	protoc -I docs/protos \
+        docs/protos/kafmesh/discover/v1/*.proto \
+    	--go_out=plugins=grpc:./internal/protos
 
 build-local:
 	go build -o ./artifacts/kafmesh-gen ./cmd/kafmesh-gen/main.go
