@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package kafmesh.discovery.v1;
+
+option csharp_namespace = "Kafmesh.Discovery.V1";
+option go_package = "discoveryv1";
+option java_multiple_files = true;
+option java_outer_classname = "DiscoveryApiProto";
+option java_package = "com.kafmesh.discovery.v1";
+option objc_class_prefix = "KDX";
+
+import "kafmesh/discovery/v1/service.proto";
+
+// DiscoveryAPI is a way for a kafmesh node to provide the structure of the
+// service running in it.
+service DiscoveryAPI {
+  // GetServiceInfo retreives information about the kafmesh service from the
+  // node.
+  rpc GetServiceInfo(GetServiceInfoRequest) returns (GetServiceInfoResponse);
+}
+
+message GetServiceInfoRequest {}
+
+message GetServiceInfoResponse { Service service = 1; }

@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	discoveryv1 "github.com/syncromatics/kafmesh/internal/protos/kafmesh/discovery/v1"
 	pingv1 "github.com/syncromatics/kafmesh/internal/protos/kafmesh/ping/v1"
 	"github.com/syncromatics/kafmesh/internal/services"
 
@@ -29,21 +30,26 @@ type Service struct {
 	protoWrapper *ProtoWrapper
 	server       *grpc.Server
 
-	mtx        sync.Mutex
-	configured bool
-	running    bool
-	runners    []func(context.Context) func() error
+	mtx          sync.Mutex
+	configured   bool
+	running      bool
+	runners      []func(context.Context) func() error
+	DiscoverInfo *discoveryv1.Service
 }
 
 // NewService creates a new kafmesh service
 func NewService(brokers []string, protoRegistry *Registry, grpcServer *grpc.Server) *Service {
-	pingv1.RegisterPingAPIServer(grpcServer, &services.PingAPI{})
-
-	return &Service{
+	service := &Service{
 		brokers:      brokers,
 		protoWrapper: NewProtoWrapper(protoRegistry),
 		server:       grpcServer,
+		DiscoverInfo: &discoveryv1.Service{},
 	}
+
+	pingv1.RegisterPingAPIServer(grpcServer, &services.PingAPI{})
+	discoveryv1.RegisterDiscoveryAPIServer(grpcServer, &services.DiscoverAPI{DiscoverInfo: service.DiscoverInfo})
+
+	return service
 }
 
 // ConfigureKafka waits for kafka to be ready and configures the topics

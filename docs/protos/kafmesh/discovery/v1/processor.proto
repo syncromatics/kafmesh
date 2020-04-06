@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package kafmesh.discovery.v1;
+
+option csharp_namespace = "Kafmesh.Discovery.V1";
+option go_package = "discoveryv1";
+option java_multiple_files = true;
+option java_outer_classname = "ProcessorProto";
+option java_package = "com.kafmesh.discovery.v1";
+option objc_class_prefix = "KDX";
+
+import "kafmesh/discovery/v1/topic_definition.proto";
+
+// Processor is a stateful kafmesh processor.
+message Processor {
+  string name = 1;
+  string group_name = 2;
+  string description = 3;
+  repeated Input inputs = 4;
+  repeated Lookup lookups = 5;
+  repeated Join joins = 6;
+  repeated Output outputs = 7;
+  Persistence persistence = 8;
+}
+
+// Input is the input to a processor.
+message Input { TopicDefinition topic = 1; }
+
+// Join is a join for a processor.
+message Join { TopicDefinition topic = 1; }
+
+// Lookup is a lookup for a processor.
+message Lookup { TopicDefinition topic = 1; }
+
+// Output is an output for a processor.
+message Output {
+  TopicDefinition topic = 1;
+  string description = 2;
+}
+
+// Persistence is the stateful persistence for a processor.
+message Persistence { TopicDefinition topic = 1; }

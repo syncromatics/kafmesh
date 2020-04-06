@@ -4,9 +4,15 @@ package kafmesh.ping.v1;
 
 option csharp_namespace = "Kafmesh.Ping.V1";
 option go_package = "pingv1";
+option java_multiple_files = true;
+option java_outer_classname = "PingApiProto";
+option java_package = "com.kafmesh.ping.v1";
+option objc_class_prefix = "KPX";
 
+// Ping api provides liveness checking for kafmesh.
 service PingAPI {
-    rpc Ping(PingRequest) returns (PingResponse);
+  // Ping returns ping response.
+  rpc Ping(PingRequest) returns (PingResponse);
 }
 
 message PingRequest {}

@@ -27,8 +27,6 @@ type Component struct {
 	Views       []View
 	ViewSources []ViewSource `yaml:"viewSources"`
 	ViewSinks   []ViewSink   `yaml:"viewSinks"`
-
-	Persistence *Persistence
 }
 
 // ToGroupName converts the component name to a kafka safe name to be used in group names

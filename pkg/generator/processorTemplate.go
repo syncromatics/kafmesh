@@ -230,6 +230,7 @@ type processorOptions struct {
 	Group     string
 	Edges     []edge
 	Codecs    []codec
+	Processor models.Processor
 }
 
 func generateProcessor(writer io.Writer, processor *processorOptions) error {
@@ -248,11 +249,12 @@ func buildProcessorOptions(pkg string, mod string, modelsPath string, service *m
 	codecIndex := 0
 
 	options := processorOptions{
-		Package: pkg,
-		Imports: []string{},
-		Group:   processor.GroupName(service, component),
-		Edges:   []edge{},
-		Codecs:  []codec{},
+		Package:   pkg,
+		Imports:   []string{},
+		Group:     processor.GroupName(service, component),
+		Edges:     []edge{},
+		Codecs:    []codec{},
+		Processor: models.Processor{},
 	}
 
 	options.Context = processorContext{
@@ -567,6 +569,8 @@ func buildProcessorOptions(pkg string, mod string, modelsPath string, service *m
 	}
 
 	sort.Strings(options.Imports)
+
+	options.Processor = processor
 
 	return &options, nil
 }
