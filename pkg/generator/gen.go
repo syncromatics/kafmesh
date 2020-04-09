@@ -93,6 +93,11 @@ func Generate(options Options) error {
 	}
 	defer file.Close()
 
+	err = os.Mkdir(path.Join(outputPath, "discover"), os.ModePerm)
+	if err != nil {
+		return errors.Wrapf(err, "failed to create discover directory")
+	}
+
 	for _, c := range options.Components {
 		err = processComponent(options.RootPath, outputPath, options.Service.Output.Module, modelsPath, options.Service, c)
 		if err != nil {

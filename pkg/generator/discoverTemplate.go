@@ -1,10 +1,12 @@
 package generator
 
 import (
-	"github.com/pkg/errors"
-	"github.com/syncromatics/kafmesh/pkg/models"
 	"io"
 	"text/template"
+
+	"github.com/syncromatics/kafmesh/pkg/models"
+
+	"github.com/pkg/errors"
 )
 
 var (
@@ -44,15 +46,14 @@ func Initialize_Discover_Info_{{ .Component.Name }}(service *runner.Service) {
 `))
 )
 
-type DiscoverOptions struct {
-	ServiceName string
+type discoverOptions struct {
+	ServiceName        string
 	ServiceDescription string
-	Component models.Component
+	Component          models.Component
 }
 
 func generateDiscover(writer io.Writer, serviceName string, serviceDescription string, component models.Component) error {
-
-	c := DiscoverOptions{
+	c := discoverOptions{
 		ServiceName:        serviceName,
 		ServiceDescription: serviceDescription,
 		Component:          component,
