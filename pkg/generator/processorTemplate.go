@@ -32,9 +32,6 @@ import (
 	"github.com/syndtr/goleveldb/leveldb/opt"
 
 	"github.com/syncromatics/kafmesh/pkg/runner"
-	"github.com/syncromatics/kafmesh/pkg/models"
-	"enplug-service/internal/definitions/discover"
-
 {{ range .Imports }}
 	{{ . }}
 {{- end }}
@@ -185,65 +182,6 @@ func Register_{{ .Name }}_Processor(options runner.ServiceOptions, service {{ .N
 			return nil
 		}
 	}, nil
-}
-
-func Register_{{ .Interface.Name }}_Processor_With_Discover(service *runner.Service) {
-	var processor = models.Processor{
-		Name:              "{{ .Processor.Name }}",
-		GroupNameOverride: {{ if not .Processor.GroupNameOverride }}nil{{ else }}"{{ .Processor.GroupNameOverride }}"{{ end }},
-		Description:       "{{ .Processor.Description }}",
-		Inputs:            []models.Input{
-{{- range $element := .Processor.Inputs }}
-			models.Input{
-				TopicDefinition: models.TopicDefinition{
-					Message: {{ if not $element.TopicDefinition.Message }}nil{{else}}"{{ $element.TopicDefinition.Message}}"{{ end }},
-					Type:    {{ if not $element.TopicDefinition.Type }}nil{{else}}"{{ $element.TopicDefinition.Type}}"{{ end }},
-					Topic:   {{ if not $element.TopicDefinition.Topic }}nil{{else}}"{{ $element.TopicDefinition.Topic}}"{{ end }},
-				},
-			},
-{{- end}}
-		},
-		Lookups: []models.Lookup{
-{{- range $element := .Processor.Lookups }}
-			models.Lookup{
-				TopicDefinition: models.TopicDefinition{
-					Message: {{ if not $element.Message }}nil{{else}}"{{ $element.Message}}"{{ end }},
-					Type:    {{ if not $element.Type }}nil{{else}}"{{ $element.Type}}"{{ end }},
-					Topic:   {{ if not $element.Topic }}nil{{else}}"{{ $element.Topic}}"{{ end }},
-				},
-			},
-{{- end}}
-		},
-		Joins: []models.Join{
-{{- range $element := .Processor.Joins }}
-			models.Join{
-				TopicDefinition: models.TopicDefinition{
-					Message: {{ if not $element.Message }}nil{{else}}"{{ $element.Message}}"{{ end }},
-					Type:    {{ if not $element.Type }}nil{{else}}"{{ $element.Type}}"{{ end }},
-					Topic:   {{ if not $element.Topic }}nil{{else}}"{{ $element.Topic}}"{{ end }},
-				},
-			},
-{{- end}}
-		},
-		Outputs: []models.Output{
-{{- range $element := .Processor.Outputs }}
-			models.Output{
-				TopicDefinition: models.TopicDefinition{
-					Message: {{ if not $element.Message }}nil{{else}}"{{ $element.Message}}"{{ end }},
-					Type:    {{ if not $element.Type }}nil{{else}}"{{ $element.Type}}"{{ end }},
-					Topic:   {{ if not $element.Topic }}nil{{else}}"{{ $element.Topic}}"{{ end }},
-				},
-				Description: "{{$element.Description }}",
-			},
-{{- end}}
-		},
-		Persistence: nil,
-	}
-
-	if len(service.DiscoverInfo.ServiceName) == 0 {
-		discover.Initialize_Discover_Info_{{ .Package }}(service)
-	}
-	service.DiscoverInfo.Component.Processors = append(service.DiscoverInfo.Component.Processors, processor)
 }
 `))
 )

@@ -103,6 +103,13 @@ func Generate(options Options) error {
 		return errors.Wrapf(err, "failed to generate package")
 	}
 
+	for _, c := range options.Components {
+		err = processComponent(options.RootPath, outputPath, options.Service.Output.Module, modelsPath, options.Service, c)
+		if err != nil {
+			return errors.Wrapf(err, "failed to process component")
+		}
+	}
+
 	file, err = os.Create(path.Join(outputPath, "discover.km.go"))
 	if err != nil {
 		return errors.Wrapf(err, "failed to open discover file")
@@ -113,7 +120,6 @@ func Generate(options Options) error {
 	if err != nil {
 		return errors.Wrapf(err, "failed to generate discover")
 	}
-	return nil
 
 	tOptions, err := buildTopicOption(options.Service, options.Components)
 	if err != nil {

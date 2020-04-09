@@ -95,6 +95,7 @@ message DetailsEnriched {
 				Replication: 1,
 				Retention:   24 * time.Hour,
 				Segment:     12 * time.Hour,
+				Type:        "protobuf",
 			},
 		},
 		RootPath:        newPath,
