@@ -20,22 +20,21 @@ import (
 )
 
 func Initialize_Discover_Info_{{ .Component.Name }}(service *runner.Service) {
-
 	var serviceDetails = models.Service{
 		Name:        "{{ .ServiceName }}",
 		Description: "{{ .ServiceDescription }}",
 	}
 
-	var component = models.Component{
-				Name:        "{{ .Component.Name }}",
-				Description: "{{ .Component.Description }}",
-				Sources:     []models.Source{},
-				Processors:  []models.Processor{},
-				Sinks:       []models.Sink{},
-				Views:       []models.View{},
-				ViewSources: []models.ViewSource{},
-				ViewSinks:   []models.ViewSink{},
-				Persistence: nil,
+	var component = models.Component {
+		Name:        "{{ .Component.Name }}",
+		Description: "{{ .Component.Description }}",
+		Sources:     []models.Source{},
+		Processors:  []models.Processor{},
+		Sinks:       []models.Sink{},
+		Views:       []models.View{},
+		ViewSources: []models.ViewSource{},
+		ViewSinks:   []models.ViewSink{},
+		Persistence: nil,
 	}
 
 	service.DiscoverInfo.ServiceName = serviceDetails.Name

@@ -42,6 +42,8 @@ func Register_Details_Enricher_Processor(service *runner.Service, processor deta
 		return errors.Wrap(err, "failed to register runner with service")
 	}
 
+	details.Register_Enricher_Processor_With_Discover(service)
+
 	return nil
 }
 
