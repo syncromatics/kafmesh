@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package kafmesh.discovery.v1;
+
+option csharp_namespace = "Kafmesh.Discovery.V1";
+option go_package = "discoveryv1";
+option java_multiple_files = true;
+option java_outer_classname = "ViewSourceProto";
+option java_package = "com.kafmesh.discovery.v1";
+option objc_class_prefix = "KDX";
+
+import "kafmesh/discovery/v1/topic_definition.proto";
+
+// View Source is a kafmesh view source.
+message ViewSource {
+  string name = 1;
+  TopicDefinition topic = 2;
+  string description = 3;
+}

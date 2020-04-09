@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	discoverv1 "github.com/syncromatics/kafmesh/internal/protos/kafmesh/discover/v1"
+	discoveryv1 "github.com/syncromatics/kafmesh/internal/protos/kafmesh/discovery/v1"
 
 	"github.com/pkg/errors"
 )
@@ -13,7 +13,7 @@ import (
 
 // Scraper scrapes pods for kafmesh discovery info
 type Scraper interface {
-	Scrape(ctx context.Context) (map[string]*discoverv1.DiscoverResponse, error)
+	Scrape(ctx context.Context) (map[string]*discoveryv1.Service, error)
 }
 
 // ScrapeService periodically scrapes pods in the k8s cluster for kafmesh info

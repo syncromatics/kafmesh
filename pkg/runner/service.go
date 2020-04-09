@@ -2,11 +2,10 @@ package runner
 
 import (
 	"context"
-	discoverv1 "github.com/syncromatics/kafmesh/internal/protos/kafmesh/discover/v1"
-	"github.com/syncromatics/kafmesh/pkg/models"
 	"sync"
 	"time"
 
+	discoveryv1 "github.com/syncromatics/kafmesh/internal/protos/kafmesh/discovery/v1"
 	pingv1 "github.com/syncromatics/kafmesh/internal/protos/kafmesh/ping/v1"
 	"github.com/syncromatics/kafmesh/internal/services"
 
@@ -31,24 +30,24 @@ type Service struct {
 	protoWrapper *ProtoWrapper
 	server       *grpc.Server
 
-	mtx        sync.Mutex
-	configured bool
-	running    bool
-	runners    []func(context.Context) func() error
-	DiscoverInfo models.DiscoverInfo
+	mtx          sync.Mutex
+	configured   bool
+	running      bool
+	runners      []func(context.Context) func() error
+	DiscoverInfo *discoveryv1.Service
 }
 
 // NewService creates a new kafmesh service
 func NewService(brokers []string, protoRegistry *Registry, grpcServer *grpc.Server) *Service {
-
 	service := &Service{
 		brokers:      brokers,
 		protoWrapper: NewProtoWrapper(protoRegistry),
 		server:       grpcServer,
+		DiscoverInfo: &discoveryv1.Service{},
 	}
 
 	pingv1.RegisterPingAPIServer(grpcServer, &services.PingAPI{})
-	discoverv1.RegisterDiscoverServer(grpcServer, &services.DiscoverAPI{DiscoverInfo:&service.DiscoverInfo})
+	discoveryv1.RegisterDiscoveryAPIServer(grpcServer, &services.DiscoverAPI{DiscoverInfo: service.DiscoverInfo})
 
 	return service
 }
@@ -157,4 +156,3 @@ func (s *Service) waitForKafkaToBeReady(ctx context.Context) error {
 		}
 	}
 }
-

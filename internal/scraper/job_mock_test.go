@@ -7,7 +7,7 @@ package scraper_test
 import (
 	context "context"
 	gomock "github.com/golang/mock/gomock"
-	discoverv1 "github.com/syncromatics/kafmesh/internal/protos/kafmesh/discover/v1"
+	discoveryv1 "github.com/syncromatics/kafmesh/internal/protos/kafmesh/discovery/v1"
 	scraper "github.com/syncromatics/kafmesh/internal/scraper"
 	grpc "google.golang.org/grpc"
 	v1 "k8s.io/api/core/v1"
@@ -77,14 +77,14 @@ func (m *MockDiscoveryClient) EXPECT() *MockDiscoveryClientMockRecorder {
 }
 
 // GetServiceInfo mocks base method
-func (m *MockDiscoveryClient) GetServiceInfo(arg0 context.Context, arg1 *discoverv1.DiscoverRequest, arg2 ...grpc.CallOption) (*discoverv1.DiscoverResponse, error) {
+func (m *MockDiscoveryClient) GetServiceInfo(arg0 context.Context, arg1 *discoveryv1.GetServiceInfoRequest, arg2 ...grpc.CallOption) (*discoveryv1.GetServiceInfoResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0, arg1}
 	for _, a := range arg2 {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetServiceInfo", varargs...)
-	ret0, _ := ret[0].(*discoverv1.DiscoverResponse)
+	ret0, _ := ret[0].(*discoveryv1.GetServiceInfoResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

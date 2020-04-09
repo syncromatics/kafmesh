@@ -7,7 +7,7 @@ package services_test
 import (
 	context "context"
 	gomock "github.com/golang/mock/gomock"
-	discoverv1 "github.com/syncromatics/kafmesh/internal/protos/kafmesh/discover/v1"
+	discoveryv1 "github.com/syncromatics/kafmesh/internal/protos/kafmesh/discovery/v1"
 	reflect "reflect"
 )
 
@@ -35,10 +35,10 @@ func (m *MockScraper) EXPECT() *MockScraperMockRecorder {
 }
 
 // Scrape mocks base method
-func (m *MockScraper) Scrape(ctx context.Context) (map[string]*discoverv1.DiscoverResponse, error) {
+func (m *MockScraper) Scrape(ctx context.Context) (map[string]*discoveryv1.Service, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Scrape", ctx)
-	ret0, _ := ret[0].(map[string]*discoverv1.DiscoverResponse)
+	ret0, _ := ret[0].(map[string]*discoveryv1.Service)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

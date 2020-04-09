@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	discoverv1 "github.com/syncromatics/kafmesh/internal/protos/kafmesh/discover/v1"
+	discoveryv1 "github.com/syncromatics/kafmesh/internal/protos/kafmesh/discovery/v1"
 	scraper "github.com/syncromatics/kafmesh/internal/scraper"
 
 	gomock "github.com/golang/mock/gomock"
@@ -63,9 +63,11 @@ func Test_Job(t *testing.T) {
 		Times(1)
 
 	client1.EXPECT().
-		GetServiceInfo(gomock.Any(), &discoverv1.DiscoverRequest{}).
-		Return(&discoverv1.DiscoverResponse{
-			ServiceName: "service1",
+		GetServiceInfo(gomock.Any(), &discoveryv1.GetServiceInfoRequest{}).
+		Return(&discoveryv1.GetServiceInfoResponse{
+			Service: &discoveryv1.Service{
+				Name: "service1",
+			},
 		}, nil).
 		Times(1)
 
@@ -77,9 +79,11 @@ func Test_Job(t *testing.T) {
 		Times(1)
 
 	client2.EXPECT().
-		GetServiceInfo(gomock.Any(), &discoverv1.DiscoverRequest{}).
-		Return(&discoverv1.DiscoverResponse{
-			ServiceName: "service2",
+		GetServiceInfo(gomock.Any(), &discoveryv1.GetServiceInfoRequest{}).
+		Return(&discoveryv1.GetServiceInfoResponse{
+			Service: &discoveryv1.Service{
+				Name: "service2",
+			},
 		}, nil).
 		Times(1)
 
@@ -91,12 +95,12 @@ func Test_Job(t *testing.T) {
 	result, err := job.Scrape(ctx)
 	assert.NilError(t, err)
 
-	assert.DeepEqual(t, result, map[string]*discoverv1.DiscoverResponse{
-		"pod1": &discoverv1.DiscoverResponse{
-			ServiceName: "service1",
+	assert.DeepEqual(t, result, map[string]*discoveryv1.Service{
+		"pod1": &discoveryv1.Service{
+			Name: "service1",
 		},
-		"pod2": &discoverv1.DiscoverResponse{
-			ServiceName: "service2",
+		"pod2": &discoveryv1.Service{
+			Name: "service2",
 		},
 	})
 }

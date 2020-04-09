@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package kafmesh.discovery.v1;
+
+option csharp_namespace = "Kafmesh.Discovery.V1";
+option go_package = "discoveryv1";
+option java_multiple_files = true;
+option java_outer_classname = "TopicDefinitionProto";
+option java_package = "com.kafmesh.discovery.v1";
+option objc_class_prefix = "KDX";
+
+// TopicDefinition is a description of a kafka topic and what is stored in it.
+message TopicDefinition {
+  string topic = 1;
+  string message = 2;
+  TopicType type = 3;
+}
+
+// TopicType is the type of message stored in a topic.
+enum TopicType {
+  TOPIC_TYPE_INVALID = 0;
+  TOPIC_TYPE_PROTOBUF = 1;
+  TOPIC_TYPE_AVRO = 2;
+}

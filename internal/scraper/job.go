@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	discoverv1 "github.com/syncromatics/kafmesh/internal/protos/kafmesh/discover/v1"
+	discoveryv1 "github.com/syncromatics/kafmesh/internal/protos/kafmesh/discovery/v1"
 
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
@@ -27,7 +27,7 @@ type PodLister interface {
 
 // DiscoveryClient is the kafmesh discovery grpc client
 type DiscoveryClient interface {
-	GetServiceInfo(context.Context, *discoverv1.DiscoverRequest, ...grpc.CallOption) (*discoverv1.DiscoverResponse, error)
+	GetServiceInfo(context.Context, *discoveryv1.GetServiceInfoRequest, ...grpc.CallOption) (*discoveryv1.GetServiceInfoResponse, error)
 }
 
 // DiscoveryFactory creates DiscoveryClients for pods
@@ -47,7 +47,7 @@ func NewJob(podLister PodLister, discoveryFactory DiscoveryFactory) *Job {
 }
 
 // Scrape scrapes the kafmesh pods running in the kubernetes cluster
-func (j *Job) Scrape(ctx context.Context) (map[string]*discoverv1.DiscoverResponse, error) {
+func (j *Job) Scrape(ctx context.Context) (map[string]*discoveryv1.Service, error) {
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
 	defer cancel()
 
@@ -56,7 +56,7 @@ func (j *Job) Scrape(ctx context.Context) (map[string]*discoverv1.DiscoverRespon
 		return nil, errors.Wrap(err, "failed to get pods")
 	}
 
-	results := map[string]*discoverv1.DiscoverResponse{}
+	results := map[string]*discoveryv1.Service{}
 
 	for _, pod := range pods {
 		r, err := j.scrapePod(ctx, pod)
@@ -87,7 +87,7 @@ func (j *Job) getPods(ctx context.Context) ([]v1.Pod, error) {
 	return scrapablePods, nil
 }
 
-func (j *Job) scrapePod(ctx context.Context, pod v1.Pod) (*discoverv1.DiscoverResponse, error) {
+func (j *Job) scrapePod(ctx context.Context, pod v1.Pod) (*discoveryv1.Service, error) {
 	port, ok := pod.Annotations[portAnnotation]
 	if !ok {
 		port = "443"
@@ -100,10 +100,10 @@ func (j *Job) scrapePod(ctx context.Context, pod v1.Pod) (*discoverv1.DiscoverRe
 	}
 	defer closer()
 
-	response, err := discover.GetServiceInfo(ctx, &discoverv1.DiscoverRequest{})
+	response, err := discover.GetServiceInfo(ctx, &discoveryv1.GetServiceInfoRequest{})
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed getting service info for service '%s'", url)
 	}
 
-	return response, nil
+	return response.Service, nil
 }

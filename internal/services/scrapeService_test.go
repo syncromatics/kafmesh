@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	discoverv1 "github.com/syncromatics/kafmesh/internal/protos/kafmesh/discover/v1"
+	discoveryv1 "github.com/syncromatics/kafmesh/internal/protos/kafmesh/discovery/v1"
 	"github.com/syncromatics/kafmesh/internal/services"
 
 	gomock "github.com/golang/mock/gomock"
@@ -26,8 +26,8 @@ func Test_ScraperService(t *testing.T) {
 
 	job.EXPECT().
 		Scrape(gomock.Any()).
-		Return(map[string]*discoverv1.DiscoverResponse{}, nil).
-		DoAndReturn(func(context.Context) (map[string]*discoverv1.DiscoverResponse, error) {
+		Return(map[string]*discoveryv1.Service{}, nil).
+		DoAndReturn(func(context.Context) (map[string]*discoveryv1.Service, error) {
 			wg.Add(-1)
 			return nil, nil
 		}).

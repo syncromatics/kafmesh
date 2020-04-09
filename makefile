@@ -9,17 +9,12 @@ test: build
 	docker run -v $(PWD)/artifacts:/artifacts -v /var/run/docker.sock:/var/run/docker.sock testing
 	cd artifacts && curl -s https://codecov.io/bash | bash
 
-generate:
+proto-lint:
+	docker run -v "$(PWD)/docs/protos:/work" uber/prototool:latest prototool lint
+
+generate: proto-lint
 	mkdir -p internal/protos
-
-	protoc -I docs/protos \
-		docs/protos/kafmesh/ping/v1/*.proto \
-		--go_out=plugins=grpc:./internal/protos
-
-	protoc -I docs/protos \
-		docs/protos/kafmesh/discover/v1/*.proto \
-		--go_out=plugins=grpc:./internal/protos
-
+	docker run -v "$(PWD)/docs/protos:/work" -v $(PWD):/output -u `id -u $(USER)`:`id -g $(USER)` uber/prototool:latest prototool generate
 	go generate ./...
 
 build-local:

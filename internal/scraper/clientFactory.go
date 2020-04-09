@@ -3,7 +3,7 @@ package scraper
 import (
 	"context"
 
-	discoverv1 "github.com/syncromatics/kafmesh/internal/protos/kafmesh/discover/v1"
+	discoveryv1 "github.com/syncromatics/kafmesh/internal/protos/kafmesh/discovery/v1"
 
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
@@ -19,5 +19,5 @@ func (f *ClientFactory) Client(ctx context.Context, url string) (DiscoveryClient
 		return nil, nil, errors.Wrap(err, "failed to dial service")
 	}
 
-	return discoverv1.NewDiscoverClient(con), con.Close, nil
+	return discoveryv1.NewDiscoveryAPIClient(con), con.Close, nil
 }
