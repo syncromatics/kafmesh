@@ -93,23 +93,6 @@ func Generate(options Options) error {
 	}
 	defer file.Close()
 
-	err = os.Mkdir(path.Join(outputPath, "discover"), os.ModePerm)
-	if err != nil {
-		return errors.Wrapf(err, "failed to create discover directory")
-	}
-
-	for _, c := range options.Components {
-		err = processComponent(options.RootPath, outputPath, options.Service.Output.Module, modelsPath, options.Service, c)
-		if err != nil {
-			return errors.Wrapf(err, "failed to process component")
-		}
-
-		err = processDiscover(options.Service.Name, options.Service.Description, outputPath, *c)
-		if err != nil {
-			return errors.Wrapf(err, "failed to process discover")
-		}
-	}
-
 	sOptions, err := buildServiceOptions(options.Service, options.Components, options.Service.Output.Module)
 	if err != nil {
 		return errors.Wrapf(err, "failed to build options")
@@ -119,6 +102,18 @@ func Generate(options Options) error {
 	if err != nil {
 		return errors.Wrapf(err, "failed to generate package")
 	}
+
+	file, err = os.Create(path.Join(outputPath, "discover.km.go"))
+	if err != nil {
+		return errors.Wrapf(err, "failed to open discover file")
+	}
+	defer file.Close()
+
+	err = generateDiscover(file, options.Service, options.Components)
+	if err != nil {
+		return errors.Wrapf(err, "failed to generate discover")
+	}
+	return nil
 
 	tOptions, err := buildTopicOption(options.Service, options.Components)
 	if err != nil {
@@ -141,20 +136,6 @@ func Generate(options Options) error {
 		return errors.Wrapf(err, "failed to generate mocks")
 	}
 
-	return nil
-}
-
-func processDiscover(serviceName string, serviceDescription string, outputPath string, component models.Component) error {
-	file, err := os.Create(path.Join(outputPath, "discover", component.Name+"_discover.km.go"))
-	if err != nil {
-		return errors.Wrapf(err, "failed to open discover file")
-	}
-	defer file.Close()
-
-	err = generateDiscover(file, serviceName, serviceDescription, component)
-	if err != nil {
-		return errors.Wrapf(err, "failed to generate discover")
-	}
 	return nil
 }
 

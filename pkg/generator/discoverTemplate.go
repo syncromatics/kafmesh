@@ -15,47 +15,98 @@ var (
 package discover
 
 import (
+	"sync"
+	
 	"github.com/syncromatics/kafmesh/pkg/models"
 	"github.com/syncromatics/kafmesh/pkg/runner"
+	discoveryv1 "github.com/syncromatics/kafmesh/internal/protos/kafmesh/discovery/v1"
 )
 
-func Initialize_Discover_Info_{{ .Component.Name }}(service *runner.Service) {
-	var serviceDetails = models.Service{
-		Name:        "{{ .ServiceName }}",
-		Description: "{{ .ServiceDescription }}",
+var (
+	serviceSetup sync.Once
+	mtx sync.Mutex
+)
+
+{{ range .Processors }}
+func discover_{{ .MethodName }}(service *runner.Service) {
+	mtx.Lock()
+	defer mtx.Unlock()
+
+	processor := &discoveryv1.Processor{
+		Name: "{{ .Name }}",
+		Description: "{{ .Description }}",
 	}
 
-	var component = models.Component {
-		Name:        "{{ .Component.Name }}",
-		Description: "{{ .Component.Description }}",
-		Sources:     []models.Source{},
-		Processors:  []models.Processor{},
-		Sinks:       []models.Sink{},
-		Views:       []models.View{},
-		ViewSources: []models.ViewSource{},
-		ViewSinks:   []models.ViewSink{},
-		Persistence: nil,
+	component := getOrCreateComponent(service, "{{ .Component.Name }}", "{{ .Component.Description}}")
+
+	component.Processors = append(component.Processors, processor)
+}
+{{ end }}
+
+func getOrCreateComponent(service *runner.Service, name string, description string) *discoveryv1.Component {
+	for _, c := range service.Components {
+		if c.Name == name {
+			return c
+		}
 	}
 
-	service.DiscoverInfo.ServiceName = serviceDetails.Name
-	service.DiscoverInfo.ServiceDescription = serviceDetails.Description
-	service.DiscoverInfo.Component = component
+	c := &discoveryv1.Component{
+		Name: name,
+		Description: desciption,
+	}
+
+	service.Components = append(service.Components, c)
+	return c
+}
+
+func setupService(service *runner.Service) {
+	serviceSetup.Do(func() {
+		service.DiscoveryInfo.Name = "{{ .ServiceName }}"
+		service.DiscoveryInfo.Description = "{{ .ServiceDescription }}"
+		service.DiscoveryInfo.Components = []*discoveryv1.Component{}
+	})
 }
 
 `))
 )
 
+type componentDiscoveryOptions struct {
+	Name        string
+	Description string
+}
+
+type processorDiscoveryOptions struct {
+	Name       string
+	MethodName string
+	Component  *componentDiscoveryOptions
+}
+
 type discoverOptions struct {
 	ServiceName        string
 	ServiceDescription string
-	Component          models.Component
+	Processors         []processorDiscoveryOptions
 }
 
-func generateDiscover(writer io.Writer, serviceName string, serviceDescription string, component models.Component) error {
+func generateDiscover(writer io.Writer, service *models.Service, components []*models.Component) error {
 	c := discoverOptions{
-		ServiceName:        serviceName,
-		ServiceDescription: serviceDescription,
-		Component:          component,
+		ServiceName:        service.Name,
+		ServiceDescription: service.Description,
+		Processors:         []processorDiscoveryOptions{},
+	}
+
+	for _, component := range components {
+		com := &componentDiscoveryOptions{
+			Name:        component.Name,
+			Description: component.Description,
+		}
+
+		for _, processor := range component.Processors {
+			proc := processorDiscoveryOptions{
+				Component: com,
+				Name:      processor.Name,
+			}
+			c.Processors = append(c.Processors, proc)
+		}
 	}
 
 	err := discoverTemplate.Execute(writer, c)
