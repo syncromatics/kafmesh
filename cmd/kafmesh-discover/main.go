@@ -38,6 +38,7 @@ func init() {
 		config = getClusterConfig()
 	}
 
+	fmt.Println("getting kubeAPI client...")
 	kubeAPIClient, err = kubernetes.NewForConfig(config)
 	if err != nil {
 		panic(err.Error())
@@ -45,13 +46,17 @@ func init() {
 }
 
 func main() {
+	fmt.Println("creating client factory...")
 	clientFactory := &scraper.ClientFactory{}
+	fmt.Println("creating scraper...")
 	scraper := scraper.NewJob(kubeAPIClient.CoreV1().Pods(""), clientFactory)
+	fmt.Println("creating scraperService...")
 	scraperService := services.NewScrapeService(scraper, 2*time.Minute)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	group, ctx := errgroup.WithContext(ctx)
 
+	fmt.Println("starting scraper service go-routine...")
 	group.Go(scraperService.Run(ctx))
 
 	eventChan := make(chan os.Signal)
