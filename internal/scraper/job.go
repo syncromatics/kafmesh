@@ -58,10 +58,12 @@ func (j *Job) Scrape(ctx context.Context) (map[string]*discoveryv1.Service, erro
 
 	results := map[string]*discoveryv1.Service{}
 
+	//ToDo: need a goroutine or something here so that it's not 2 min between each scrape
 	for _, pod := range pods {
 		r, err := j.scrapePod(ctx, pod)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to scrape pod '%s'", pod.Name)
+			fmt.Printf(errors.Wrapf(err, "failed to scrape pod '%s'\n", pod.Name).Error())
+			continue
 		}
 		results[pod.Name] = r
 	}

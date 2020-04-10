@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -62,6 +63,10 @@ func main() {
 		cancel()
 	case <-ctx.Done():
 		fmt.Println("ctxDone")
+	}
+
+	if err := group.Wait(); err != nil {
+		log.Fatal(err)
 	}
 
 }
