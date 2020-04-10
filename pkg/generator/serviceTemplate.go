@@ -38,7 +38,10 @@ func Register_{{ .ExportName }}(service *runner.Service, processor {{ .Package }
 		return errors.Wrap(err, "failed to register runner with service")
 	}
 
-	{{ .Package }}.Register_{{ .Name }}_With_Discover(service)
+	err = discover_{{ .ExportName }}(service)
+	if err != nil {
+		return errors.Wrap(err, "failed to register with discovery")
+	}
 
 	return nil
 }
@@ -54,6 +57,11 @@ func New_{{ .ExportName }}_Source(service *runner.Service) ({{ .Package }}.{{ .N
 	err = service.RegisterRunner(e.Watch)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to register runner with service")
+	}
+
+	err = discover_{{ .ExportName }}_Source(service)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to register with discovery")
 	}
 
 	return e, nil
@@ -72,6 +80,11 @@ func New_{{ .ExportName }}_View(service *runner.Service) ({{ .Package }}.{{ .Nam
 		return nil, errors.Wrap(err, "failed to register runner with service")
 	}
 
+	err = discover_{{ .ExportName }}_View(service)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to register with discovery")
+	}
+
 	return v, nil
 }
 {{ end -}}
@@ -86,6 +99,11 @@ func Register_{{ .Name }}_Sink(service *runner.Service, sink {{ .Package }}.{{ .
 	err = service.RegisterRunner(r)
 	if err != nil {
 		return errors.Wrap(err, "failed to register runner with service")
+	}
+
+	err = discover_{{ .Name }}_Sink(service)
+	if err != nil {
+		return errors.Wrap(err, "failed to register with discovery")
 	}
 
 	return nil
@@ -104,6 +122,11 @@ func Register_{{ .ExportName }}_ViewSource(service *runner.Service, viewSource {
 		return errors.Wrap(err, "failed to register runner with service")
 	}
 
+	err = discover_{{ .ExportName }}_ViewSource(service)
+	if err != nil {
+		return errors.Wrap(err, "failed to register with discovery")
+	}
+
 	return nil
 }
 {{ end -}}
@@ -118,6 +141,11 @@ func Register_{{ .ExportName }}_ViewSink(service *runner.Service, viewSink {{ .P
 	err = service.RegisterRunner(r)
 	if err != nil {
 		return errors.Wrap(err, "failed to register runner with service")
+	}
+
+	err = discover_{{ .ExportName }}_ViewSink(service)
+	if err != nil {
+		return errors.Wrap(err, "failed to register with discovery")
 	}
 
 	return nil
@@ -170,7 +198,6 @@ type generateServiceOptions struct {
 	Sinks       []serviceSink
 	ViewSources []serviceViewSource
 	ViewSinks   []serviceViewSink
-
 }
 
 func generateService(writer io.Writer, options generateServiceOptions) error {

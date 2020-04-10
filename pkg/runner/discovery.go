@@ -12,35 +12,43 @@ var (
 	serviceSetup sync.Once
 )
 
+// ServiceDiscovery provides service information for discovery
 type ServiceDiscovery struct {
 	Name        string
 	Description string
 }
 
+// ComponentDiscovery provides component information for discovery
 type ComponentDiscovery struct {
 	Name        string
 	Description string
 }
 
+// MessageType is the type of serialization used for the kafka topic
 type MessageType int
 
 const (
+	// MessageTypeProtobuf uses protobuf serialization
 	MessageTypeProtobuf MessageType = iota
+	// MessageTypeAvro uses avro serialization
 	MessageTypeAvro
 )
 
+// TopicDiscovery provides topic information for discovery
 type TopicDiscovery struct {
 	Message string
 	Topic   string
 	Type    MessageType
 }
 
+// SourceDiscovery provides source information for discovery
 type SourceDiscovery struct {
 	ServiceDiscovery
 	ComponentDiscovery
 	TopicDiscovery
 }
 
+// SinkDiscovery provides sink information for discovery
 type SinkDiscovery struct {
 	ServiceDiscovery
 	ComponentDiscovery
@@ -50,12 +58,14 @@ type SinkDiscovery struct {
 	Description string
 }
 
+// ViewDiscovery adds view information for discovery
 type ViewDiscovery struct {
 	ServiceDiscovery
 	ComponentDiscovery
 	TopicDiscovery
 }
 
+// ViewSourceDiscovery provides view source information for discovery
 type ViewSourceDiscovery struct {
 	ServiceDiscovery
 	ComponentDiscovery
@@ -65,6 +75,7 @@ type ViewSourceDiscovery struct {
 	Description string
 }
 
+// ViewSinkDiscovery provides view sink information for discovery
 type ViewSinkDiscovery struct {
 	ServiceDiscovery
 	ComponentDiscovery
@@ -74,6 +85,7 @@ type ViewSinkDiscovery struct {
 	Description string
 }
 
+// ProcessorDiscovery provides processor information for discovery
 type ProcessorDiscovery struct {
 	ServiceDiscovery
 	ComponentDiscovery
@@ -89,22 +101,27 @@ type ProcessorDiscovery struct {
 	Persistence *PersistentDiscovery
 }
 
+// InputDiscovery provides input information for discovery
 type InputDiscovery struct {
 	TopicDiscovery
 }
 
+// JoinDiscovery provides join information for discovery
 type JoinDiscovery struct {
 	TopicDiscovery
 }
 
+// LookupDiscovery provides lookup information for discovery
 type LookupDiscovery struct {
 	TopicDiscovery
 }
 
+// OutputDiscovery provides output information for discovery
 type OutputDiscovery struct {
 	TopicDiscovery
 }
 
+// PersistentDiscovery provides persistence information for discovery
 type PersistentDiscovery struct {
 	TopicDiscovery
 }
@@ -119,6 +136,7 @@ func (s *Service) registerService(service ServiceDiscovery) {
 	})
 }
 
+// RegisterProcessor registers a processor with the discovery service
 func (s *Service) RegisterProcessor(processor ProcessorDiscovery) error {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
@@ -213,6 +231,7 @@ func (s *Service) RegisterProcessor(processor ProcessorDiscovery) error {
 	return nil
 }
 
+// RegisterSource registers a source with the discovery service
 func (s *Service) RegisterSource(source SourceDiscovery) error {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
@@ -238,6 +257,7 @@ func (s *Service) RegisterSource(source SourceDiscovery) error {
 	return nil
 }
 
+// RegisterSink registers a sink with the discovery service
 func (s *Service) RegisterSink(sink SinkDiscovery) error {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
@@ -263,6 +283,7 @@ func (s *Service) RegisterSink(sink SinkDiscovery) error {
 	return nil
 }
 
+// RegisterView registers a view with the discovery service
 func (s *Service) RegisterView(view ViewDiscovery) error {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
@@ -286,6 +307,7 @@ func (s *Service) RegisterView(view ViewDiscovery) error {
 	return nil
 }
 
+// RegisterViewSource registers a view source with the discovery service
 func (s *Service) RegisterViewSource(viewSource ViewSourceDiscovery) error {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
@@ -311,6 +333,7 @@ func (s *Service) RegisterViewSource(viewSource ViewSourceDiscovery) error {
 	return nil
 }
 
+// RegisterViewSink registers a view sink with the discovery service
 func (s *Service) RegisterViewSink(viewSink ViewSinkDiscovery) error {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()

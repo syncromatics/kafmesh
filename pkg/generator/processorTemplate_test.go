@@ -36,9 +36,6 @@ import (
 	"github.com/syndtr/goleveldb/leveldb/opt"
 
 	"github.com/syncromatics/kafmesh/pkg/runner"
-	"github.com/syncromatics/kafmesh/pkg/models"
-	"enplug-service/internal/definitions/discover"
-
 
 	m0 "test/internal/kafmesh/models/testMesh/testId"
 	m1 "test/internal/kafmesh/models/testMesh/testSerial"
@@ -197,64 +194,6 @@ func Register_Enricher_Processor(options runner.ServiceOptions, service Enricher
 			return nil
 		}
 	}, nil
-}
-
-func Register_Enricher_Processor_With_Discover(service *runner.Service) {
-	var processor = models.Processor{
-		Name:              "enricher",
-		GroupNameOverride: nil,
-		Description:       "",
-		Inputs:            []models.Input{
-			models.Input{
-				TopicDefinition: models.TopicDefinition{
-					Message: "testId.test",
-					Type:    nil,
-					Topic:   nil,
-				},
-			},
-			models.Input{
-				TopicDefinition: models.TopicDefinition{
-					Message: "testId.test2",
-					Type:    nil,
-					Topic:   nil,
-				},
-			},
-		},
-		Lookups: []models.Lookup{
-			models.Lookup{
-				TopicDefinition: models.TopicDefinition{
-					Message: "testSerial.details",
-					Type:    nil,
-					Topic:   nil,
-				},
-			},
-		},
-		Joins: []models.Join{
-			models.Join{
-				TopicDefinition: models.TopicDefinition{
-					Message: "testSerial.details",
-					Type:    nil,
-					Topic:   nil,
-				},
-			},
-		},
-		Outputs: []models.Output{
-			models.Output{
-				TopicDefinition: models.TopicDefinition{
-					Message: "testSerial.detailsEnriched",
-					Type:    nil,
-					Topic:   nil,
-				},
-				Description: "",
-			},
-		},
-		Persistence: nil,
-	}
-
-	if len(service.DiscoverInfo.ServiceName) == 0 {
-		discover.Initialize_Discover_Info_details(service)
-	}
-	service.DiscoverInfo.Component.Processors = append(service.DiscoverInfo.Component.Processors, processor)
 }
 `
 )

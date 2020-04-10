@@ -67,7 +67,7 @@ func discover_{{ .MethodName }}(service *runner.Service) error {
 {{- end }}
 		},
 {{- if .Persistence }}
-		Persistence: &runner.PersistenceDiscovery{
+		Persistence: &runner.PersistentDiscovery{
 			TopicDiscovery: runner.TopicDiscovery{
 				Message: "{{ .Persistence.Message }}",
 				Topic: "{{ .Persistence.Topic }}",
@@ -153,7 +153,7 @@ func discover_{{ .MethodName }}(service *runner.Service) error {
 
 {{ range .ViewSinks }}
 func discover_{{ .MethodName }}(service *runner.Service) error {
-	sink := runner.SourceDiscovery{
+	sink := runner.ViewSinkDiscovery{
 		ServiceDiscovery : runner.ServiceDiscovery {
 			Name: "{{ .Service.Name}}",
 			Description: "{{ .Service.Description }}",
@@ -171,13 +171,13 @@ func discover_{{ .MethodName }}(service *runner.Service) error {
 		Description: "{{ .Description }}",
 	}
 
-	return service.RegisterSink(sink)
+	return service.RegisterViewSink(sink)
 }
 {{- end }}
 
 {{ range .ViewSources }}
 func discover_{{ .MethodName }}(service *runner.Service) error {
-	sink := runner.SourceDiscovery{
+	source := runner.ViewSourceDiscovery{
 		ServiceDiscovery : runner.ServiceDiscovery {
 			Name: "{{ .Service.Name}}",
 			Description: "{{ .Service.Description }}",
@@ -195,7 +195,7 @@ func discover_{{ .MethodName }}(service *runner.Service) error {
 		Description: "{{ .Description }}",
 	}
 
-	return service.RegisterSink(sink)
+	return service.RegisterViewSource(source)
 }
 {{- end }}
 `))
@@ -450,7 +450,7 @@ func generateDiscover(writer io.Writer, service *models.Service, components []*m
 					Topic:   viewSource.ToTopicName(service),
 					Type:    t,
 				},
-				MethodName:  fmt.Sprintf("%s_%s_ViewSource", component.ToSafeName(), viewSource.Name),
+				MethodName:  fmt.Sprintf("%s_%s_ViewSource", component.ToSafeName(), viewSource.ToSafeName()),
 				Name:        viewSource.Name,
 				Description: viewSource.Description,
 			})
@@ -470,7 +470,7 @@ func generateDiscover(writer io.Writer, service *models.Service, components []*m
 					Topic:   viewSink.ToTopicName(service),
 					Type:    t,
 				},
-				MethodName:  fmt.Sprintf("%s_%s_ViewSink", component.ToSafeName(), viewSink.Name),
+				MethodName:  fmt.Sprintf("%s_%s_ViewSink", component.ToSafeName(), viewSink.ToSafeName()),
 				Name:        viewSink.Name,
 				Description: viewSink.Description,
 			})

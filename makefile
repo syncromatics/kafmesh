@@ -2,7 +2,6 @@ export VERSION := $(shell gogitver)
 
 build:
 	docker build -t testing --target test .
-	docker build -t syncromatics/kafmesh-discovery:${VERSION} --target final .
 
 test: build
 	mkdir -p artifacts/
