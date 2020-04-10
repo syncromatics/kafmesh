@@ -44,7 +44,9 @@ func (s *ScrapeService) Run(ctx context.Context) func() error {
 				if err != nil {
 					return errors.Wrap(err, "failed to scrape\n")
 				}
-				fmt.Printf("---%v---\n", response)
+				for key, val := range response {
+					fmt.Printf("%v --- %v\n", key, val)
+				}
 
 				timer = time.NewTimer(s.interval)
 			}
