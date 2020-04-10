@@ -131,8 +131,8 @@ func (s *Service) registerService(service ServiceDiscovery) {
 	defer s.mtx.Unlock()
 
 	serviceSetup.Do(func() {
-		s.DiscoveryInfo.Name = service.Name
-		s.DiscoveryInfo.Description = service.Description
+		s.DiscoverInfo.Name = service.Name
+		s.DiscoverInfo.Description = service.Description
 	})
 }
 
@@ -372,7 +372,7 @@ func convertMessageType(messageType MessageType) (discoveryv1.TopicType, error) 
 }
 
 func (s *Service) getOrCreateDiscoveryComponent(component ComponentDiscovery) *discoveryv1.Component {
-	for _, c := range s.DiscoveryInfo.Components {
+	for _, c := range s.DiscoverInfo.Components {
 		if c.Name == component.Name {
 			return c
 		}
@@ -383,6 +383,6 @@ func (s *Service) getOrCreateDiscoveryComponent(component ComponentDiscovery) *d
 		Description: component.Description,
 	}
 
-	s.DiscoveryInfo.Components = append(s.DiscoveryInfo.Components, c)
+	s.DiscoverInfo.Components = append(s.DiscoverInfo.Components, c)
 	return c
 }

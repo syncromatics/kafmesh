@@ -30,24 +30,24 @@ type Service struct {
 	protoWrapper *ProtoWrapper
 	server       *grpc.Server
 
-	mtx           sync.Mutex
-	configured    bool
-	running       bool
-	runners       []func(context.Context) func() error
-	DiscoveryInfo *discoveryv1.Service
+	mtx          sync.Mutex
+	configured   bool
+	running      bool
+	runners      []func(context.Context) func() error
+	DiscoverInfo *discoveryv1.Service
 }
 
 // NewService creates a new kafmesh service
 func NewService(brokers []string, protoRegistry *Registry, grpcServer *grpc.Server) *Service {
 	service := &Service{
-		brokers:       brokers,
-		protoWrapper:  NewProtoWrapper(protoRegistry),
-		server:        grpcServer,
-		DiscoveryInfo: &discoveryv1.Service{},
+		brokers:      brokers,
+		protoWrapper: NewProtoWrapper(protoRegistry),
+		server:       grpcServer,
+		DiscoverInfo: &discoveryv1.Service{},
 	}
 
 	pingv1.RegisterPingAPIServer(grpcServer, &services.PingAPI{})
-	discoveryv1.RegisterDiscoveryAPIServer(grpcServer, &services.DiscoverAPI{DiscoverInfo: service.DiscoveryInfo})
+	discoveryv1.RegisterDiscoveryAPIServer(grpcServer, &services.DiscoverAPI{DiscoverInfo: service.DiscoverInfo})
 
 	return service
 }

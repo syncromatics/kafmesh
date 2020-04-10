@@ -3,7 +3,7 @@ DOCKER_REPOSITORY = harbor.syncromatics.com/infrastructure
 
 build:
 	docker build -t testing --target test .
-	docker build -t $(DOCKER_REPOSITORY)/kafmesh-discovery --target discovery .
+	docker build -t $(DOCKER_REPOSITORY)/kafmesh-discover --target discover .
 
 test: build
 	mkdir -p artifacts/
