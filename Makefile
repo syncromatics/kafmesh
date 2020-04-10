@@ -21,7 +21,7 @@ generate: proto-lint
 build-local:
 	go build -o ./artifacts/kafmesh-gen ./cmd/kafmesh-gen/main.go
 
-ship:
+ship: build
 #	docker login --username ${DOCKER_USERNAME} --password ${DOCKER_PASSWORD}
 #	docker build -t ssyncromatics/kafmesh-discover:${VERSION} --target final .
 #	docker push syncromatics/kafmesh-discover:${VERSION}
