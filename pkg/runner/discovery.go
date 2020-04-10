@@ -127,6 +127,7 @@ type PersistentDiscovery struct {
 }
 
 func (s *Service) registerService(service ServiceDiscovery) {
+
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 
@@ -234,10 +235,11 @@ func (s *Service) RegisterProcessor(processor ProcessorDiscovery) error {
 
 // RegisterSource registers a source with the discovery service
 func (s *Service) RegisterSource(source SourceDiscovery) error {
-	s.mtx.Lock()
-	defer s.mtx.Unlock()
 
 	s.registerService(source.ServiceDiscovery)
+
+	s.mtx.Lock()
+	defer s.mtx.Unlock()
 
 	component := s.getOrCreateDiscoveryComponent(source.ComponentDiscovery)
 
@@ -260,10 +262,11 @@ func (s *Service) RegisterSource(source SourceDiscovery) error {
 
 // RegisterSink registers a sink with the discovery service
 func (s *Service) RegisterSink(sink SinkDiscovery) error {
-	s.mtx.Lock()
-	defer s.mtx.Unlock()
 
 	s.registerService(sink.ServiceDiscovery)
+
+	s.mtx.Lock()
+	defer s.mtx.Unlock()
 
 	component := s.getOrCreateDiscoveryComponent(sink.ComponentDiscovery)
 
@@ -286,10 +289,11 @@ func (s *Service) RegisterSink(sink SinkDiscovery) error {
 
 // RegisterView registers a view with the discovery service
 func (s *Service) RegisterView(view ViewDiscovery) error {
-	s.mtx.Lock()
-	defer s.mtx.Unlock()
 
 	s.registerService(view.ServiceDiscovery)
+
+	s.mtx.Lock()
+	defer s.mtx.Unlock()
 
 	component := s.getOrCreateDiscoveryComponent(view.ComponentDiscovery)
 
@@ -310,10 +314,11 @@ func (s *Service) RegisterView(view ViewDiscovery) error {
 
 // RegisterViewSource registers a view source with the discovery service
 func (s *Service) RegisterViewSource(viewSource ViewSourceDiscovery) error {
-	s.mtx.Lock()
-	defer s.mtx.Unlock()
 
 	s.registerService(viewSource.ServiceDiscovery)
+
+	s.mtx.Lock()
+	defer s.mtx.Unlock()
 
 	component := s.getOrCreateDiscoveryComponent(viewSource.ComponentDiscovery)
 
@@ -336,10 +341,11 @@ func (s *Service) RegisterViewSource(viewSource ViewSourceDiscovery) error {
 
 // RegisterViewSink registers a view sink with the discovery service
 func (s *Service) RegisterViewSink(viewSink ViewSinkDiscovery) error {
-	s.mtx.Lock()
-	defer s.mtx.Unlock()
 
 	s.registerService(viewSink.ServiceDiscovery)
+
+	s.mtx.Lock()
+	defer s.mtx.Unlock()
 
 	component := s.getOrCreateDiscoveryComponent(viewSink.ComponentDiscovery)
 
