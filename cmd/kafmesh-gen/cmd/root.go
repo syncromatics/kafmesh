@@ -18,20 +18,24 @@ var rootCmd = &cobra.Command{
 	Short: "kafmesh-gen is a code generator for kafmesh services",
 	Long:  `A generator for kafmesh services`,
 	Run: func(cmd *cobra.Command, args []string) {
-		//if len(args) != 1 {
-		//	log.Fatal("wrong number of args. Should just have path to service config yaml")
-		//}
+		if len(args) != 1 {
+			log.Fatal("wrong number of args. Should just have path to service config yaml")
+		}
 
-		//exPath, err := os.Getwd()
-		//if err != nil {
-		//	log.Fatal(err)
-		//}
+		exPath, err := os.Getwd()
+		if err != nil {
+			log.Fatal(err)
+		}
 
-		exPath := "/home/glen/src/enplug-service"
+		servicePath := args[0]
 
-		//fullServicePath := filepath.Join(exPath, servicePath)
+		//ToDo: remove
+		//exPath := "/home/glen/src/enplug-service"
 
-		fullServicePath := "/home/glen/src/enplug-service/docs/kafmesh/definition.yml"
+		fullServicePath := filepath.Join(exPath, servicePath)
+
+		//ToDo: remove
+		//fullServicePath := "/home/glen/src/enplug-service/docs/kafmesh/definition.yml"
 
 		serviceFile, err := os.Open(fullServicePath)
 		if err != nil {
