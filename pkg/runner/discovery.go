@@ -138,10 +138,11 @@ func (s *Service) registerService(service ServiceDiscovery) {
 
 // RegisterProcessor registers a processor with the discovery service
 func (s *Service) RegisterProcessor(processor ProcessorDiscovery) error {
-	s.mtx.Lock()
-	defer s.mtx.Unlock()
 
 	s.registerService(processor.ServiceDiscovery)
+
+	s.mtx.Lock()
+	defer s.mtx.Unlock()
 
 	component := s.getOrCreateDiscoveryComponent(processor.ComponentDiscovery)
 
