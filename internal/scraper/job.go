@@ -104,7 +104,7 @@ func (j *Job) scrapePod(ctx context.Context, pod v1.Pod) (*discoveryv1.Service, 
 
 	response, err := discover.GetServiceInfo(ctx, &discoveryv1.GetServiceInfoRequest{})
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed getting service info for service '%s'", url)
+		return nil, errors.Wrapf(err, "failed getting service info for service '%s'\n", url)
 	}
 
 	return response.Service, nil

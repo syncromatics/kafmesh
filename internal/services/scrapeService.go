@@ -42,9 +42,9 @@ func (s *ScrapeService) Run(ctx context.Context) func() error {
 			case <-timer.C:
 				response, err := s.scraper.Scrape(ctx)
 				if err != nil {
-					return errors.Wrap(err, "failed to scrape")
+					return errors.Wrap(err, "failed to scrape\n")
 				}
-				fmt.Printf("---%v---", response)
+				fmt.Printf("---%v---\n", response)
 
 				timer = time.NewTimer(s.interval)
 			}
