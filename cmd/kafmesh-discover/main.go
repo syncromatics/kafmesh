@@ -61,7 +61,7 @@ func main() {
 		fmt.Println("os.Signal received, exiting")
 		cancel()
 	case <-ctx.Done():
-		fmt.Println("ctxDone...cancel?")
+		fmt.Println("ctxDone")
 	}
 
 }

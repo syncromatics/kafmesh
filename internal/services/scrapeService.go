@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	discoveryv1 "github.com/syncromatics/kafmesh/internal/protos/kafmesh/discovery/v1"
@@ -39,10 +40,11 @@ func (s *ScrapeService) Run(ctx context.Context) func() error {
 				return nil
 
 			case <-timer.C:
-				_, err := s.scraper.Scrape(ctx)
+				response, err := s.scraper.Scrape(ctx)
 				if err != nil {
 					return errors.Wrap(err, "failed to scrape")
 				}
+				fmt.Printf("---%v---", response)
 
 				timer = time.NewTimer(s.interval)
 			}

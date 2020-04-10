@@ -15,7 +15,7 @@ RUN go get -u golang.org/x/lint/golint
 
 RUN golint -set_exit_status ./...
 
-RUN go build -o ./discovery ./cmd/kafmesh-discover
+RUN go build -o ./discover ./cmd/kafmesh-discover
 
 #testing
 FROM build as test
@@ -28,11 +28,11 @@ RUN go get github.com/golang/mock/mockgen@latest
 CMD go test -race -coverprofile=/artifacts/coverage.txt -covermode=atomic ./...
 
 # final image
-FROM ubuntu:18.04 as final
+FROM ubuntu:18.04 as discover
 
 WORKDIR /app
 
-COPY --from=0 /build/discovery /app/
+COPY --from=0 /build/discover /app/
 
-CMD ["/app/discovery"]
+CMD ["/app/discover"]
 
