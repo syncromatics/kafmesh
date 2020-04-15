@@ -42,6 +42,11 @@ func Register_Details_Enricher_Processor(service *runner.Service, processor deta
 		return errors.Wrap(err, "failed to register runner with service")
 	}
 
+	err = discover_Details_Enricher_Processor(service)
+	if err != nil {
+		return errors.Wrap(err, "failed to register with discovery")
+	}
+
 	return nil
 }
 
@@ -54,6 +59,11 @@ func New_Details_TestSerialDetails_Source(service *runner.Service) (details.Test
 	err = service.RegisterRunner(e.Watch)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to register runner with service")
+	}
+
+	err = discover_Details_TestSerialDetails_Source(service)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to register with discovery")
 	}
 
 	return e, nil
@@ -70,6 +80,11 @@ func New_Details_TestSerialDetailsEnriched_View(service *runner.Service) (detail
 		return nil, errors.Wrap(err, "failed to register runner with service")
 	}
 
+	err = discover_Details_TestSerialDetailsEnriched_View(service)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to register with discovery")
+	}
+
 	return v, nil
 }
 
@@ -82,6 +97,11 @@ func Register_EnrichedDataPostgres_Sink(service *runner.Service, sink details.En
 	err = service.RegisterRunner(r)
 	if err != nil {
 		return errors.Wrap(err, "failed to register runner with service")
+	}
+
+	err = discover_EnrichedDataPostgres_Sink(service)
+	if err != nil {
+		return errors.Wrap(err, "failed to register with discovery")
 	}
 
 	return nil
@@ -98,6 +118,11 @@ func Register_Details_TestToDatabase_ViewSource(service *runner.Service, viewSou
 		return errors.Wrap(err, "failed to register runner with service")
 	}
 
+	err = discover_Details_TestToDatabase_ViewSource(service)
+	if err != nil {
+		return errors.Wrap(err, "failed to register with discovery")
+	}
+
 	return nil
 }
 
@@ -110,6 +135,11 @@ func Register_Details_TestToApi_ViewSink(service *runner.Service, viewSink detai
 	err = service.RegisterRunner(r)
 	if err != nil {
 		return errors.Wrap(err, "failed to register runner with service")
+	}
+
+	err = discover_Details_TestToApi_ViewSink(service)
+	if err != nil {
+		return errors.Wrap(err, "failed to register with discovery")
 	}
 
 	return nil
