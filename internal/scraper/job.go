@@ -3,6 +3,7 @@ package scraper
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	discoveryv1 "github.com/syncromatics/kafmesh/internal/protos/kafmesh/discovery/v1"
@@ -61,8 +62,7 @@ func (j *Job) Scrape(ctx context.Context) (map[string]*discoveryv1.Service, erro
 	for _, pod := range pods {
 		r, err := j.scrapePod(ctx, pod)
 		if err != nil {
-			fmt.Printf(errors.Wrapf(err, "failed to scrape pod '%s'\n", pod.Name).Error())
-			continue
+			return nil, errors.Wrapf(err, "failed to scrape pod '%s'", pod.Name)
 		}
 		results[pod.Name] = r
 	}
@@ -79,8 +79,16 @@ func (j *Job) getPods(ctx context.Context) ([]v1.Pod, error) {
 	scrapablePods := []v1.Pod{}
 
 	for _, pod := range allPods.Items {
+		if pod.Status.Phase != v1.PodRunning {
+			continue
+		}
+
 		scrapable, ok := pod.Annotations[scrapeAnnotation]
-		if ok && scrapable == "true" && pod.Status.Phase == v1.PodRunning {
+		if !ok {
+			continue
+		}
+
+		if scrapable == "true" {
 			scrapablePods = append(scrapablePods, pod)
 		}
 	}
@@ -94,7 +102,12 @@ func (j *Job) scrapePod(ctx context.Context, pod v1.Pod) (*discoveryv1.Service, 
 		port = "443"
 	}
 
-	url := fmt.Sprintf("%s:%s", pod.Status.PodIP, port)
+	portInt, err := strconv.Atoi(port)
+	if err != nil {
+		return nil, errors.Wrapf(err, "port annotation value '%s' is not a number", port)
+	}
+
+	url := fmt.Sprintf("%s:%d", pod.Status.PodIP, portInt)
 	discover, closer, err := j.discoveryFactory.Client(ctx, url)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get discovery client for service '%s'", url)

@@ -30,8 +30,6 @@ type MessageType int
 const (
 	// MessageTypeProtobuf uses protobuf serialization
 	MessageTypeProtobuf MessageType = iota
-	// MessageTypeAvro uses avro serialization
-	MessageTypeAvro
 )
 
 // TopicDiscovery provides topic information for discovery
@@ -370,9 +368,6 @@ func convertMessageType(messageType MessageType) (discoveryv1.TopicType, error) 
 	switch messageType {
 	case MessageTypeProtobuf:
 		return discoveryv1.TopicType_TOPIC_TYPE_PROTOBUF, nil
-
-	case MessageTypeAvro:
-		return discoveryv1.TopicType_TOPIC_TYPE_AVRO, nil
 	}
 
 	return discoveryv1.TopicType_TOPIC_TYPE_INVALID, errors.Errorf("unknown message type '%d'", messageType)

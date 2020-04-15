@@ -51,6 +51,16 @@ func Test_Job(t *testing.T) {
 					},
 				},
 				v1.Pod{},
+				v1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "pod8",
+						Annotations: map[string]string{},
+					},
+					Status: v1.PodStatus{
+						Phase: v1.PodRunning,
+						PodIP: "1.1.1.2",
+					},
+				},
 			},
 		}, nil).
 		Times(1)

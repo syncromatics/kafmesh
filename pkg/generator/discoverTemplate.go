@@ -490,12 +490,15 @@ func getDiscoveryTopicType(service *models.Service, t *string) (runner.MessageTy
 	if t != nil {
 		messageType = *t
 	}
+	if messageType == "" {
+		messageType = "protobuf"
+	}
 
 	switch messageType {
-	case "avro":
-		return runner.MessageTypeAvro, nil
-	default:
+	case "protobuf":
 		return runner.MessageTypeProtobuf, nil
+	default:
+		return -1, errors.Errorf("unknown message type '%s'", messageType)
 
 	}
 }

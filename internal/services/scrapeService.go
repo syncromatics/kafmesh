@@ -6,7 +6,7 @@ import (
 
 	discoveryv1 "github.com/syncromatics/kafmesh/internal/protos/kafmesh/discovery/v1"
 
-	"github.com/pkg/errors"
+	"github.com/syncromatics/go-kit/log"
 )
 
 //go:generate mockgen -source=./scrapeService.go -destination=./scrapeService_mock_test.go -package=services_test
@@ -41,7 +41,9 @@ func (s *ScrapeService) Run(ctx context.Context) func() error {
 			case <-timer.C:
 				_, err := s.scraper.Scrape(ctx)
 				if err != nil {
-					return errors.Wrap(err, "failed to scrape")
+					log.Error("scrape job failed", "error", err)
+					timer = time.NewTimer(s.interval)
+					continue
 				}
 
 				timer = time.NewTimer(s.interval)

@@ -11,6 +11,7 @@ import (
 
 	"github.com/burdiyan/kafkautil"
 	"github.com/golang/protobuf/descriptor"
+	"github.com/golang/protobuf/proto"
 	protobufD "github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"github.com/lovoo/goka"
 	"github.com/pkg/errors"
@@ -103,7 +104,7 @@ func extractDescriptor(m []byte) (*protobufD.FileDescriptorProto, error) {
 	}
 
 	desc := &protobufD.FileDescriptorProto{}
-	err = desc.XXX_Unmarshal(buf)
+	err = proto.Unmarshal(buf, desc)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to unmarshal proto")
 	}

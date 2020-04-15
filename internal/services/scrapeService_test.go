@@ -10,9 +10,7 @@ import (
 	"github.com/syncromatics/kafmesh/internal/services"
 
 	gomock "github.com/golang/mock/gomock"
-	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
-	"gotest.tools/assert"
 )
 
 func Test_ScraperService(t *testing.T) {
@@ -55,32 +53,4 @@ func Test_ScraperService(t *testing.T) {
 	cancel()
 
 	t.Fatal(group.Wait())
-}
-
-func Test_ScraperService_ShouldReturnErrorIfScrapeFails(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	job := NewMockScraper(ctrl)
-
-	job.EXPECT().
-		Scrape(gomock.Any()).
-		Return(nil, errors.Errorf("boom")).
-		Times(1)
-
-	scrapeService := services.NewScrapeService(job, 1*time.Second)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	group, ctx := errgroup.WithContext(ctx)
-	defer cancel()
-
-	group.Go(scrapeService.Run(ctx))
-
-	select {
-	case <-ctx.Done():
-	}
-
-	cancel()
-
-	assert.ErrorContains(t, group.Wait(), "failed to scrape: boom")
 }
