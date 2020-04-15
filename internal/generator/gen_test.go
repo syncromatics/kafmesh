@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/syncromatics/kafmesh/pkg/generator"
-	"github.com/syncromatics/kafmesh/pkg/models"
+	"github.com/syncromatics/kafmesh/internal/generator"
+	"github.com/syncromatics/kafmesh/internal/models"
 )
 
 func Test_Generator(t *testing.T) {

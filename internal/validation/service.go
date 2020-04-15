@@ -3,7 +3,7 @@ package validation
 import (
 	"strings"
 
-	"github.com/syncromatics/kafmesh/pkg/models"
+	"github.com/syncromatics/kafmesh/internal/models"
 
 	"github.com/pkg/errors"
 )

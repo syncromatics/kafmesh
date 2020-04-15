@@ -6,9 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/syncromatics/kafmesh/pkg/generator"
-
-	"github.com/syncromatics/kafmesh/pkg/models"
+	"github.com/syncromatics/kafmesh/internal/generator"
+	"github.com/syncromatics/kafmesh/internal/models"
 
 	"github.com/spf13/cobra"
 )

@@ -6,9 +6,10 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/pkg/errors"
-	"github.com/syncromatics/kafmesh/pkg/models"
+	"github.com/syncromatics/kafmesh/internal/models"
 	"github.com/syncromatics/kafmesh/pkg/runner"
+
+	"github.com/pkg/errors"
 )
 
 var (

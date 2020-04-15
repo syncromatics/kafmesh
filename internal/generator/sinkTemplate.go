@@ -6,8 +6,9 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/syncromatics/kafmesh/internal/models"
+
 	"github.com/pkg/errors"
-	"github.com/syncromatics/kafmesh/pkg/models"
 )
 
 var (

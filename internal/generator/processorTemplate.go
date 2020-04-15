@@ -7,7 +7,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/syncromatics/kafmesh/pkg/models"
+	"github.com/syncromatics/kafmesh/internal/models"
 
 	"github.com/iancoleman/strcase"
 	"github.com/pkg/errors"

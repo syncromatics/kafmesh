@@ -9,13 +9,14 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"github.com/syncromatics/kafmesh/pkg/runner"
+
 	"github.com/burdiyan/kafkautil"
 	"github.com/golang/protobuf/descriptor"
 	"github.com/golang/protobuf/proto"
 	protobufD "github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"github.com/lovoo/goka"
 	"github.com/pkg/errors"
-	"github.com/syncromatics/kafmesh/pkg/runner"
 )
 
 // Emitter is used to emit messages into kafka for testing

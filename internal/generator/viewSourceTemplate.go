@@ -5,10 +5,10 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/iancoleman/strcase"
+	"github.com/syncromatics/kafmesh/internal/models"
 
+	"github.com/iancoleman/strcase"
 	"github.com/pkg/errors"
-	"github.com/syncromatics/kafmesh/pkg/models"
 )
 
 var (
