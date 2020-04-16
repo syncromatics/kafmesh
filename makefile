@@ -1,5 +1,3 @@
-export VERSION := $(shell gogitver)
-
 build:
 	docker build -t testing --target test .
 
