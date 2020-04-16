@@ -6,8 +6,9 @@ import (
 	"path"
 	"testing"
 
+	"github.com/syncromatics/kafmesh/internal/schema"
+
 	"github.com/stretchr/testify/assert"
-	"github.com/syncromatics/kafmesh/pkg/schema"
 )
 
 func Test_ProtobufDescribeSchema(t *testing.T) {
