@@ -16,16 +16,15 @@ require (
 	github.com/golang/protobuf v1.4.0
 	github.com/iancoleman/strcase v0.0.0-20191112232945-16388991a334
 	github.com/imdario/mergo v0.3.9 // indirect
-	github.com/klauspost/cpuid v1.2.3 // indirect
+	github.com/lib/pq v1.0.0
 	github.com/lovoo/goka v0.1.3
 	github.com/pkg/errors v0.9.1
-	github.com/samuel/go-zookeeper v0.0.0-20190923202752-2cc03de413da // indirect
+	github.com/rakyll/statik v0.1.6
 	github.com/spf13/cobra v0.0.5
 	github.com/stretchr/testify v1.4.0
-	github.com/syncromatics/go-kit v1.1.0
+	github.com/syncromatics/go-kit v1.2.1-0.20200416222456-151156469dfb
 	github.com/syncromatics/proto-schema-registry v0.7.3
-	github.com/syndtr/goleveldb v1.0.0
-	github.com/wvanbergen/kazoo-go v0.0.0-20180202103751-f72d8611297a // indirect
+	github.com/syndtr/goleveldb v1.0.0 // indirect
 	github.com/yargevad/filepathx v0.0.0-20161019152617-907099cb5a62
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0 // indirect

@@ -2,55 +2,85 @@ package services_test
 
 import (
 	"context"
-	"sync"
 	"testing"
 	"time"
 
 	discoveryv1 "github.com/syncromatics/kafmesh/internal/protos/kafmesh/discovery/v1"
 	"github.com/syncromatics/kafmesh/internal/services"
+	"github.com/syncromatics/kafmesh/internal/storage"
 
 	gomock "github.com/golang/mock/gomock"
-	"golang.org/x/sync/errgroup"
+	"gotest.tools/assert"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func Test_ScraperService(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	wg := sync.WaitGroup{}
-	wg.Add(2)
-
 	job := NewMockScraper(ctrl)
+	getter := NewMockGetPodser(ctrl)
+	updater := NewMockUpdater(ctrl)
+	deleter := NewMockDeleter(ctrl)
 
-	job.EXPECT().
-		Scrape(gomock.Any()).
-		Return(map[string]*discoveryv1.Service{}, nil).
-		DoAndReturn(func(context.Context) (map[string]*discoveryv1.Service, error) {
-			wg.Add(-1)
-			return nil, nil
-		}).
-		Times(2)
+	getter.EXPECT().
+		GetPods(gomock.Any()).
+		Return(map[string]struct{}{
+			"existingPod": struct{}{},
+			"deletePod":   struct{}{},
+		}, nil).
+		Times(1)
 
-	scrapeService := services.NewScrapeService(job, 1*time.Second)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	group, ctx := errgroup.WithContext(ctx)
-	defer cancel()
-
-	group.Go(scrapeService.Run(ctx))
-
-	wgChan := make(chan struct{})
-	go func() {
-		wg.Wait()
-		close(wgChan)
-	}()
-	select {
-	case <-ctx.Done():
-	case <-wgChan:
-		return
+	newPod := corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "newPod",
+			Annotations: map[string]string{
+				"kafmesh/scrape": "true",
+			},
+		},
+		Status: corev1.PodStatus{
+			Phase: corev1.PodRunning,
+			PodIP: "1.1.1.1",
+		},
 	}
 
-	cancel()
+	job.EXPECT().
+		GetKafmeshPods(gomock.Any()).
+		Return([]corev1.Pod{
+			corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "existingPod",
+					Annotations: map[string]string{
+						"kafmesh/scrape": "true",
+					},
+				},
+				Status: corev1.PodStatus{
+					Phase: corev1.PodRunning,
+					PodIP: "1.1.1.1",
+				},
+			},
+			newPod,
+		}, nil).
+		Times(1)
 
-	t.Fatal(group.Wait())
+	job.EXPECT().
+		ScrapePod(gomock.Any(), newPod).
+		Return(&discoveryv1.Service{Name: "newService"}, nil).
+		Times(1)
+
+	updater.EXPECT().
+		Update(gomock.Any(), storage.Pod{Name: "newPod"}, &discoveryv1.Service{Name: "newService"}).
+		Return(nil).
+		Times(1)
+
+	deleter.EXPECT().
+		Delete(gomock.Any(), storage.Pod{Name: "deletePod"}).
+		Return(nil).
+		Times(1)
+
+	scrapeService := services.NewScrapeService(job, getter, updater, deleter, 1*time.Second)
+
+	err := scrapeService.Scrape(context.Background())
+	assert.NilError(t, err)
 }

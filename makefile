@@ -13,6 +13,7 @@ generate: proto-lint
 	mkdir -p internal/protos
 	docker run -v "$(PWD)/docs/protos:/work" -v $(PWD):/output -u `id -u $(USER)`:`id -g $(USER)` uber/prototool:latest prototool generate
 	go generate ./...
+	statik -f -src=./docs/migrations -dest=./internal/storage
 
 build-local:
 	go build -o ./artifacts/kafmesh-gen ./cmd/kafmesh-gen/main.go
