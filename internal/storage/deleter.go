@@ -21,7 +21,7 @@ func NewDeleter(db *sql.DB) *Deleter {
 func (d *Deleter) Delete(ctx context.Context, pod Pod) error {
 	txn, err := d.db.BeginTx(ctx, nil)
 	if err != nil {
-		return errors.Wrap(err, "failed to being transaction")
+		return errors.Wrap(err, "failed to begin transaction")
 	}
 	defer txn.Rollback()
 
