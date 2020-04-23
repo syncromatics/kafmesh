@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-	"time"
 
 	discoveryv1 "github.com/syncromatics/kafmesh/internal/protos/kafmesh/discovery/v1"
 
@@ -47,30 +46,8 @@ func NewJob(podLister PodLister, discoveryFactory DiscoveryFactory) *Job {
 	return &Job{podLister, discoveryFactory}
 }
 
-// Scrape scrapes the kafmesh pods running in the kubernetes cluster
-func (j *Job) Scrape(ctx context.Context) (map[string]*discoveryv1.Service, error) {
-	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
-	defer cancel()
-
-	pods, err := j.getPods(ctx)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get pods")
-	}
-
-	results := map[string]*discoveryv1.Service{}
-
-	for _, pod := range pods {
-		r, err := j.scrapePod(ctx, pod)
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to scrape pod '%s'", pod.Name)
-		}
-		results[pod.Name] = r
-	}
-
-	return results, nil
-}
-
-func (j *Job) getPods(ctx context.Context) ([]v1.Pod, error) {
+// GetKafmeshPods gets all kafmesh pods running in the cluster
+func (j *Job) GetKafmeshPods(ctx context.Context) ([]v1.Pod, error) {
 	allPods, err := j.podLister.List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to list pods")
@@ -79,10 +56,6 @@ func (j *Job) getPods(ctx context.Context) ([]v1.Pod, error) {
 	scrapablePods := []v1.Pod{}
 
 	for _, pod := range allPods.Items {
-		if pod.Status.Phase != v1.PodRunning {
-			continue
-		}
-
 		scrapable, ok := pod.Annotations[scrapeAnnotation]
 		if !ok {
 			continue
@@ -96,7 +69,8 @@ func (j *Job) getPods(ctx context.Context) ([]v1.Pod, error) {
 	return scrapablePods, nil
 }
 
-func (j *Job) scrapePod(ctx context.Context, pod v1.Pod) (*discoveryv1.Service, error) {
+// ScrapePod gets the kafmesh service info from the pod
+func (j *Job) ScrapePod(ctx context.Context, pod v1.Pod) (*discoveryv1.Service, error) {
 	port, ok := pod.Annotations[portAnnotation]
 	if !ok {
 		port = "443"
