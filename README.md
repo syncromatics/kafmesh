@@ -55,7 +55,7 @@ component is made up of different streaming objects
 
 * **ViewSource**
 
-  View source will keep a kafka compacted topic in sink with an external source.
+  View source will keep a kafka compacted topic in sync with an external source.
 
 * **ViewSink**
 
