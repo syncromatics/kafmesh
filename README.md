@@ -133,4 +133,4 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 
 [Kafka]: https://kafka.apache.org/
 [Goka]: https://github.com/lovoo/goka
-[kafmesh-example]: https://github.com/syncromtaics/kafmesh-example
+[kafmesh-example]: https://github.com/syncromatics/kafmesh-example
