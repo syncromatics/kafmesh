@@ -9,8 +9,14 @@
             "type": "go",
             "request": "launch",
             "mode": "debug",
-            "program": "${workspaceRoot}/cmd/kafmesh-gen/main.go",
-            "args": [ "docs/kafmesh/definition.yml"],
+            "program": "${workspaceRoot}/cmd/kafmesh-discovery",
+            "args": [],
+            "env" : {
+                "DATABASE_HOST" :"localhost",
+                "DATABASE_NAME" :"kafmesh",
+                "DATABASE_USER" :"postgres",
+                "DATABASE_PASSWORD": "$KAFMESH_DATABASE_PASSWORD",
+            }
         }
     ]
 }
