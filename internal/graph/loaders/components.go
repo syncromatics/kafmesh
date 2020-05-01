@@ -1,395 +1,157 @@
 package loaders
 
 import (
+	"context"
 	"time"
 
-	"github.com/lib/pq"
-	"github.com/pkg/errors"
 	"github.com/syncromatics/kafmesh/internal/graph/model"
+	"github.com/syncromatics/kafmesh/internal/graph/resolvers"
 )
 
-// Components container dataloaders for component relationships
-type Components struct {
-	ServiceByComponent     *ServiceLoader
-	ProcessorsByComponent  *ProcessorSliceLoader
-	SinksByComponent       *SinkSliceLoader
-	SourcesByComponent     *SourceSliceLoader
-	ViewSinksByComponent   *ViewSinkSliceLoader
-	ViewSourcesByComponent *ViewSourceSliceLoader
-	ViewsByComponent       *ViewSliceLoader
+// ComponentRepository is the datastore repository for components
+type ComponentRepository interface {
+	ServicesByComponents(ctx context.Context, components []int) ([]*model.Service, error)
+	ProcessorsByComponents(ctx context.Context, components []int) ([][]*model.Processor, error)
+	SinksByComponents(ctx context.Context, components []int) ([][]*model.Sink, error)
+	SourcesByComponents(ctx context.Context, components []int) ([][]*model.Source, error)
+	ViewSinksByComponents(ctx context.Context, components []int) ([][]*model.ViewSink, error)
+	ViewSourcesByComponents(ctx context.Context, components []int) ([][]*model.ViewSource, error)
+	ViewsByComponents(ctx context.Context, components []int) ([][]*model.View, error)
 }
 
-func configureComponentLoaders(loaders *Loaders) {
-	loader := &Components{}
-	loaders.ComponentLoader = loader
+var _ resolvers.ComponentLoader = &ComponentLoader{}
 
-	loader.ServiceByComponent = &ServiceLoader{
+// ComponentLoader is the dataloader for component relationships
+type ComponentLoader struct {
+	serviceByComponent     *serviceLoader
+	processorsByComponent  *processorSliceLoader
+	sinksByComponent       *sinkSliceLoader
+	sourcesByComponent     *sourceSliceLoader
+	viewSinksByComponent   *viewSinkSliceLoader
+	viewSourcesByComponent *viewSourceSliceLoader
+	viewsByComponent       *viewSliceLoader
+}
+
+// NewComponentLoader creates a new component dataloader
+func NewComponentLoader(ctx context.Context, repository ComponentRepository) *ComponentLoader {
+	loader := &ComponentLoader{}
+	loader.serviceByComponent = &serviceLoader{
 		wait:     100 * time.Millisecond,
 		maxBatch: 100,
 		fetch: func(keys []int) ([]*model.Service, []error) {
-			var components []int
-			for _, key := range keys {
-				components = append(components, key)
-			}
-
-			rows, err := loaders.db.QueryContext(loaders.context, `
-			select
-				components.id,
-				services.id,
-				services.name,
-				services.description
-			from
-				services
-			inner join
-				components on components.service=services.id
-			where
-				service = ANY ($1)
-			`, pq.Array(components))
+			r, err := repository.ServicesByComponents(ctx, keys)
 			if err != nil {
-				return nil, []error{errors.Wrap(err, "failed to query for component services")}
+				return nil, []error{err}
 			}
-			defer rows.Close()
-
-			componentServices := map[int]*model.Service{}
-			var componentID int
-			for rows.Next() {
-				service := &model.Service{}
-				err = rows.Scan(&componentID, &service.ID, &service.Name, &service.Description)
-				if err != nil {
-					return nil, []error{errors.Wrap(err, "failed to scan service row")}
-				}
-			}
-
-			services := []*model.Service{}
-			for _, c := range components {
-				s, ok := componentServices[c]
-				if !ok {
-					return nil, []error{errors.Errorf("did not find service for component %d", c)}
-				}
-				services = append(services, s)
-			}
-
-			return services, nil
+			return r, nil
 		},
 	}
 
-	loader.ProcessorsByComponent = &ProcessorSliceLoader{
+	loader.processorsByComponent = &processorSliceLoader{
 		wait:     100 * time.Millisecond,
 		maxBatch: 100,
 		fetch: func(keys []int) ([][]*model.Processor, []error) {
-			var components []int
-			for _, key := range keys {
-				components = append(components, key)
-			}
-
-			rows, err := loaders.db.QueryContext(loaders.context, `
-			select
-				component,
-				id,
-				name,
-				description
-			from
-				processors
-			where
-				component = ANY ($1)
-			`, pq.Array(components))
+			r, err := repository.ProcessorsByComponents(ctx, keys)
 			if err != nil {
-				return nil, []error{errors.Wrap(err, "failed to query for processors")}
+				return nil, []error{err}
 			}
-			defer rows.Close()
-
-			processors := map[int][]*model.Processor{}
-			var componentID int
-			for rows.Next() {
-				processor := &model.Processor{}
-				err = rows.Scan(&componentID, &processor.ID, &processor.Name, &processor.Description)
-				if err != nil {
-					return nil, []error{errors.Wrap(err, "failed to scan processor")}
-				}
-				_, ok := processors[componentID]
-				if !ok {
-					processors[componentID] = []*model.Processor{}
-				}
-
-				processors[componentID] = append(processors[componentID], processor)
-			}
-
-			results := [][]*model.Processor{}
-			for _, s := range components {
-				_, ok := processors[s]
-				if !ok {
-					results = append(results, []*model.Processor{})
-				} else {
-					results = append(results, processors[s])
-				}
-			}
-			return results, nil
+			return r, nil
 		},
 	}
 
-	loader.SinksByComponent = &SinkSliceLoader{
+	loader.sinksByComponent = &sinkSliceLoader{
 		wait:     100 * time.Millisecond,
 		maxBatch: 100,
 		fetch: func(keys []int) ([][]*model.Sink, []error) {
-			var components []int
-			for _, key := range keys {
-				components = append(components, key)
-			}
-
-			rows, err := loaders.db.QueryContext(loaders.context, `
-			select
-				component,
-				id,
-				name,
-				description
-			from
-				sinks
-			where
-				component = ANY ($1)
-			`, pq.Array(components))
+			r, err := repository.SinksByComponents(ctx, keys)
 			if err != nil {
-				return nil, []error{errors.Wrap(err, "failed to query for sinks")}
+				return nil, []error{err}
 			}
-			defer rows.Close()
-
-			sinks := map[int][]*model.Sink{}
-			var componentID int
-			for rows.Next() {
-				sink := &model.Sink{}
-				err = rows.Scan(&componentID, &sink.ID, &sink.Name, &sink.Description)
-				if err != nil {
-					return nil, []error{errors.Wrap(err, "failed to scan sink")}
-				}
-				_, ok := sinks[componentID]
-				if !ok {
-					sinks[componentID] = []*model.Sink{}
-				}
-
-				sinks[componentID] = append(sinks[componentID], sink)
-			}
-
-			results := [][]*model.Sink{}
-			for _, s := range components {
-				_, ok := sinks[s]
-				if !ok {
-					results = append(results, []*model.Sink{})
-				} else {
-					results = append(results, sinks[s])
-				}
-			}
-			return results, nil
+			return r, nil
 		},
 	}
 
-	loader.SourcesByComponent = &SourceSliceLoader{
+	loader.sourcesByComponent = &sourceSliceLoader{
 		wait:     100 * time.Millisecond,
 		maxBatch: 100,
 		fetch: func(keys []int) ([][]*model.Source, []error) {
-			var components []int
-			for _, key := range keys {
-				components = append(components, key)
-			}
-
-			rows, err := loaders.db.QueryContext(loaders.context, `
-			select
-				component,
-				id
-			from
-				sources
-			where
-				component = ANY ($1)
-			`, pq.Array(components))
+			r, err := repository.SourcesByComponents(ctx, keys)
 			if err != nil {
-				return nil, []error{errors.Wrap(err, "failed to query for sources")}
+				return nil, []error{err}
 			}
-			defer rows.Close()
-
-			sources := map[int][]*model.Source{}
-			var componentID int
-			for rows.Next() {
-				source := &model.Source{}
-				err = rows.Scan(&componentID, &source.ID)
-				if err != nil {
-					return nil, []error{errors.Wrap(err, "failed to scan source")}
-				}
-				_, ok := sources[componentID]
-				if !ok {
-					sources[componentID] = []*model.Source{}
-				}
-
-				sources[componentID] = append(sources[componentID], source)
-			}
-
-			results := [][]*model.Source{}
-			for _, s := range components {
-				_, ok := sources[s]
-				if !ok {
-					results = append(results, []*model.Source{})
-				} else {
-					results = append(results, sources[s])
-				}
-			}
-			return results, nil
+			return r, nil
 		},
 	}
 
-	loader.ViewSinksByComponent = &ViewSinkSliceLoader{
+	loader.viewSinksByComponent = &viewSinkSliceLoader{
 		wait:     100 * time.Millisecond,
 		maxBatch: 100,
 		fetch: func(keys []int) ([][]*model.ViewSink, []error) {
-			var components []int
-			for _, key := range keys {
-				components = append(components, key)
-			}
-
-			rows, err := loaders.db.QueryContext(loaders.context, `
-			select
-				component,
-				id,
-				name,
-				description
-			from
-				view_sinks
-			where
-				component = ANY ($1)
-			`, pq.Array(components))
+			r, err := repository.ViewSinksByComponents(ctx, keys)
 			if err != nil {
-				return nil, []error{errors.Wrap(err, "failed to query for view sinks")}
+				return nil, []error{err}
 			}
-			defer rows.Close()
-
-			viewSinks := map[int][]*model.ViewSink{}
-			var componentID int
-			for rows.Next() {
-				viewSink := &model.ViewSink{}
-				err = rows.Scan(&componentID, &viewSink.ID, &viewSink.Name, &viewSink.Description)
-				if err != nil {
-					return nil, []error{errors.Wrap(err, "failed to scan view sink")}
-				}
-				_, ok := viewSinks[componentID]
-				if !ok {
-					viewSinks[componentID] = []*model.ViewSink{}
-				}
-
-				viewSinks[componentID] = append(viewSinks[componentID], viewSink)
-			}
-
-			results := [][]*model.ViewSink{}
-			for _, s := range components {
-				_, ok := viewSinks[s]
-				if !ok {
-					results = append(results, []*model.ViewSink{})
-				} else {
-					results = append(results, viewSinks[s])
-				}
-			}
-			return results, nil
+			return r, nil
 		},
 	}
 
-	loader.ViewSourcesByComponent = &ViewSourceSliceLoader{
+	loader.viewSourcesByComponent = &viewSourceSliceLoader{
 		wait:     100 * time.Millisecond,
 		maxBatch: 100,
 		fetch: func(keys []int) ([][]*model.ViewSource, []error) {
-			var components []int
-			for _, key := range keys {
-				components = append(components, key)
-			}
-
-			rows, err := loaders.db.QueryContext(loaders.context, `
-			select
-				component,
-				id,
-				name,
-				description
-			from
-				view_sources
-			where
-				component = ANY ($1)
-			`, pq.Array(components))
+			r, err := repository.ViewSourcesByComponents(ctx, keys)
 			if err != nil {
-				return nil, []error{errors.Wrap(err, "failed to query for view sources")}
+				return nil, []error{err}
 			}
-			defer rows.Close()
-
-			viewSources := map[int][]*model.ViewSource{}
-			var componentID int
-			for rows.Next() {
-				viewSource := &model.ViewSource{}
-				err = rows.Scan(&componentID, &viewSource.ID, &viewSource.Name, &viewSource.Description)
-				if err != nil {
-					return nil, []error{errors.Wrap(err, "failed to scan view source")}
-				}
-				_, ok := viewSources[componentID]
-				if !ok {
-					viewSources[componentID] = []*model.ViewSource{}
-				}
-
-				viewSources[componentID] = append(viewSources[componentID], viewSource)
-			}
-
-			results := [][]*model.ViewSource{}
-			for _, s := range components {
-				_, ok := viewSources[s]
-				if !ok {
-					results = append(results, []*model.ViewSource{})
-				} else {
-					results = append(results, viewSources[s])
-				}
-			}
-			return results, nil
+			return r, nil
 		},
 	}
 
-	loader.ViewsByComponent = &ViewSliceLoader{
+	loader.viewsByComponent = &viewSliceLoader{
 		wait:     100 * time.Millisecond,
 		maxBatch: 100,
 		fetch: func(keys []int) ([][]*model.View, []error) {
-			var components []int
-			for _, key := range keys {
-				components = append(components, key)
-			}
-
-			rows, err := loaders.db.QueryContext(loaders.context, `
-			select
-				component,
-				id
-			from
-				views
-			where
-				component = ANY ($1)
-			`, pq.Array(components))
+			r, err := repository.ViewsByComponents(ctx, keys)
 			if err != nil {
-				return nil, []error{errors.Wrap(err, "failed to query for views")}
+				return nil, []error{err}
 			}
-			defer rows.Close()
-
-			views := map[int][]*model.View{}
-			var componentID int
-			for rows.Next() {
-				view := &model.View{}
-				err = rows.Scan(&componentID, &view.ID)
-				if err != nil {
-					return nil, []error{errors.Wrap(err, "failed to scan view")}
-				}
-				_, ok := views[componentID]
-				if !ok {
-					views[componentID] = []*model.View{}
-				}
-
-				views[componentID] = append(views[componentID], view)
-			}
-
-			results := [][]*model.View{}
-			for _, s := range components {
-				_, ok := views[s]
-				if !ok {
-					results = append(results, []*model.View{})
-				} else {
-					results = append(results, views[s])
-				}
-			}
-			return results, nil
+			return r, nil
 		},
 	}
+	return loader
+}
+
+// ProcessorsByComponent returns the processors for the component
+func (c *ComponentLoader) ProcessorsByComponent(componentID int) ([]*model.Processor, error) {
+	return c.processorsByComponent.Load(componentID)
+}
+
+// ServiceByComponent returns the component's service
+func (c *ComponentLoader) ServiceByComponent(componentID int) (*model.Service, error) {
+	return c.serviceByComponent.Load(componentID)
+}
+
+// SinksByComponent returns the sinks for the component
+func (c *ComponentLoader) SinksByComponent(componentID int) ([]*model.Sink, error) {
+	return c.sinksByComponent.Load(componentID)
+}
+
+// SourcesByComponent returns the sources for the component
+func (c *ComponentLoader) SourcesByComponent(componentID int) ([]*model.Source, error) {
+	return c.sourcesByComponent.Load(componentID)
+}
+
+// ViewSinksByComponent returns the view sinks for the component
+func (c *ComponentLoader) ViewSinksByComponent(componentID int) ([]*model.ViewSink, error) {
+	return c.viewSinksByComponent.Load(componentID)
+}
+
+// ViewSourcesByComponent returns the view sources for the component
+func (c *ComponentLoader) ViewSourcesByComponent(componentID int) ([]*model.ViewSource, error) {
+	return c.viewSourcesByComponent.Load(componentID)
+}
+
+// ViewsByComponent returns the views for the components
+func (c *ComponentLoader) ViewsByComponent(componentID int) ([]*model.View, error) {
+	return c.viewsByComponent.Load(componentID)
 }

@@ -9,8 +9,8 @@ import (
 	"github.com/syncromatics/kafmesh/internal/graph/model"
 )
 
-// ViewSinkSliceLoaderConfig captures the config to create a new ViewSinkSliceLoader
-type ViewSinkSliceLoaderConfig struct {
+// viewSinkSliceLoaderConfig captures the config to create a new viewSinkSliceLoader
+type viewSinkSliceLoaderConfig struct {
 	// Fetch is a method that provides the data for the loader
 	Fetch func(keys []int) ([][]*model.ViewSink, []error)
 
@@ -21,17 +21,17 @@ type ViewSinkSliceLoaderConfig struct {
 	MaxBatch int
 }
 
-// NewViewSinkSliceLoader creates a new ViewSinkSliceLoader given a fetch, wait, and maxBatch
-func NewViewSinkSliceLoader(config ViewSinkSliceLoaderConfig) *ViewSinkSliceLoader {
-	return &ViewSinkSliceLoader{
+// NewviewSinkSliceLoader creates a new viewSinkSliceLoader given a fetch, wait, and maxBatch
+func NewviewSinkSliceLoader(config viewSinkSliceLoaderConfig) *viewSinkSliceLoader {
+	return &viewSinkSliceLoader{
 		fetch:    config.Fetch,
 		wait:     config.Wait,
 		maxBatch: config.MaxBatch,
 	}
 }
 
-// ViewSinkSliceLoader batches and caches requests
-type ViewSinkSliceLoader struct {
+// viewSinkSliceLoader batches and caches requests
+type viewSinkSliceLoader struct {
 	// this method provides the data for the loader
 	fetch func(keys []int) ([][]*model.ViewSink, []error)
 
@@ -63,14 +63,14 @@ type viewSinkSliceLoaderBatch struct {
 }
 
 // Load a ViewSink by key, batching and caching will be applied automatically
-func (l *ViewSinkSliceLoader) Load(key int) ([]*model.ViewSink, error) {
+func (l *viewSinkSliceLoader) Load(key int) ([]*model.ViewSink, error) {
 	return l.LoadThunk(key)()
 }
 
 // LoadThunk returns a function that when called will block waiting for a ViewSink.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *ViewSinkSliceLoader) LoadThunk(key int) func() ([]*model.ViewSink, error) {
+func (l *viewSinkSliceLoader) LoadThunk(key int) func() ([]*model.ViewSink, error) {
 	l.mu.Lock()
 	if it, ok := l.cache[key]; ok {
 		l.mu.Unlock()
@@ -113,7 +113,7 @@ func (l *ViewSinkSliceLoader) LoadThunk(key int) func() ([]*model.ViewSink, erro
 
 // LoadAll fetches many keys at once. It will be broken into appropriate sized
 // sub batches depending on how the loader is configured
-func (l *ViewSinkSliceLoader) LoadAll(keys []int) ([][]*model.ViewSink, []error) {
+func (l *viewSinkSliceLoader) LoadAll(keys []int) ([][]*model.ViewSink, []error) {
 	results := make([]func() ([]*model.ViewSink, error), len(keys))
 
 	for i, key := range keys {
@@ -131,7 +131,7 @@ func (l *ViewSinkSliceLoader) LoadAll(keys []int) ([][]*model.ViewSink, []error)
 // LoadAllThunk returns a function that when called will block waiting for a ViewSinks.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *ViewSinkSliceLoader) LoadAllThunk(keys []int) func() ([][]*model.ViewSink, []error) {
+func (l *viewSinkSliceLoader) LoadAllThunk(keys []int) func() ([][]*model.ViewSink, []error) {
 	results := make([]func() ([]*model.ViewSink, error), len(keys))
 	for i, key := range keys {
 		results[i] = l.LoadThunk(key)
@@ -149,7 +149,7 @@ func (l *ViewSinkSliceLoader) LoadAllThunk(keys []int) func() ([][]*model.ViewSi
 // Prime the cache with the provided key and value. If the key already exists, no change is made
 // and false is returned.
 // (To forcefully prime the cache, clear the key first with loader.clear(key).prime(key, value).)
-func (l *ViewSinkSliceLoader) Prime(key int, value []*model.ViewSink) bool {
+func (l *viewSinkSliceLoader) Prime(key int, value []*model.ViewSink) bool {
 	l.mu.Lock()
 	var found bool
 	if _, found = l.cache[key]; !found {
@@ -164,13 +164,13 @@ func (l *ViewSinkSliceLoader) Prime(key int, value []*model.ViewSink) bool {
 }
 
 // Clear the value at key from the cache, if it exists
-func (l *ViewSinkSliceLoader) Clear(key int) {
+func (l *viewSinkSliceLoader) Clear(key int) {
 	l.mu.Lock()
 	delete(l.cache, key)
 	l.mu.Unlock()
 }
 
-func (l *ViewSinkSliceLoader) unsafeSet(key int, value []*model.ViewSink) {
+func (l *viewSinkSliceLoader) unsafeSet(key int, value []*model.ViewSink) {
 	if l.cache == nil {
 		l.cache = map[int][]*model.ViewSink{}
 	}
@@ -179,7 +179,7 @@ func (l *ViewSinkSliceLoader) unsafeSet(key int, value []*model.ViewSink) {
 
 // keyIndex will return the location of the key in the batch, if its not found
 // it will add the key to the batch
-func (b *viewSinkSliceLoaderBatch) keyIndex(l *ViewSinkSliceLoader, key int) int {
+func (b *viewSinkSliceLoaderBatch) keyIndex(l *viewSinkSliceLoader, key int) int {
 	for i, existingKey := range b.keys {
 		if key == existingKey {
 			return i
@@ -203,7 +203,7 @@ func (b *viewSinkSliceLoaderBatch) keyIndex(l *ViewSinkSliceLoader, key int) int
 	return pos
 }
 
-func (b *viewSinkSliceLoaderBatch) startTimer(l *ViewSinkSliceLoader) {
+func (b *viewSinkSliceLoaderBatch) startTimer(l *viewSinkSliceLoader) {
 	time.Sleep(l.wait)
 	l.mu.Lock()
 
@@ -219,7 +219,7 @@ func (b *viewSinkSliceLoaderBatch) startTimer(l *ViewSinkSliceLoader) {
 	b.end(l)
 }
 
-func (b *viewSinkSliceLoaderBatch) end(l *ViewSinkSliceLoader) {
+func (b *viewSinkSliceLoaderBatch) end(l *viewSinkSliceLoader) {
 	b.data, b.error = l.fetch(b.keys)
 	close(b.done)
 }

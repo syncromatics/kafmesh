@@ -9,8 +9,8 @@ import (
 	"github.com/syncromatics/kafmesh/internal/graph/model"
 )
 
-// ViewSliceLoaderConfig captures the config to create a new ViewSliceLoader
-type ViewSliceLoaderConfig struct {
+// viewSliceLoaderConfig captures the config to create a new viewSliceLoader
+type viewSliceLoaderConfig struct {
 	// Fetch is a method that provides the data for the loader
 	Fetch func(keys []int) ([][]*model.View, []error)
 
@@ -21,17 +21,17 @@ type ViewSliceLoaderConfig struct {
 	MaxBatch int
 }
 
-// NewViewSliceLoader creates a new ViewSliceLoader given a fetch, wait, and maxBatch
-func NewViewSliceLoader(config ViewSliceLoaderConfig) *ViewSliceLoader {
-	return &ViewSliceLoader{
+// NewviewSliceLoader creates a new viewSliceLoader given a fetch, wait, and maxBatch
+func NewviewSliceLoader(config viewSliceLoaderConfig) *viewSliceLoader {
+	return &viewSliceLoader{
 		fetch:    config.Fetch,
 		wait:     config.Wait,
 		maxBatch: config.MaxBatch,
 	}
 }
 
-// ViewSliceLoader batches and caches requests
-type ViewSliceLoader struct {
+// viewSliceLoader batches and caches requests
+type viewSliceLoader struct {
 	// this method provides the data for the loader
 	fetch func(keys []int) ([][]*model.View, []error)
 
@@ -63,14 +63,14 @@ type viewSliceLoaderBatch struct {
 }
 
 // Load a View by key, batching and caching will be applied automatically
-func (l *ViewSliceLoader) Load(key int) ([]*model.View, error) {
+func (l *viewSliceLoader) Load(key int) ([]*model.View, error) {
 	return l.LoadThunk(key)()
 }
 
 // LoadThunk returns a function that when called will block waiting for a View.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *ViewSliceLoader) LoadThunk(key int) func() ([]*model.View, error) {
+func (l *viewSliceLoader) LoadThunk(key int) func() ([]*model.View, error) {
 	l.mu.Lock()
 	if it, ok := l.cache[key]; ok {
 		l.mu.Unlock()
@@ -113,7 +113,7 @@ func (l *ViewSliceLoader) LoadThunk(key int) func() ([]*model.View, error) {
 
 // LoadAll fetches many keys at once. It will be broken into appropriate sized
 // sub batches depending on how the loader is configured
-func (l *ViewSliceLoader) LoadAll(keys []int) ([][]*model.View, []error) {
+func (l *viewSliceLoader) LoadAll(keys []int) ([][]*model.View, []error) {
 	results := make([]func() ([]*model.View, error), len(keys))
 
 	for i, key := range keys {
@@ -131,7 +131,7 @@ func (l *ViewSliceLoader) LoadAll(keys []int) ([][]*model.View, []error) {
 // LoadAllThunk returns a function that when called will block waiting for a Views.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *ViewSliceLoader) LoadAllThunk(keys []int) func() ([][]*model.View, []error) {
+func (l *viewSliceLoader) LoadAllThunk(keys []int) func() ([][]*model.View, []error) {
 	results := make([]func() ([]*model.View, error), len(keys))
 	for i, key := range keys {
 		results[i] = l.LoadThunk(key)
@@ -149,7 +149,7 @@ func (l *ViewSliceLoader) LoadAllThunk(keys []int) func() ([][]*model.View, []er
 // Prime the cache with the provided key and value. If the key already exists, no change is made
 // and false is returned.
 // (To forcefully prime the cache, clear the key first with loader.clear(key).prime(key, value).)
-func (l *ViewSliceLoader) Prime(key int, value []*model.View) bool {
+func (l *viewSliceLoader) Prime(key int, value []*model.View) bool {
 	l.mu.Lock()
 	var found bool
 	if _, found = l.cache[key]; !found {
@@ -164,13 +164,13 @@ func (l *ViewSliceLoader) Prime(key int, value []*model.View) bool {
 }
 
 // Clear the value at key from the cache, if it exists
-func (l *ViewSliceLoader) Clear(key int) {
+func (l *viewSliceLoader) Clear(key int) {
 	l.mu.Lock()
 	delete(l.cache, key)
 	l.mu.Unlock()
 }
 
-func (l *ViewSliceLoader) unsafeSet(key int, value []*model.View) {
+func (l *viewSliceLoader) unsafeSet(key int, value []*model.View) {
 	if l.cache == nil {
 		l.cache = map[int][]*model.View{}
 	}
@@ -179,7 +179,7 @@ func (l *ViewSliceLoader) unsafeSet(key int, value []*model.View) {
 
 // keyIndex will return the location of the key in the batch, if its not found
 // it will add the key to the batch
-func (b *viewSliceLoaderBatch) keyIndex(l *ViewSliceLoader, key int) int {
+func (b *viewSliceLoaderBatch) keyIndex(l *viewSliceLoader, key int) int {
 	for i, existingKey := range b.keys {
 		if key == existingKey {
 			return i
@@ -203,7 +203,7 @@ func (b *viewSliceLoaderBatch) keyIndex(l *ViewSliceLoader, key int) int {
 	return pos
 }
 
-func (b *viewSliceLoaderBatch) startTimer(l *ViewSliceLoader) {
+func (b *viewSliceLoaderBatch) startTimer(l *viewSliceLoader) {
 	time.Sleep(l.wait)
 	l.mu.Lock()
 
@@ -219,7 +219,7 @@ func (b *viewSliceLoaderBatch) startTimer(l *ViewSliceLoader) {
 	b.end(l)
 }
 
-func (b *viewSliceLoaderBatch) end(l *ViewSliceLoader) {
+func (b *viewSliceLoaderBatch) end(l *viewSliceLoader) {
 	b.data, b.error = l.fetch(b.keys)
 	close(b.done)
 }

@@ -2,13 +2,29 @@ package loaders
 
 import (
 	"context"
-	"database/sql"
 	"net/http"
 
-	"github.com/syncromatics/kafmesh/internal/graph/model"
-
-	"github.com/pkg/errors"
+	"github.com/syncromatics/kafmesh/internal/graph/resolvers"
 )
+
+// Repositories is a collection of all data repositories
+type Repositories interface {
+	Component() ComponentRepository
+	Service() ServiceRepository
+	Processor() ProcessorRepository
+	ProcessorInput() ProcessorInputRepository
+	ProcessorJoin() ProcessorJoinRepository
+	ProcessorLookup() ProcessorLookupRepository
+	ProcessorOutput() ProcessorOutputRepository
+	Sink() SinkRepository
+	Source() SourceRepository
+	ViewSink() ViewSinkRepository
+	ViewSource() ViewSourceRepository
+	View() ViewRepository
+	Pod() PodRepository
+	Topic() TopicRepository
+	Query() QueryRepository
+}
 
 type ctxKeyType struct{ name string }
 
@@ -16,124 +32,135 @@ var ctxKey = ctxKeyType{"loadersCtx"}
 
 // Loaders is a collection of model loaders
 type Loaders struct {
-	ComponentLoader       *Components
-	ServiceLoader         *Services
-	ProcessorLoader       *Processors
-	ProcessorInputLoader  *ProcessorInputs
-	ProcessorJoinLoader   *ProcessorJoins
-	ProcessorLookupLoader *ProcessorLookups
-	ProcessorOutputLoader *ProcessorOutputs
-	SinkLoader            *Sinks
-	SourceLoader          *Sources
-	ViewSinkLoader        *ViewSinks
-	ViewSourceLoader      *ViewSources
-	ViewLoader            *Views
-	PodLoader             *Pods
-	TopicLoader           *Topics
-
-	db      *sql.DB
-	context context.Context
+	ComponentLoader       *ComponentLoader
+	ServiceLoader         *ServiceLoader
+	ProcessorLoader       *ProcessorLoader
+	ProcessorInputLoader  *ProcessorInputLoader
+	ProcessorJoinLoader   *ProcessorJoinLoader
+	ProcessorLookupLoader *ProcessorLookupLoader
+	ProcessorOutputLoader *ProcessorOutputLoader
+	SinkLoader            *SinkLoader
+	SourceLoader          *SourceLoader
+	ViewSinkLoader        *ViewSinkLoader
+	ViewSourceLoader      *ViewSourceLoader
+	ViewLoader            *ViewLoader
+	PodLoader             *PodLoader
+	TopicLoader           *TopicLoader
+	QueryLoader           *QueryLoader
 }
 
 // NewLoaders creates a new Loaders
-func NewLoaders(ctx context.Context, db *sql.DB) *Loaders {
-	loaders := &Loaders{
-		db:      db,
-		context: ctx,
+func NewLoaders(ctx context.Context, repositories Repositories) *Loaders {
+	return &Loaders{
+		ComponentLoader:       NewComponentLoader(ctx, repositories.Component()),
+		ServiceLoader:         NewServiceLoader(ctx, repositories.Service()),
+		ProcessorLoader:       NewProcessorLoader(ctx, repositories.Processor()),
+		ProcessorInputLoader:  NewProcessorInputLoader(ctx, repositories.ProcessorInput()),
+		ProcessorJoinLoader:   NewProcessorJoinLoader(ctx, repositories.ProcessorJoin()),
+		ProcessorLookupLoader: NewProcessorLookupLoader(ctx, repositories.ProcessorLookup()),
+		ProcessorOutputLoader: NewProcessorOutputLoader(ctx, repositories.ProcessorOutput()),
+		SinkLoader:            NewSinkLoader(ctx, repositories.Sink()),
+		SourceLoader:          NewSourceLoader(ctx, repositories.Source()),
+		ViewSinkLoader:        NewViewSinkLoader(ctx, repositories.ViewSink()),
+		ViewSourceLoader:      NewViewSourceLoader(ctx, repositories.ViewSource()),
+		PodLoader:             NewPodLoader(ctx, repositories.Pod()),
+		TopicLoader:           NewTopicLoader(ctx, repositories.Topic()),
+		QueryLoader:           NewQueryLoader(ctx, repositories.Query()),
+		ViewLoader:            NewViewLoader(ctx, repositories.View()),
 	}
-	configureServices(loaders)
-	configureComponentLoaders(loaders)
-	configureProcessors(loaders)
-	configureProcessorInputs(loaders)
-	configureProcessorJoins(loaders)
-	configureProcessorLookups(loaders)
-	configureProcessorOutputs(loaders)
-	configureSinks(loaders)
-	configureSources(loaders)
-	configureViewSinks(loaders)
-	configureViewSources(loaders)
-	configureViews(loaders)
-	configurePods(loaders)
-	configureTopics(loaders)
-
-	return loaders
 }
 
 // NewMiddleware wires up the dataloaders into the http pipeline
-func NewMiddleware(db *sql.DB) func(next http.Handler) http.Handler {
+func NewMiddleware(repositories Repositories) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			loaders := NewLoaders(r.Context(), db)
+			loaders := NewLoaders(r.Context(), repositories)
 			dlCtx := context.WithValue(r.Context(), ctxKey, loaders)
 			next.ServeHTTP(w, r.WithContext(dlCtx))
 		})
 	}
 }
 
-// CtxLoaders gets the data loaders object from the context
-func CtxLoaders(ctx context.Context) *Loaders {
+var _ resolvers.DataLoaders = &LoaderFactory{}
+
+// LoaderFactory gets the data loaders from the context
+type LoaderFactory struct{}
+
+func (f *LoaderFactory) ctxLoaders(ctx context.Context) *Loaders {
 	return ctx.Value(ctxKey).(*Loaders)
 }
 
-// GetAllServices gets all services
-func (s *Loaders) GetAllServices() ([]*model.Service, error) {
-	rows, err := s.db.QueryContext(s.context, `select id, name, description from services`)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to query services")
-	}
-	defer rows.Close()
-
-	services := []*model.Service{}
-	for rows.Next() {
-		service := &model.Service{}
-		err = rows.Scan(&service.ID, &service.Name, &service.Description)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to scan service")
-		}
-		services = append(services, service)
-	}
-
-	return services, nil
+// ComponentLoader returns the component data loader
+func (f *LoaderFactory) ComponentLoader(ctx context.Context) resolvers.ComponentLoader {
+	return f.ctxLoaders(ctx).ComponentLoader
 }
 
-// GetAllPods gets all pods
-func (s *Loaders) GetAllPods() ([]*model.Pod, error) {
-	rows, err := s.db.QueryContext(s.context, `select id, name from pods`)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to query pods")
-	}
-	defer rows.Close()
-
-	pods := []*model.Pod{}
-	for rows.Next() {
-		pod := &model.Pod{}
-		err = rows.Scan(&pod.ID, &pod.Name)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to scan pod")
-		}
-		pods = append(pods, pod)
-	}
-
-	return pods, nil
+// PodLoader returns the pod data loader
+func (f *LoaderFactory) PodLoader(ctx context.Context) resolvers.PodLoader {
+	return f.ctxLoaders(ctx).PodLoader
 }
 
-// GetAllTopics gets all topics
-func (s *Loaders) GetAllTopics() ([]*model.Topic, error) {
-	rows, err := s.db.QueryContext(s.context, `select id, name, message from topics`)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to query topics")
-	}
-	defer rows.Close()
+// ProcessorInputLoader returns the processor input data loader
+func (f *LoaderFactory) ProcessorInputLoader(ctx context.Context) resolvers.ProcessorInputLoader {
+	return f.ctxLoaders(ctx).ProcessorInputLoader
+}
 
-	results := []*model.Topic{}
-	for rows.Next() {
-		topic := &model.Topic{}
-		err = rows.Scan(&topic.ID, &topic.Name, &topic.Message)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to scan topic")
-		}
-		results = append(results, topic)
-	}
+// ProcessorJoinLoader returns the processor join data loader
+func (f *LoaderFactory) ProcessorJoinLoader(ctx context.Context) resolvers.ProcessorJoinLoader {
+	return f.ctxLoaders(ctx).ProcessorJoinLoader
+}
 
-	return results, nil
+// ProcessorLookupLoader returns the processor lookup data loader
+func (f *LoaderFactory) ProcessorLookupLoader(ctx context.Context) resolvers.ProcessorLookupLoader {
+	return f.ctxLoaders(ctx).ProcessorLookupLoader
+}
+
+// ProcessorOutputLoader returns the processor output data loader
+func (f *LoaderFactory) ProcessorOutputLoader(ctx context.Context) resolvers.ProcessorOutputLoader {
+	return f.ctxLoaders(ctx).ProcessorOutputLoader
+}
+
+// ProcessorLoader returns the processor data loader
+func (f *LoaderFactory) ProcessorLoader(ctx context.Context) resolvers.ProcessorLoader {
+	return f.ctxLoaders(ctx).ProcessorLoader
+}
+
+// QueryLoader returns the query data loader
+func (f *LoaderFactory) QueryLoader(ctx context.Context) resolvers.QueryLoader {
+	return f.ctxLoaders(ctx).QueryLoader
+}
+
+// ServiceLoader returns the service data loader
+func (f *LoaderFactory) ServiceLoader(ctx context.Context) resolvers.ServiceLoader {
+	return f.ctxLoaders(ctx).ServiceLoader
+}
+
+// SinkLoader returns the sink data loader
+func (f *LoaderFactory) SinkLoader(ctx context.Context) resolvers.SinkLoader {
+	return f.ctxLoaders(ctx).SinkLoader
+}
+
+// SourceLoader returns the source data loader
+func (f *LoaderFactory) SourceLoader(ctx context.Context) resolvers.SourceLoader {
+	return f.ctxLoaders(ctx).SourceLoader
+}
+
+// TopicLoader returns the topic data loader
+func (f *LoaderFactory) TopicLoader(ctx context.Context) resolvers.TopicLoader {
+	return f.ctxLoaders(ctx).TopicLoader
+}
+
+// ViewLoader returns the view data loader
+func (f *LoaderFactory) ViewLoader(ctx context.Context) resolvers.ViewLoader {
+	return f.ctxLoaders(ctx).ViewLoader
+}
+
+// ViewSinkLoader returns the view sink data loader
+func (f *LoaderFactory) ViewSinkLoader(ctx context.Context) resolvers.ViewSinkLoader {
+	return f.ctxLoaders(ctx).ViewSinkLoader
+}
+
+// ViewSourceLoader returns the view source data loader
+func (f *LoaderFactory) ViewSourceLoader(ctx context.Context) resolvers.ViewSourceLoader {
+	return f.ctxLoaders(ctx).ViewSourceLoader
 }

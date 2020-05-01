@@ -1,160 +1,86 @@
 package loaders
 
 import (
+	"context"
 	"time"
 
-	"github.com/lib/pq"
-	"github.com/pkg/errors"
 	"github.com/syncromatics/kafmesh/internal/graph/model"
+	"github.com/syncromatics/kafmesh/internal/graph/resolvers"
 )
 
-// Sources contains data loaders for source relationships
-type Sources struct {
-	ComponentBySource *ComponentLoader
-	PodsBySource      *PodSliceLoader
-	TopicBySource     *TopicLoader
+// SourceRepository is the datastore repository for sources
+type SourceRepository interface {
+	ComponentBySources(ctx context.Context, sources []int) ([]*model.Component, error)
+	PodsBySources(ctx context.Context, sources []int) ([][]*model.Pod, error)
+	TopicBySources(ctx context.Context, sources []int) ([]*model.Topic, error)
 }
 
-func configureSources(loaders *Loaders) {
-	loader := &Sources{}
-	loaders.SourceLoader = loader
+var _ resolvers.SourceLoader = &SourceLoader{}
 
-	loader.ComponentBySource = &ComponentLoader{
+// SourceLoader contains data loaders for source relationships
+type SourceLoader struct {
+	componentBySource *componentLoader
+	podsBySource      *podSliceLoader
+	topicBySource     *topicLoader
+}
+
+// NewSourceLoader creates a new SourceLoader
+func NewSourceLoader(ctx context.Context, repository SourceRepository) *SourceLoader {
+	loader := &SourceLoader{}
+
+	loader.componentBySource = &componentLoader{
 		wait:     100 * time.Millisecond,
 		maxBatch: 100,
 		fetch: func(keys []int) ([]*model.Component, []error) {
-			rows, err := loaders.db.QueryContext(loaders.context, `
-			select
-				sources.id,
-				components.id,
-				components.name,
-				components.description
-			from
-				components
-			inner join
-				sources on sources.component=components.id
-			where
-				sources.id = ANY ($1)
-			`, pq.Array(keys))
+			r, err := repository.ComponentBySources(ctx, keys)
 			if err != nil {
-				return nil, []error{errors.Wrap(err, "failed to query for source components")}
-			}
-			defer rows.Close()
-
-			components := map[int]*model.Component{}
-			var id int
-			for rows.Next() {
-				component := &model.Component{}
-				err = rows.Scan(&id, &component.ID, &component.Name, &component.Description)
-				if err != nil {
-					return nil, []error{errors.Wrap(err, "failed to scan component row")}
-				}
-				components[id] = component
+				return nil, []error{err}
 			}
 
-			results := []*model.Component{}
-			for _, c := range keys {
-				s, ok := components[c]
-				if !ok {
-					return nil, []error{errors.Errorf("did not find component for sink %d", c)}
-				}
-				results = append(results, s)
-			}
-
-			return results, nil
+			return r, nil
 		},
 	}
 
-	loader.PodsBySource = &PodSliceLoader{
+	loader.podsBySource = &podSliceLoader{
 		wait:     100 * time.Millisecond,
 		maxBatch: 100,
 		fetch: func(keys []int) ([][]*model.Pod, []error) {
-			rows, err := loaders.db.QueryContext(loaders.context, `
-			select
-				pod_sources.source,
-				pods.id,
-				pods.name
-			from
-				pods
-			inner join
-				pod_sources ON pod_sources.pod=pods.id
-			where
-				pod_sources.source = ANY ($1)
-			`, pq.Array(keys))
+			r, err := repository.PodsBySources(ctx, keys)
 			if err != nil {
-				return nil, []error{errors.Wrap(err, "failed to query for pods")}
-			}
-			defer rows.Close()
-
-			pods := map[int][]*model.Pod{}
-			var id int
-			for rows.Next() {
-				pod := &model.Pod{}
-				err = rows.Scan(&id, &pod.ID, &pod.Name)
-				if err != nil {
-					return nil, []error{errors.Wrap(err, "failed to scan pods")}
-				}
-				_, ok := pods[id]
-				if !ok {
-					pods[id] = []*model.Pod{}
-				}
-
-				pods[id] = append(pods[id], pod)
+				return nil, []error{err}
 			}
 
-			results := [][]*model.Pod{}
-			for _, s := range keys {
-				_, ok := pods[s]
-				if !ok {
-					results = append(results, []*model.Pod{})
-				} else {
-					results = append(results, pods[s])
-				}
-			}
-			return results, nil
+			return r, nil
 		},
 	}
 
-	loader.TopicBySource = &TopicLoader{
+	loader.topicBySource = &topicLoader{
 		wait:     100 * time.Millisecond,
 		maxBatch: 100,
 		fetch: func(keys []int) ([]*model.Topic, []error) {
-			rows, err := loaders.db.QueryContext(loaders.context, `
-			select
-				sources.id,
-				topics.id,
-				topics.name,
-				topics.message
-			from
-				topics
-			inner join
-				sources on sources.topic=topics.id
-			where
-				sources.id = ANY ($1)
-			`, pq.Array(keys))
+			r, err := repository.TopicBySources(ctx, keys)
 			if err != nil {
-				return nil, []error{errors.Wrap(err, "failed to query for source topic")}
-			}
-			defer rows.Close()
-
-			topics := map[int]*model.Topic{}
-			var id int
-			for rows.Next() {
-				topic := &model.Topic{}
-				err = rows.Scan(&id, &topic.ID, &topic.Name, &topic.Message)
-				if err != nil {
-					return nil, []error{errors.Wrap(err, "failed to scan topic row")}
-				}
-				topics[id] = topic
+				return nil, []error{err}
 			}
 
-			results := []*model.Topic{}
-			for _, c := range keys {
-				s, _ := topics[c]
-				results = append(results, s)
-			}
-
-			return results, nil
+			return r, nil
 		},
 	}
+
+	return loader
+}
+
+// ComponentBySource returns the component for the source
+func (l *SourceLoader) ComponentBySource(sourceID int) (*model.Component, error) {
+	return l.componentBySource.Load(sourceID)
+}
+
+// PodsBySource returns the pods for the source
+func (l *SourceLoader) PodsBySource(sourceID int) ([]*model.Pod, error) {
+	return l.podsBySource.Load(sourceID)
+}
+
+// TopicBySource returns the topic for the source
+func (l *SourceLoader) TopicBySource(sourceID int) (*model.Topic, error) {
+	return l.topicBySource.Load(sourceID)
 }

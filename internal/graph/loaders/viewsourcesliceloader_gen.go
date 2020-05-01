@@ -9,8 +9,8 @@ import (
 	"github.com/syncromatics/kafmesh/internal/graph/model"
 )
 
-// ViewSourceSliceLoaderConfig captures the config to create a new ViewSourceSliceLoader
-type ViewSourceSliceLoaderConfig struct {
+// viewSourceSliceLoaderConfig captures the config to create a new viewSourceSliceLoader
+type viewSourceSliceLoaderConfig struct {
 	// Fetch is a method that provides the data for the loader
 	Fetch func(keys []int) ([][]*model.ViewSource, []error)
 
@@ -21,17 +21,17 @@ type ViewSourceSliceLoaderConfig struct {
 	MaxBatch int
 }
 
-// NewViewSourceSliceLoader creates a new ViewSourceSliceLoader given a fetch, wait, and maxBatch
-func NewViewSourceSliceLoader(config ViewSourceSliceLoaderConfig) *ViewSourceSliceLoader {
-	return &ViewSourceSliceLoader{
+// NewviewSourceSliceLoader creates a new viewSourceSliceLoader given a fetch, wait, and maxBatch
+func NewviewSourceSliceLoader(config viewSourceSliceLoaderConfig) *viewSourceSliceLoader {
+	return &viewSourceSliceLoader{
 		fetch:    config.Fetch,
 		wait:     config.Wait,
 		maxBatch: config.MaxBatch,
 	}
 }
 
-// ViewSourceSliceLoader batches and caches requests
-type ViewSourceSliceLoader struct {
+// viewSourceSliceLoader batches and caches requests
+type viewSourceSliceLoader struct {
 	// this method provides the data for the loader
 	fetch func(keys []int) ([][]*model.ViewSource, []error)
 
@@ -63,14 +63,14 @@ type viewSourceSliceLoaderBatch struct {
 }
 
 // Load a ViewSource by key, batching and caching will be applied automatically
-func (l *ViewSourceSliceLoader) Load(key int) ([]*model.ViewSource, error) {
+func (l *viewSourceSliceLoader) Load(key int) ([]*model.ViewSource, error) {
 	return l.LoadThunk(key)()
 }
 
 // LoadThunk returns a function that when called will block waiting for a ViewSource.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *ViewSourceSliceLoader) LoadThunk(key int) func() ([]*model.ViewSource, error) {
+func (l *viewSourceSliceLoader) LoadThunk(key int) func() ([]*model.ViewSource, error) {
 	l.mu.Lock()
 	if it, ok := l.cache[key]; ok {
 		l.mu.Unlock()
@@ -113,7 +113,7 @@ func (l *ViewSourceSliceLoader) LoadThunk(key int) func() ([]*model.ViewSource, 
 
 // LoadAll fetches many keys at once. It will be broken into appropriate sized
 // sub batches depending on how the loader is configured
-func (l *ViewSourceSliceLoader) LoadAll(keys []int) ([][]*model.ViewSource, []error) {
+func (l *viewSourceSliceLoader) LoadAll(keys []int) ([][]*model.ViewSource, []error) {
 	results := make([]func() ([]*model.ViewSource, error), len(keys))
 
 	for i, key := range keys {
@@ -131,7 +131,7 @@ func (l *ViewSourceSliceLoader) LoadAll(keys []int) ([][]*model.ViewSource, []er
 // LoadAllThunk returns a function that when called will block waiting for a ViewSources.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *ViewSourceSliceLoader) LoadAllThunk(keys []int) func() ([][]*model.ViewSource, []error) {
+func (l *viewSourceSliceLoader) LoadAllThunk(keys []int) func() ([][]*model.ViewSource, []error) {
 	results := make([]func() ([]*model.ViewSource, error), len(keys))
 	for i, key := range keys {
 		results[i] = l.LoadThunk(key)
@@ -149,7 +149,7 @@ func (l *ViewSourceSliceLoader) LoadAllThunk(keys []int) func() ([][]*model.View
 // Prime the cache with the provided key and value. If the key already exists, no change is made
 // and false is returned.
 // (To forcefully prime the cache, clear the key first with loader.clear(key).prime(key, value).)
-func (l *ViewSourceSliceLoader) Prime(key int, value []*model.ViewSource) bool {
+func (l *viewSourceSliceLoader) Prime(key int, value []*model.ViewSource) bool {
 	l.mu.Lock()
 	var found bool
 	if _, found = l.cache[key]; !found {
@@ -164,13 +164,13 @@ func (l *ViewSourceSliceLoader) Prime(key int, value []*model.ViewSource) bool {
 }
 
 // Clear the value at key from the cache, if it exists
-func (l *ViewSourceSliceLoader) Clear(key int) {
+func (l *viewSourceSliceLoader) Clear(key int) {
 	l.mu.Lock()
 	delete(l.cache, key)
 	l.mu.Unlock()
 }
 
-func (l *ViewSourceSliceLoader) unsafeSet(key int, value []*model.ViewSource) {
+func (l *viewSourceSliceLoader) unsafeSet(key int, value []*model.ViewSource) {
 	if l.cache == nil {
 		l.cache = map[int][]*model.ViewSource{}
 	}
@@ -179,7 +179,7 @@ func (l *ViewSourceSliceLoader) unsafeSet(key int, value []*model.ViewSource) {
 
 // keyIndex will return the location of the key in the batch, if its not found
 // it will add the key to the batch
-func (b *viewSourceSliceLoaderBatch) keyIndex(l *ViewSourceSliceLoader, key int) int {
+func (b *viewSourceSliceLoaderBatch) keyIndex(l *viewSourceSliceLoader, key int) int {
 	for i, existingKey := range b.keys {
 		if key == existingKey {
 			return i
@@ -203,7 +203,7 @@ func (b *viewSourceSliceLoaderBatch) keyIndex(l *ViewSourceSliceLoader, key int)
 	return pos
 }
 
-func (b *viewSourceSliceLoaderBatch) startTimer(l *ViewSourceSliceLoader) {
+func (b *viewSourceSliceLoaderBatch) startTimer(l *viewSourceSliceLoader) {
 	time.Sleep(l.wait)
 	l.mu.Lock()
 
@@ -219,7 +219,7 @@ func (b *viewSourceSliceLoaderBatch) startTimer(l *ViewSourceSliceLoader) {
 	b.end(l)
 }
 
-func (b *viewSourceSliceLoaderBatch) end(l *ViewSourceSliceLoader) {
+func (b *viewSourceSliceLoaderBatch) end(l *viewSourceSliceLoader) {
 	b.data, b.error = l.fetch(b.keys)
 	close(b.done)
 }

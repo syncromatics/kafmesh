@@ -9,8 +9,8 @@ import (
 	"github.com/syncromatics/kafmesh/internal/graph/model"
 )
 
-// PodSliceLoaderConfig captures the config to create a new PodSliceLoader
-type PodSliceLoaderConfig struct {
+// podSliceLoaderConfig captures the config to create a new podSliceLoader
+type podSliceLoaderConfig struct {
 	// Fetch is a method that provides the data for the loader
 	Fetch func(keys []int) ([][]*model.Pod, []error)
 
@@ -21,17 +21,17 @@ type PodSliceLoaderConfig struct {
 	MaxBatch int
 }
 
-// NewPodSliceLoader creates a new PodSliceLoader given a fetch, wait, and maxBatch
-func NewPodSliceLoader(config PodSliceLoaderConfig) *PodSliceLoader {
-	return &PodSliceLoader{
+// NewpodSliceLoader creates a new podSliceLoader given a fetch, wait, and maxBatch
+func NewpodSliceLoader(config podSliceLoaderConfig) *podSliceLoader {
+	return &podSliceLoader{
 		fetch:    config.Fetch,
 		wait:     config.Wait,
 		maxBatch: config.MaxBatch,
 	}
 }
 
-// PodSliceLoader batches and caches requests
-type PodSliceLoader struct {
+// podSliceLoader batches and caches requests
+type podSliceLoader struct {
 	// this method provides the data for the loader
 	fetch func(keys []int) ([][]*model.Pod, []error)
 
@@ -63,14 +63,14 @@ type podSliceLoaderBatch struct {
 }
 
 // Load a Pod by key, batching and caching will be applied automatically
-func (l *PodSliceLoader) Load(key int) ([]*model.Pod, error) {
+func (l *podSliceLoader) Load(key int) ([]*model.Pod, error) {
 	return l.LoadThunk(key)()
 }
 
 // LoadThunk returns a function that when called will block waiting for a Pod.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *PodSliceLoader) LoadThunk(key int) func() ([]*model.Pod, error) {
+func (l *podSliceLoader) LoadThunk(key int) func() ([]*model.Pod, error) {
 	l.mu.Lock()
 	if it, ok := l.cache[key]; ok {
 		l.mu.Unlock()
@@ -113,7 +113,7 @@ func (l *PodSliceLoader) LoadThunk(key int) func() ([]*model.Pod, error) {
 
 // LoadAll fetches many keys at once. It will be broken into appropriate sized
 // sub batches depending on how the loader is configured
-func (l *PodSliceLoader) LoadAll(keys []int) ([][]*model.Pod, []error) {
+func (l *podSliceLoader) LoadAll(keys []int) ([][]*model.Pod, []error) {
 	results := make([]func() ([]*model.Pod, error), len(keys))
 
 	for i, key := range keys {
@@ -131,7 +131,7 @@ func (l *PodSliceLoader) LoadAll(keys []int) ([][]*model.Pod, []error) {
 // LoadAllThunk returns a function that when called will block waiting for a Pods.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *PodSliceLoader) LoadAllThunk(keys []int) func() ([][]*model.Pod, []error) {
+func (l *podSliceLoader) LoadAllThunk(keys []int) func() ([][]*model.Pod, []error) {
 	results := make([]func() ([]*model.Pod, error), len(keys))
 	for i, key := range keys {
 		results[i] = l.LoadThunk(key)
@@ -149,7 +149,7 @@ func (l *PodSliceLoader) LoadAllThunk(keys []int) func() ([][]*model.Pod, []erro
 // Prime the cache with the provided key and value. If the key already exists, no change is made
 // and false is returned.
 // (To forcefully prime the cache, clear the key first with loader.clear(key).prime(key, value).)
-func (l *PodSliceLoader) Prime(key int, value []*model.Pod) bool {
+func (l *podSliceLoader) Prime(key int, value []*model.Pod) bool {
 	l.mu.Lock()
 	var found bool
 	if _, found = l.cache[key]; !found {
@@ -164,13 +164,13 @@ func (l *PodSliceLoader) Prime(key int, value []*model.Pod) bool {
 }
 
 // Clear the value at key from the cache, if it exists
-func (l *PodSliceLoader) Clear(key int) {
+func (l *podSliceLoader) Clear(key int) {
 	l.mu.Lock()
 	delete(l.cache, key)
 	l.mu.Unlock()
 }
 
-func (l *PodSliceLoader) unsafeSet(key int, value []*model.Pod) {
+func (l *podSliceLoader) unsafeSet(key int, value []*model.Pod) {
 	if l.cache == nil {
 		l.cache = map[int][]*model.Pod{}
 	}
@@ -179,7 +179,7 @@ func (l *PodSliceLoader) unsafeSet(key int, value []*model.Pod) {
 
 // keyIndex will return the location of the key in the batch, if its not found
 // it will add the key to the batch
-func (b *podSliceLoaderBatch) keyIndex(l *PodSliceLoader, key int) int {
+func (b *podSliceLoaderBatch) keyIndex(l *podSliceLoader, key int) int {
 	for i, existingKey := range b.keys {
 		if key == existingKey {
 			return i
@@ -203,7 +203,7 @@ func (b *podSliceLoaderBatch) keyIndex(l *PodSliceLoader, key int) int {
 	return pos
 }
 
-func (b *podSliceLoaderBatch) startTimer(l *PodSliceLoader) {
+func (b *podSliceLoaderBatch) startTimer(l *podSliceLoader) {
 	time.Sleep(l.wait)
 	l.mu.Lock()
 
@@ -219,7 +219,7 @@ func (b *podSliceLoaderBatch) startTimer(l *PodSliceLoader) {
 	b.end(l)
 }
 
-func (b *podSliceLoaderBatch) end(l *PodSliceLoader) {
+func (b *podSliceLoaderBatch) end(l *podSliceLoader) {
 	b.data, b.error = l.fetch(b.keys)
 	close(b.done)
 }

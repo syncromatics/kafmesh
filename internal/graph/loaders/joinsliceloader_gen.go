@@ -9,8 +9,8 @@ import (
 	"github.com/syncromatics/kafmesh/internal/graph/model"
 )
 
-// JoinSliceLoaderConfig captures the config to create a new JoinSliceLoader
-type JoinSliceLoaderConfig struct {
+// joinSliceLoaderConfig captures the config to create a new joinSliceLoader
+type joinSliceLoaderConfig struct {
 	// Fetch is a method that provides the data for the loader
 	Fetch func(keys []int) ([][]*model.ProcessorJoin, []error)
 
@@ -21,17 +21,17 @@ type JoinSliceLoaderConfig struct {
 	MaxBatch int
 }
 
-// NewJoinSliceLoader creates a new JoinSliceLoader given a fetch, wait, and maxBatch
-func NewJoinSliceLoader(config JoinSliceLoaderConfig) *JoinSliceLoader {
-	return &JoinSliceLoader{
+// NewjoinSliceLoader creates a new joinSliceLoader given a fetch, wait, and maxBatch
+func NewjoinSliceLoader(config joinSliceLoaderConfig) *joinSliceLoader {
+	return &joinSliceLoader{
 		fetch:    config.Fetch,
 		wait:     config.Wait,
 		maxBatch: config.MaxBatch,
 	}
 }
 
-// JoinSliceLoader batches and caches requests
-type JoinSliceLoader struct {
+// joinSliceLoader batches and caches requests
+type joinSliceLoader struct {
 	// this method provides the data for the loader
 	fetch func(keys []int) ([][]*model.ProcessorJoin, []error)
 
@@ -63,14 +63,14 @@ type joinSliceLoaderBatch struct {
 }
 
 // Load a ProcessorJoin by key, batching and caching will be applied automatically
-func (l *JoinSliceLoader) Load(key int) ([]*model.ProcessorJoin, error) {
+func (l *joinSliceLoader) Load(key int) ([]*model.ProcessorJoin, error) {
 	return l.LoadThunk(key)()
 }
 
 // LoadThunk returns a function that when called will block waiting for a ProcessorJoin.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *JoinSliceLoader) LoadThunk(key int) func() ([]*model.ProcessorJoin, error) {
+func (l *joinSliceLoader) LoadThunk(key int) func() ([]*model.ProcessorJoin, error) {
 	l.mu.Lock()
 	if it, ok := l.cache[key]; ok {
 		l.mu.Unlock()
@@ -113,7 +113,7 @@ func (l *JoinSliceLoader) LoadThunk(key int) func() ([]*model.ProcessorJoin, err
 
 // LoadAll fetches many keys at once. It will be broken into appropriate sized
 // sub batches depending on how the loader is configured
-func (l *JoinSliceLoader) LoadAll(keys []int) ([][]*model.ProcessorJoin, []error) {
+func (l *joinSliceLoader) LoadAll(keys []int) ([][]*model.ProcessorJoin, []error) {
 	results := make([]func() ([]*model.ProcessorJoin, error), len(keys))
 
 	for i, key := range keys {
@@ -131,7 +131,7 @@ func (l *JoinSliceLoader) LoadAll(keys []int) ([][]*model.ProcessorJoin, []error
 // LoadAllThunk returns a function that when called will block waiting for a ProcessorJoins.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *JoinSliceLoader) LoadAllThunk(keys []int) func() ([][]*model.ProcessorJoin, []error) {
+func (l *joinSliceLoader) LoadAllThunk(keys []int) func() ([][]*model.ProcessorJoin, []error) {
 	results := make([]func() ([]*model.ProcessorJoin, error), len(keys))
 	for i, key := range keys {
 		results[i] = l.LoadThunk(key)
@@ -149,7 +149,7 @@ func (l *JoinSliceLoader) LoadAllThunk(keys []int) func() ([][]*model.ProcessorJ
 // Prime the cache with the provided key and value. If the key already exists, no change is made
 // and false is returned.
 // (To forcefully prime the cache, clear the key first with loader.clear(key).prime(key, value).)
-func (l *JoinSliceLoader) Prime(key int, value []*model.ProcessorJoin) bool {
+func (l *joinSliceLoader) Prime(key int, value []*model.ProcessorJoin) bool {
 	l.mu.Lock()
 	var found bool
 	if _, found = l.cache[key]; !found {
@@ -164,13 +164,13 @@ func (l *JoinSliceLoader) Prime(key int, value []*model.ProcessorJoin) bool {
 }
 
 // Clear the value at key from the cache, if it exists
-func (l *JoinSliceLoader) Clear(key int) {
+func (l *joinSliceLoader) Clear(key int) {
 	l.mu.Lock()
 	delete(l.cache, key)
 	l.mu.Unlock()
 }
 
-func (l *JoinSliceLoader) unsafeSet(key int, value []*model.ProcessorJoin) {
+func (l *joinSliceLoader) unsafeSet(key int, value []*model.ProcessorJoin) {
 	if l.cache == nil {
 		l.cache = map[int][]*model.ProcessorJoin{}
 	}
@@ -179,7 +179,7 @@ func (l *JoinSliceLoader) unsafeSet(key int, value []*model.ProcessorJoin) {
 
 // keyIndex will return the location of the key in the batch, if its not found
 // it will add the key to the batch
-func (b *joinSliceLoaderBatch) keyIndex(l *JoinSliceLoader, key int) int {
+func (b *joinSliceLoaderBatch) keyIndex(l *joinSliceLoader, key int) int {
 	for i, existingKey := range b.keys {
 		if key == existingKey {
 			return i
@@ -203,7 +203,7 @@ func (b *joinSliceLoaderBatch) keyIndex(l *JoinSliceLoader, key int) int {
 	return pos
 }
 
-func (b *joinSliceLoaderBatch) startTimer(l *JoinSliceLoader) {
+func (b *joinSliceLoaderBatch) startTimer(l *joinSliceLoader) {
 	time.Sleep(l.wait)
 	l.mu.Lock()
 
@@ -219,7 +219,7 @@ func (b *joinSliceLoaderBatch) startTimer(l *JoinSliceLoader) {
 	b.end(l)
 }
 
-func (b *joinSliceLoaderBatch) end(l *JoinSliceLoader) {
+func (b *joinSliceLoaderBatch) end(l *joinSliceLoader) {
 	b.data, b.error = l.fetch(b.keys)
 	close(b.done)
 }

@@ -1,387 +1,166 @@
 package loaders
 
 import (
+	"context"
 	"time"
 
-	"github.com/lib/pq"
-	"github.com/pkg/errors"
 	"github.com/syncromatics/kafmesh/internal/graph/model"
+	"github.com/syncromatics/kafmesh/internal/graph/resolvers"
 )
 
-// Processors contains data loaders for processor relationships
-type Processors struct {
-	ComponentByProcessor   *ComponentLoader
-	InputsByProcessor      *InputSliceLoader
-	JoinsByProcessor       *JoinSliceLoader
-	LookupsByProcessor     *LookupSliceLoader
-	OutputsByProcessor     *OutputSliceLoader
-	PodsByProcessor        *PodSliceLoader
-	PersistenceByProcessor *TopicLoader
+// ProcessorRepository is the datastore repository for processors
+type ProcessorRepository interface {
+	ComponentByProcessors(ctx context.Context, processors []int) ([]*model.Component, error)
+	InputsByProcessors(ctx context.Context, processors []int) ([][]*model.ProcessorInput, error)
+	JoinsByProcessors(ctx context.Context, processors []int) ([][]*model.ProcessorJoin, error)
+	LookupsByProcessors(ctx context.Context, processors []int) ([][]*model.ProcessorLookup, error)
+	OutputsByProcessors(ctx context.Context, processors []int) ([][]*model.ProcessorOutput, error)
+	PodsByProcessors(ctx context.Context, processors []int) ([][]*model.Pod, error)
+	PersistenceByProcessors(ctx context.Context, processors []int) ([]*model.Topic, error)
 }
 
-func configureProcessors(loaders *Loaders) {
-	loader := &Processors{}
-	loaders.ProcessorLoader = loader
+var _ resolvers.ProcessorLoader = &ProcessorLoader{}
 
-	loader.ComponentByProcessor = &ComponentLoader{
+// ProcessorLoader contains data loaders for processor relationships
+type ProcessorLoader struct {
+	componentByProcessor   *componentLoader
+	inputsByProcessor      *inputSliceLoader
+	joinsByProcessor       *joinSliceLoader
+	lookupsByProcessor     *lookupSliceLoader
+	outputsByProcessor     *outputSliceLoader
+	podsByProcessor        *podSliceLoader
+	persistenceByProcessor *topicLoader
+}
+
+// NewProcessorLoader creates a new ProcessorLoader
+func NewProcessorLoader(ctx context.Context, repository ProcessorRepository) *ProcessorLoader {
+	loader := &ProcessorLoader{}
+
+	loader.componentByProcessor = &componentLoader{
 		wait:     100 * time.Millisecond,
 		maxBatch: 100,
 		fetch: func(keys []int) ([]*model.Component, []error) {
-			var processors []int
-			for _, key := range keys {
-				processors = append(processors, key)
-			}
-
-			rows, err := loaders.db.QueryContext(loaders.context, `
-			select
-				processors.id,
-				components.id,
-				components.name,
-				components.description
-			from
-				components
-			inner join
-				processors on processors.component=components.id
-			where
-				processors.id = ANY ($1)
-			`, pq.Array(processors))
+			r, err := repository.ComponentByProcessors(ctx, keys)
 			if err != nil {
-				return nil, []error{errors.Wrap(err, "failed to query for processor components")}
-			}
-			defer rows.Close()
-
-			processorsComponents := map[int]*model.Component{}
-			var processorID int
-			for rows.Next() {
-				component := &model.Component{}
-				err = rows.Scan(&processorID, &component.ID, &component.Name, &component.Description)
-				if err != nil {
-					return nil, []error{errors.Wrap(err, "failed to scan component row")}
-				}
-				processorsComponents[processorID] = component
+				return nil, []error{err}
 			}
 
-			components := []*model.Component{}
-			for _, c := range processors {
-				s, ok := processorsComponents[c]
-				if !ok {
-					return nil, []error{errors.Errorf("did not find component for processor %d", c)}
-				}
-				components = append(components, s)
-			}
-
-			return components, nil
+			return r, nil
 		},
 	}
 
-	loader.InputsByProcessor = &InputSliceLoader{
+	loader.inputsByProcessor = &inputSliceLoader{
 		wait:     100 * time.Millisecond,
 		maxBatch: 100,
 		fetch: func(keys []int) ([][]*model.ProcessorInput, []error) {
-			var processors []int
-			for _, key := range keys {
-				processors = append(processors, key)
-			}
-
-			rows, err := loaders.db.QueryContext(loaders.context, `
-			select
-				processor,
-				id
-			from
-				processor_inputs
-			where
-				processor = ANY ($1)
-			`, pq.Array(processors))
+			r, err := repository.InputsByProcessors(ctx, keys)
 			if err != nil {
-				return nil, []error{errors.Wrap(err, "failed to query for processor inputs")}
-			}
-			defer rows.Close()
-
-			inputs := map[int][]*model.ProcessorInput{}
-			var processorID int
-			for rows.Next() {
-				input := &model.ProcessorInput{}
-				err = rows.Scan(&processorID, &input.ID)
-				if err != nil {
-					return nil, []error{errors.Wrap(err, "failed to scan processor input")}
-				}
-				_, ok := inputs[processorID]
-				if !ok {
-					inputs[processorID] = []*model.ProcessorInput{}
-				}
-
-				inputs[processorID] = append(inputs[processorID], input)
+				return nil, []error{err}
 			}
 
-			results := [][]*model.ProcessorInput{}
-			for _, s := range processors {
-				_, ok := inputs[s]
-				if !ok {
-					results = append(results, []*model.ProcessorInput{})
-				} else {
-					results = append(results, inputs[s])
-				}
-			}
-			return results, nil
+			return r, nil
 		},
 	}
 
-	loader.JoinsByProcessor = &JoinSliceLoader{
+	loader.joinsByProcessor = &joinSliceLoader{
 		wait:     100 * time.Millisecond,
 		maxBatch: 100,
 		fetch: func(keys []int) ([][]*model.ProcessorJoin, []error) {
-			var processors []int
-			for _, key := range keys {
-				processors = append(processors, key)
-			}
-
-			rows, err := loaders.db.QueryContext(loaders.context, `
-			select
-				processor,
-				id
-			from
-				processor_joins
-			where
-				processor = ANY ($1)
-			`, pq.Array(processors))
+			r, err := repository.JoinsByProcessors(ctx, keys)
 			if err != nil {
-				return nil, []error{errors.Wrap(err, "failed to query for processor joins")}
-			}
-			defer rows.Close()
-
-			joins := map[int][]*model.ProcessorJoin{}
-			var processorID int
-			for rows.Next() {
-				join := &model.ProcessorJoin{}
-				err = rows.Scan(&processorID, &join.ID)
-				if err != nil {
-					return nil, []error{errors.Wrap(err, "failed to scan processor join")}
-				}
-				_, ok := joins[processorID]
-				if !ok {
-					joins[processorID] = []*model.ProcessorJoin{}
-				}
-
-				joins[processorID] = append(joins[processorID], join)
+				return nil, []error{err}
 			}
 
-			results := [][]*model.ProcessorJoin{}
-			for _, s := range processors {
-				_, ok := joins[s]
-				if !ok {
-					results = append(results, []*model.ProcessorJoin{})
-				} else {
-					results = append(results, joins[s])
-				}
-			}
-			return results, nil
+			return r, nil
 		},
 	}
 
-	loader.LookupsByProcessor = &LookupSliceLoader{
+	loader.lookupsByProcessor = &lookupSliceLoader{
 		wait:     100 * time.Millisecond,
 		maxBatch: 100,
 		fetch: func(keys []int) ([][]*model.ProcessorLookup, []error) {
-			var processors []int
-			for _, key := range keys {
-				processors = append(processors, key)
-			}
-
-			rows, err := loaders.db.QueryContext(loaders.context, `
-			select
-				processor,
-				id
-			from
-				processor_lookups
-			where
-				processor = ANY ($1)
-			`, pq.Array(processors))
+			r, err := repository.LookupsByProcessors(ctx, keys)
 			if err != nil {
-				return nil, []error{errors.Wrap(err, "failed to query for processor lookups")}
-			}
-			defer rows.Close()
-
-			lookups := map[int][]*model.ProcessorLookup{}
-			var processorID int
-			for rows.Next() {
-				lookup := &model.ProcessorLookup{}
-				err = rows.Scan(&processorID, &lookup.ID)
-				if err != nil {
-					return nil, []error{errors.Wrap(err, "failed to scan processor lookup")}
-				}
-				_, ok := lookups[processorID]
-				if !ok {
-					lookups[processorID] = []*model.ProcessorLookup{}
-				}
-
-				lookups[processorID] = append(lookups[processorID], lookup)
+				return nil, []error{err}
 			}
 
-			results := [][]*model.ProcessorLookup{}
-			for _, s := range processors {
-				_, ok := lookups[s]
-				if !ok {
-					results = append(results, []*model.ProcessorLookup{})
-				} else {
-					results = append(results, lookups[s])
-				}
-			}
-			return results, nil
+			return r, nil
 		},
 	}
 
-	loader.OutputsByProcessor = &OutputSliceLoader{
+	loader.outputsByProcessor = &outputSliceLoader{
 		wait:     100 * time.Millisecond,
 		maxBatch: 100,
 		fetch: func(keys []int) ([][]*model.ProcessorOutput, []error) {
-			var processors []int
-			for _, key := range keys {
-				processors = append(processors, key)
-			}
-
-			rows, err := loaders.db.QueryContext(loaders.context, `
-			select
-				processor,
-				id
-			from
-				processor_outputs
-			where
-				processor = ANY ($1)
-			`, pq.Array(processors))
+			r, err := repository.OutputsByProcessors(ctx, keys)
 			if err != nil {
-				return nil, []error{errors.Wrap(err, "failed to query for processor outputs")}
-			}
-			defer rows.Close()
-
-			outputs := map[int][]*model.ProcessorOutput{}
-			var processorID int
-			for rows.Next() {
-				output := &model.ProcessorOutput{}
-				err = rows.Scan(&processorID, &output.ID)
-				if err != nil {
-					return nil, []error{errors.Wrap(err, "failed to scan processor output")}
-				}
-				_, ok := outputs[processorID]
-				if !ok {
-					outputs[processorID] = []*model.ProcessorOutput{}
-				}
-
-				outputs[processorID] = append(outputs[processorID], output)
+				return nil, []error{err}
 			}
 
-			results := [][]*model.ProcessorOutput{}
-			for _, s := range processors {
-				_, ok := outputs[s]
-				if !ok {
-					results = append(results, []*model.ProcessorOutput{})
-				} else {
-					results = append(results, outputs[s])
-				}
-			}
-			return results, nil
+			return r, nil
 		},
 	}
 
-	loader.PodsByProcessor = &PodSliceLoader{
+	loader.podsByProcessor = &podSliceLoader{
 		wait:     100 * time.Millisecond,
 		maxBatch: 100,
 		fetch: func(keys []int) ([][]*model.Pod, []error) {
-			var processors []int
-			for _, key := range keys {
-				processors = append(processors, key)
-			}
-
-			rows, err := loaders.db.QueryContext(loaders.context, `
-			select
-				pod_processors.processor,
-				pods.id,
-				pods.name
-			from
-				pods
-			inner join
-				pod_processors ON pod_processors.pod=pods.id
-			where
-				pod_processors.processor = ANY ($1)
-			`, pq.Array(processors))
+			r, err := repository.PodsByProcessors(ctx, keys)
 			if err != nil {
-				return nil, []error{errors.Wrap(err, "failed to query for processor outputs")}
-			}
-			defer rows.Close()
-
-			pods := map[int][]*model.Pod{}
-			var processorID int
-			for rows.Next() {
-				pod := &model.Pod{}
-				err = rows.Scan(&processorID, &pod.ID, &pod.Name)
-				if err != nil {
-					return nil, []error{errors.Wrap(err, "failed to scan processor pods")}
-				}
-				_, ok := pods[processorID]
-				if !ok {
-					pods[processorID] = []*model.Pod{}
-				}
-
-				pods[processorID] = append(pods[processorID], pod)
+				return nil, []error{err}
 			}
 
-			results := [][]*model.Pod{}
-			for _, s := range processors {
-				_, ok := pods[s]
-				if !ok {
-					results = append(results, []*model.Pod{})
-				} else {
-					results = append(results, pods[s])
-				}
-			}
-			return results, nil
+			return r, nil
 		},
 	}
 
-	loader.PersistenceByProcessor = &TopicLoader{
+	loader.persistenceByProcessor = &topicLoader{
 		wait:     100 * time.Millisecond,
 		maxBatch: 100,
 		fetch: func(keys []int) ([]*model.Topic, []error) {
-			var processors []int
-			for _, key := range keys {
-				processors = append(processors, key)
-			}
-
-			rows, err := loaders.db.QueryContext(loaders.context, `
-			select
-				processors.id,
-				topics.id,
-				topics.name,
-				topics.message
-			from
-				topics
-			inner join
-				processors on processors.persistence=topics.id
-			where
-				processors.id = ANY ($1)
-			`, pq.Array(processors))
+			r, err := repository.PersistenceByProcessors(ctx, keys)
 			if err != nil {
-				return nil, []error{errors.Wrap(err, "failed to query for processor persistence")}
-			}
-			defer rows.Close()
-
-			topics := map[int]*model.Topic{}
-			var processorID int
-			for rows.Next() {
-				topic := &model.Topic{}
-				err = rows.Scan(&processorID, &topic.ID, &topic.Name, &topic.Message)
-				if err != nil {
-					return nil, []error{errors.Wrap(err, "failed to scan topic row")}
-				}
-				topics[processorID] = topic
+				return nil, []error{err}
 			}
 
-			results := []*model.Topic{}
-			for _, c := range processors {
-				s, _ := topics[c]
-				results = append(results, s)
-			}
-
-			return results, nil
+			return r, nil
 		},
 	}
+
+	return loader
+}
+
+// ComponentByProcessor returns the component for a processor
+func (l *ProcessorLoader) ComponentByProcessor(processorID int) (*model.Component, error) {
+	return l.componentByProcessor.Load(processorID)
+}
+
+// InputsByProcessor returns the inputs for a processor
+func (l *ProcessorLoader) InputsByProcessor(processorID int) ([]*model.ProcessorInput, error) {
+	return l.inputsByProcessor.Load(processorID)
+}
+
+// JoinsByProcessor returns the joins for a processor
+func (l *ProcessorLoader) JoinsByProcessor(processorID int) ([]*model.ProcessorJoin, error) {
+	return l.joinsByProcessor.Load(processorID)
+}
+
+// LookupsByProcessor returns the lookups for a processor
+func (l *ProcessorLoader) LookupsByProcessor(processorID int) ([]*model.ProcessorLookup, error) {
+	return l.lookupsByProcessor.Load(processorID)
+}
+
+// OutputsByProcessor returns the outputs for a processor
+func (l *ProcessorLoader) OutputsByProcessor(processorID int) ([]*model.ProcessorOutput, error) {
+	return l.outputsByProcessor.Load(processorID)
+}
+
+// PodsByProcessor returns the pods for a processor
+func (l *ProcessorLoader) PodsByProcessor(processorID int) ([]*model.Pod, error) {
+	return l.podsByProcessor.Load(processorID)
+}
+
+// PersistenceByProcessor returns the perisistence topic for a processor
+func (l *ProcessorLoader) PersistenceByProcessor(processorID int) (*model.Topic, error) {
+	return l.persistenceByProcessor.Load(processorID)
 }

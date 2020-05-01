@@ -1,72 +1,45 @@
 package loaders
 
 import (
+	"context"
 	"time"
 
-	"github.com/lib/pq"
-	"github.com/pkg/errors"
 	"github.com/syncromatics/kafmesh/internal/graph/model"
+	"github.com/syncromatics/kafmesh/internal/graph/resolvers"
 )
 
-// Services contains data loaders for service relationships
-type Services struct {
-	ComponentsByServiceID *ComponentSliceLoader
+// ServiceRepository is the datastore repository for services
+type ServiceRepository interface {
+	ComponentsByServices(ctx context.Context, services []int) ([][]*model.Component, error)
 }
 
-func configureServices(loaders *Loaders) {
-	loader := &Services{}
-	loaders.ServiceLoader = loader
-	loader.ComponentsByServiceID = &ComponentSliceLoader{
+var _ resolvers.ServiceLoader = &ServiceLoader{}
+
+// ServiceLoader contains data loaders for service relationships
+type ServiceLoader struct {
+	componentsByServiceID *componentSliceLoader
+}
+
+// NewServiceLoader creates a new ServiceLoader
+func NewServiceLoader(ctx context.Context, repository ServiceRepository) *ServiceLoader {
+	loader := &ServiceLoader{}
+	loader.componentsByServiceID = &componentSliceLoader{
 		wait:     100 * time.Millisecond,
 		maxBatch: 100,
 		fetch: func(keys []int) ([][]*model.Component, []error) {
-			var services []int
-			for _, key := range keys {
-				services = append(services, key)
-			}
-
-			rows, err := loaders.db.QueryContext(loaders.context, `
-			select
-				service,
-				id,
-				name,
-				description
-			from
-				components
-			where
-				service = ANY ($1)
-			`, pq.Array(services))
+			r, err := repository.ComponentsByServices(ctx, keys)
 			if err != nil {
-				return nil, []error{errors.Wrap(err, "failed to query for components")}
-			}
-			defer rows.Close()
-
-			components := map[int][]*model.Component{}
-			var serviceID int
-			for rows.Next() {
-				component := &model.Component{}
-				err = rows.Scan(&serviceID, &component.ID, &component.Name, &component.Description)
-				if err != nil {
-					return nil, []error{errors.Wrap(err, "failed to scan component")}
-				}
-				_, ok := components[serviceID]
-				if !ok {
-					components[serviceID] = []*model.Component{}
-				}
-
-				components[serviceID] = append(components[serviceID], component)
+				return nil, []error{err}
 			}
 
-			results := [][]*model.Component{}
-			for _, s := range services {
-				_, ok := components[s]
-				if !ok {
-					results = append(results, []*model.Component{})
-				} else {
-					results = append(results, components[s])
-				}
-			}
-			return results, nil
+			return r, nil
 		},
 	}
+
+	return loader
+}
+
+// ComponentsByService returns components for the service
+func (l *ServiceLoader) ComponentsByService(serviceID int) ([]*model.Component, error) {
+	return l.componentsByServiceID.Load(serviceID)
 }

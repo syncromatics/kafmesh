@@ -1,119 +1,64 @@
 package loaders
 
 import (
+	"context"
 	"time"
 
-	"github.com/lib/pq"
-	"github.com/pkg/errors"
 	"github.com/syncromatics/kafmesh/internal/graph/model"
+	"github.com/syncromatics/kafmesh/internal/graph/resolvers"
 )
 
-// ProcessorLookups contains data loaders for processor lookup relationships
-type ProcessorLookups struct {
-	ProcessorByLookup *ProcessorLoader
-	TopicByLookup     *TopicLoader
+// ProcessorLookupRepository is the datastore repository for processor lookups
+type ProcessorLookupRepository interface {
+	ProcessorByLookups(ctx context.Context, lookups []int) ([]*model.Processor, error)
+	TopicByLookups(ctx context.Context, lookups []int) ([]*model.Topic, error)
 }
 
-func configureProcessorLookups(loaders *Loaders) {
-	loader := &ProcessorLookups{}
-	loaders.ProcessorLookupLoader = loader
+var _ resolvers.ProcessorLookupLoader = &ProcessorLookupLoader{}
 
-	loader.ProcessorByLookup = &ProcessorLoader{
+// ProcessorLookupLoader contains data loaders for processor lookup relationships
+type ProcessorLookupLoader struct {
+	processorByLookup *processorLoader
+	topicByLookup     *topicLoader
+}
+
+// NewProcessorLookupLoader creates a new ProcessorLookupLoader
+func NewProcessorLookupLoader(ctx context.Context, repository ProcessorLookupRepository) *ProcessorLookupLoader {
+	loader := &ProcessorLookupLoader{}
+
+	loader.processorByLookup = &processorLoader{
 		wait:     100 * time.Millisecond,
 		maxBatch: 100,
 		fetch: func(keys []int) ([]*model.Processor, []error) {
-			var ids []int
-			for _, key := range keys {
-				ids = append(ids, key)
-			}
-
-			rows, err := loaders.db.QueryContext(loaders.context, `
-			select
-				processor_lookups.id,
-				processors.id,
-				processors.name,
-				processors.description
-			from
-				processors
-			inner join
-				processor_lookups on processor_lookups.processor=processors.id
-			where
-				processor_lookups.id = ANY ($1)
-			`, pq.Array(ids))
+			r, err := repository.ProcessorByLookups(ctx, keys)
 			if err != nil {
-				return nil, []error{errors.Wrap(err, "failed to query for lookup processors")}
+				return nil, []error{err}
 			}
-			defer rows.Close()
-
-			processors := map[int]*model.Processor{}
-			var id int
-			for rows.Next() {
-				processor := &model.Processor{}
-				err = rows.Scan(&id, &processor.ID, &processor.Name, &processor.Description)
-				if err != nil {
-					return nil, []error{errors.Wrap(err, "failed to scan processor row")}
-				}
-				processors[id] = processor
-			}
-
-			results := []*model.Processor{}
-			for _, c := range ids {
-				s, ok := processors[c]
-				if !ok {
-					return nil, []error{errors.Errorf("did not find processor for processor input %d", c)}
-				}
-				results = append(results, s)
-			}
-
-			return results, nil
+			return r, nil
 		},
 	}
 
-	loader.TopicByLookup = &TopicLoader{
+	loader.topicByLookup = &topicLoader{
 		wait:     100 * time.Millisecond,
 		maxBatch: 100,
 		fetch: func(keys []int) ([]*model.Topic, []error) {
-			var ids []int
-			for _, key := range keys {
-				ids = append(ids, key)
-			}
-
-			rows, err := loaders.db.QueryContext(loaders.context, `
-			select
-				processor_lookups.id,
-				topics.id,
-				topics.name,
-				topics.message
-			from
-				topics
-			inner join
-				processor_lookups on processor_lookups.topic=topics.id
-			where
-				processor_lookups.id = ANY ($1)
-			`, pq.Array(ids))
+			r, err := repository.TopicByLookups(ctx, keys)
 			if err != nil {
-				return nil, []error{errors.Wrap(err, "failed to query for processor input topic")}
+				return nil, []error{err}
 			}
-			defer rows.Close()
-
-			topics := map[int]*model.Topic{}
-			var id int
-			for rows.Next() {
-				topic := &model.Topic{}
-				err = rows.Scan(&id, &topic.ID, &topic.Name, &topic.Message)
-				if err != nil {
-					return nil, []error{errors.Wrap(err, "failed to scan topic row")}
-				}
-				topics[id] = topic
-			}
-
-			results := []*model.Topic{}
-			for _, c := range ids {
-				s, _ := topics[c]
-				results = append(results, s)
-			}
-
-			return results, nil
+			return r, nil
 		},
 	}
+
+	return loader
+}
+
+// ProcessorByLookup returns the processor for the lookup
+func (l *ProcessorLookupLoader) ProcessorByLookup(lookupID int) (*model.Processor, error) {
+	return l.processorByLookup.Load(lookupID)
+}
+
+// TopicByLookup returns the topic for the lookup
+func (l *ProcessorLookupLoader) TopicByLookup(lookupID int) (*model.Topic, error) {
+	return l.topicByLookup.Load(lookupID)
 }

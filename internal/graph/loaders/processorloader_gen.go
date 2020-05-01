@@ -9,8 +9,8 @@ import (
 	"github.com/syncromatics/kafmesh/internal/graph/model"
 )
 
-// ProcessorLoaderConfig captures the config to create a new ProcessorLoader
-type ProcessorLoaderConfig struct {
+// processorLoaderConfig captures the config to create a new processorLoader
+type processorLoaderConfig struct {
 	// Fetch is a method that provides the data for the loader
 	Fetch func(keys []int) ([]*model.Processor, []error)
 
@@ -21,17 +21,17 @@ type ProcessorLoaderConfig struct {
 	MaxBatch int
 }
 
-// NewProcessorLoader creates a new ProcessorLoader given a fetch, wait, and maxBatch
-func NewProcessorLoader(config ProcessorLoaderConfig) *ProcessorLoader {
-	return &ProcessorLoader{
+// NewprocessorLoader creates a new processorLoader given a fetch, wait, and maxBatch
+func NewprocessorLoader(config processorLoaderConfig) *processorLoader {
+	return &processorLoader{
 		fetch:    config.Fetch,
 		wait:     config.Wait,
 		maxBatch: config.MaxBatch,
 	}
 }
 
-// ProcessorLoader batches and caches requests
-type ProcessorLoader struct {
+// processorLoader batches and caches requests
+type processorLoader struct {
 	// this method provides the data for the loader
 	fetch func(keys []int) ([]*model.Processor, []error)
 
@@ -63,14 +63,14 @@ type processorLoaderBatch struct {
 }
 
 // Load a Processor by key, batching and caching will be applied automatically
-func (l *ProcessorLoader) Load(key int) (*model.Processor, error) {
+func (l *processorLoader) Load(key int) (*model.Processor, error) {
 	return l.LoadThunk(key)()
 }
 
 // LoadThunk returns a function that when called will block waiting for a Processor.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *ProcessorLoader) LoadThunk(key int) func() (*model.Processor, error) {
+func (l *processorLoader) LoadThunk(key int) func() (*model.Processor, error) {
 	l.mu.Lock()
 	if it, ok := l.cache[key]; ok {
 		l.mu.Unlock()
@@ -113,7 +113,7 @@ func (l *ProcessorLoader) LoadThunk(key int) func() (*model.Processor, error) {
 
 // LoadAll fetches many keys at once. It will be broken into appropriate sized
 // sub batches depending on how the loader is configured
-func (l *ProcessorLoader) LoadAll(keys []int) ([]*model.Processor, []error) {
+func (l *processorLoader) LoadAll(keys []int) ([]*model.Processor, []error) {
 	results := make([]func() (*model.Processor, error), len(keys))
 
 	for i, key := range keys {
@@ -131,7 +131,7 @@ func (l *ProcessorLoader) LoadAll(keys []int) ([]*model.Processor, []error) {
 // LoadAllThunk returns a function that when called will block waiting for a Processors.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *ProcessorLoader) LoadAllThunk(keys []int) func() ([]*model.Processor, []error) {
+func (l *processorLoader) LoadAllThunk(keys []int) func() ([]*model.Processor, []error) {
 	results := make([]func() (*model.Processor, error), len(keys))
 	for i, key := range keys {
 		results[i] = l.LoadThunk(key)
@@ -149,7 +149,7 @@ func (l *ProcessorLoader) LoadAllThunk(keys []int) func() ([]*model.Processor, [
 // Prime the cache with the provided key and value. If the key already exists, no change is made
 // and false is returned.
 // (To forcefully prime the cache, clear the key first with loader.clear(key).prime(key, value).)
-func (l *ProcessorLoader) Prime(key int, value *model.Processor) bool {
+func (l *processorLoader) Prime(key int, value *model.Processor) bool {
 	l.mu.Lock()
 	var found bool
 	if _, found = l.cache[key]; !found {
@@ -163,13 +163,13 @@ func (l *ProcessorLoader) Prime(key int, value *model.Processor) bool {
 }
 
 // Clear the value at key from the cache, if it exists
-func (l *ProcessorLoader) Clear(key int) {
+func (l *processorLoader) Clear(key int) {
 	l.mu.Lock()
 	delete(l.cache, key)
 	l.mu.Unlock()
 }
 
-func (l *ProcessorLoader) unsafeSet(key int, value *model.Processor) {
+func (l *processorLoader) unsafeSet(key int, value *model.Processor) {
 	if l.cache == nil {
 		l.cache = map[int]*model.Processor{}
 	}
@@ -178,7 +178,7 @@ func (l *ProcessorLoader) unsafeSet(key int, value *model.Processor) {
 
 // keyIndex will return the location of the key in the batch, if its not found
 // it will add the key to the batch
-func (b *processorLoaderBatch) keyIndex(l *ProcessorLoader, key int) int {
+func (b *processorLoaderBatch) keyIndex(l *processorLoader, key int) int {
 	for i, existingKey := range b.keys {
 		if key == existingKey {
 			return i
@@ -202,7 +202,7 @@ func (b *processorLoaderBatch) keyIndex(l *ProcessorLoader, key int) int {
 	return pos
 }
 
-func (b *processorLoaderBatch) startTimer(l *ProcessorLoader) {
+func (b *processorLoaderBatch) startTimer(l *processorLoader) {
 	time.Sleep(l.wait)
 	l.mu.Lock()
 
@@ -218,7 +218,7 @@ func (b *processorLoaderBatch) startTimer(l *ProcessorLoader) {
 	b.end(l)
 }
 
-func (b *processorLoaderBatch) end(l *ProcessorLoader) {
+func (b *processorLoaderBatch) end(l *processorLoader) {
 	b.data, b.error = l.fetch(b.keys)
 	close(b.done)
 }

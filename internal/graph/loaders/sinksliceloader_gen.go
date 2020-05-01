@@ -9,8 +9,8 @@ import (
 	"github.com/syncromatics/kafmesh/internal/graph/model"
 )
 
-// SinkSliceLoaderConfig captures the config to create a new SinkSliceLoader
-type SinkSliceLoaderConfig struct {
+// sinkSliceLoaderConfig captures the config to create a new sinkSliceLoader
+type sinkSliceLoaderConfig struct {
 	// Fetch is a method that provides the data for the loader
 	Fetch func(keys []int) ([][]*model.Sink, []error)
 
@@ -21,17 +21,17 @@ type SinkSliceLoaderConfig struct {
 	MaxBatch int
 }
 
-// NewSinkSliceLoader creates a new SinkSliceLoader given a fetch, wait, and maxBatch
-func NewSinkSliceLoader(config SinkSliceLoaderConfig) *SinkSliceLoader {
-	return &SinkSliceLoader{
+// NewsinkSliceLoader creates a new sinkSliceLoader given a fetch, wait, and maxBatch
+func NewsinkSliceLoader(config sinkSliceLoaderConfig) *sinkSliceLoader {
+	return &sinkSliceLoader{
 		fetch:    config.Fetch,
 		wait:     config.Wait,
 		maxBatch: config.MaxBatch,
 	}
 }
 
-// SinkSliceLoader batches and caches requests
-type SinkSliceLoader struct {
+// sinkSliceLoader batches and caches requests
+type sinkSliceLoader struct {
 	// this method provides the data for the loader
 	fetch func(keys []int) ([][]*model.Sink, []error)
 
@@ -63,14 +63,14 @@ type sinkSliceLoaderBatch struct {
 }
 
 // Load a Sink by key, batching and caching will be applied automatically
-func (l *SinkSliceLoader) Load(key int) ([]*model.Sink, error) {
+func (l *sinkSliceLoader) Load(key int) ([]*model.Sink, error) {
 	return l.LoadThunk(key)()
 }
 
 // LoadThunk returns a function that when called will block waiting for a Sink.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *SinkSliceLoader) LoadThunk(key int) func() ([]*model.Sink, error) {
+func (l *sinkSliceLoader) LoadThunk(key int) func() ([]*model.Sink, error) {
 	l.mu.Lock()
 	if it, ok := l.cache[key]; ok {
 		l.mu.Unlock()
@@ -113,7 +113,7 @@ func (l *SinkSliceLoader) LoadThunk(key int) func() ([]*model.Sink, error) {
 
 // LoadAll fetches many keys at once. It will be broken into appropriate sized
 // sub batches depending on how the loader is configured
-func (l *SinkSliceLoader) LoadAll(keys []int) ([][]*model.Sink, []error) {
+func (l *sinkSliceLoader) LoadAll(keys []int) ([][]*model.Sink, []error) {
 	results := make([]func() ([]*model.Sink, error), len(keys))
 
 	for i, key := range keys {
@@ -131,7 +131,7 @@ func (l *SinkSliceLoader) LoadAll(keys []int) ([][]*model.Sink, []error) {
 // LoadAllThunk returns a function that when called will block waiting for a Sinks.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *SinkSliceLoader) LoadAllThunk(keys []int) func() ([][]*model.Sink, []error) {
+func (l *sinkSliceLoader) LoadAllThunk(keys []int) func() ([][]*model.Sink, []error) {
 	results := make([]func() ([]*model.Sink, error), len(keys))
 	for i, key := range keys {
 		results[i] = l.LoadThunk(key)
@@ -149,7 +149,7 @@ func (l *SinkSliceLoader) LoadAllThunk(keys []int) func() ([][]*model.Sink, []er
 // Prime the cache with the provided key and value. If the key already exists, no change is made
 // and false is returned.
 // (To forcefully prime the cache, clear the key first with loader.clear(key).prime(key, value).)
-func (l *SinkSliceLoader) Prime(key int, value []*model.Sink) bool {
+func (l *sinkSliceLoader) Prime(key int, value []*model.Sink) bool {
 	l.mu.Lock()
 	var found bool
 	if _, found = l.cache[key]; !found {
@@ -164,13 +164,13 @@ func (l *SinkSliceLoader) Prime(key int, value []*model.Sink) bool {
 }
 
 // Clear the value at key from the cache, if it exists
-func (l *SinkSliceLoader) Clear(key int) {
+func (l *sinkSliceLoader) Clear(key int) {
 	l.mu.Lock()
 	delete(l.cache, key)
 	l.mu.Unlock()
 }
 
-func (l *SinkSliceLoader) unsafeSet(key int, value []*model.Sink) {
+func (l *sinkSliceLoader) unsafeSet(key int, value []*model.Sink) {
 	if l.cache == nil {
 		l.cache = map[int][]*model.Sink{}
 	}
@@ -179,7 +179,7 @@ func (l *SinkSliceLoader) unsafeSet(key int, value []*model.Sink) {
 
 // keyIndex will return the location of the key in the batch, if its not found
 // it will add the key to the batch
-func (b *sinkSliceLoaderBatch) keyIndex(l *SinkSliceLoader, key int) int {
+func (b *sinkSliceLoaderBatch) keyIndex(l *sinkSliceLoader, key int) int {
 	for i, existingKey := range b.keys {
 		if key == existingKey {
 			return i
@@ -203,7 +203,7 @@ func (b *sinkSliceLoaderBatch) keyIndex(l *SinkSliceLoader, key int) int {
 	return pos
 }
 
-func (b *sinkSliceLoaderBatch) startTimer(l *SinkSliceLoader) {
+func (b *sinkSliceLoaderBatch) startTimer(l *sinkSliceLoader) {
 	time.Sleep(l.wait)
 	l.mu.Lock()
 
@@ -219,7 +219,7 @@ func (b *sinkSliceLoaderBatch) startTimer(l *SinkSliceLoader) {
 	b.end(l)
 }
 
-func (b *sinkSliceLoaderBatch) end(l *SinkSliceLoader) {
+func (b *sinkSliceLoaderBatch) end(l *sinkSliceLoader) {
 	b.data, b.error = l.fetch(b.keys)
 	close(b.done)
 }

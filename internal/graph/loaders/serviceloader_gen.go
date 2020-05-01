@@ -9,8 +9,8 @@ import (
 	"github.com/syncromatics/kafmesh/internal/graph/model"
 )
 
-// ServiceLoaderConfig captures the config to create a new ServiceLoader
-type ServiceLoaderConfig struct {
+// serviceLoaderConfig captures the config to create a new serviceLoader
+type serviceLoaderConfig struct {
 	// Fetch is a method that provides the data for the loader
 	Fetch func(keys []int) ([]*model.Service, []error)
 
@@ -21,17 +21,17 @@ type ServiceLoaderConfig struct {
 	MaxBatch int
 }
 
-// NewServiceLoader creates a new ServiceLoader given a fetch, wait, and maxBatch
-func NewServiceLoader(config ServiceLoaderConfig) *ServiceLoader {
-	return &ServiceLoader{
+// NewserviceLoader creates a new serviceLoader given a fetch, wait, and maxBatch
+func NewserviceLoader(config serviceLoaderConfig) *serviceLoader {
+	return &serviceLoader{
 		fetch:    config.Fetch,
 		wait:     config.Wait,
 		maxBatch: config.MaxBatch,
 	}
 }
 
-// ServiceLoader batches and caches requests
-type ServiceLoader struct {
+// serviceLoader batches and caches requests
+type serviceLoader struct {
 	// this method provides the data for the loader
 	fetch func(keys []int) ([]*model.Service, []error)
 
@@ -63,14 +63,14 @@ type serviceLoaderBatch struct {
 }
 
 // Load a Service by key, batching and caching will be applied automatically
-func (l *ServiceLoader) Load(key int) (*model.Service, error) {
+func (l *serviceLoader) Load(key int) (*model.Service, error) {
 	return l.LoadThunk(key)()
 }
 
 // LoadThunk returns a function that when called will block waiting for a Service.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *ServiceLoader) LoadThunk(key int) func() (*model.Service, error) {
+func (l *serviceLoader) LoadThunk(key int) func() (*model.Service, error) {
 	l.mu.Lock()
 	if it, ok := l.cache[key]; ok {
 		l.mu.Unlock()
@@ -113,7 +113,7 @@ func (l *ServiceLoader) LoadThunk(key int) func() (*model.Service, error) {
 
 // LoadAll fetches many keys at once. It will be broken into appropriate sized
 // sub batches depending on how the loader is configured
-func (l *ServiceLoader) LoadAll(keys []int) ([]*model.Service, []error) {
+func (l *serviceLoader) LoadAll(keys []int) ([]*model.Service, []error) {
 	results := make([]func() (*model.Service, error), len(keys))
 
 	for i, key := range keys {
@@ -131,7 +131,7 @@ func (l *ServiceLoader) LoadAll(keys []int) ([]*model.Service, []error) {
 // LoadAllThunk returns a function that when called will block waiting for a Services.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *ServiceLoader) LoadAllThunk(keys []int) func() ([]*model.Service, []error) {
+func (l *serviceLoader) LoadAllThunk(keys []int) func() ([]*model.Service, []error) {
 	results := make([]func() (*model.Service, error), len(keys))
 	for i, key := range keys {
 		results[i] = l.LoadThunk(key)
@@ -149,7 +149,7 @@ func (l *ServiceLoader) LoadAllThunk(keys []int) func() ([]*model.Service, []err
 // Prime the cache with the provided key and value. If the key already exists, no change is made
 // and false is returned.
 // (To forcefully prime the cache, clear the key first with loader.clear(key).prime(key, value).)
-func (l *ServiceLoader) Prime(key int, value *model.Service) bool {
+func (l *serviceLoader) Prime(key int, value *model.Service) bool {
 	l.mu.Lock()
 	var found bool
 	if _, found = l.cache[key]; !found {
@@ -163,13 +163,13 @@ func (l *ServiceLoader) Prime(key int, value *model.Service) bool {
 }
 
 // Clear the value at key from the cache, if it exists
-func (l *ServiceLoader) Clear(key int) {
+func (l *serviceLoader) Clear(key int) {
 	l.mu.Lock()
 	delete(l.cache, key)
 	l.mu.Unlock()
 }
 
-func (l *ServiceLoader) unsafeSet(key int, value *model.Service) {
+func (l *serviceLoader) unsafeSet(key int, value *model.Service) {
 	if l.cache == nil {
 		l.cache = map[int]*model.Service{}
 	}
@@ -178,7 +178,7 @@ func (l *ServiceLoader) unsafeSet(key int, value *model.Service) {
 
 // keyIndex will return the location of the key in the batch, if its not found
 // it will add the key to the batch
-func (b *serviceLoaderBatch) keyIndex(l *ServiceLoader, key int) int {
+func (b *serviceLoaderBatch) keyIndex(l *serviceLoader, key int) int {
 	for i, existingKey := range b.keys {
 		if key == existingKey {
 			return i
@@ -202,7 +202,7 @@ func (b *serviceLoaderBatch) keyIndex(l *ServiceLoader, key int) int {
 	return pos
 }
 
-func (b *serviceLoaderBatch) startTimer(l *ServiceLoader) {
+func (b *serviceLoaderBatch) startTimer(l *serviceLoader) {
 	time.Sleep(l.wait)
 	l.mu.Lock()
 
@@ -218,7 +218,7 @@ func (b *serviceLoaderBatch) startTimer(l *ServiceLoader) {
 	b.end(l)
 }
 
-func (b *serviceLoaderBatch) end(l *ServiceLoader) {
+func (b *serviceLoaderBatch) end(l *serviceLoader) {
 	b.data, b.error = l.fetch(b.keys)
 	close(b.done)
 }

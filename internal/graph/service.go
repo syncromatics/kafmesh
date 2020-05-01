@@ -10,6 +10,7 @@ import (
 	"github.com/syncromatics/kafmesh/internal/graph/generated"
 	"github.com/syncromatics/kafmesh/internal/graph/loaders"
 	"github.com/syncromatics/kafmesh/internal/graph/resolvers"
+	"github.com/syncromatics/kafmesh/internal/storage/repositories"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/handler"
@@ -32,11 +33,14 @@ func NewService(port int, db *sql.DB) *Service {
 
 // Run the graphql api
 func (s *Service) Run(ctx context.Context) func() error {
+	repositories := repositories.All(s.db)
+
 	router := chi.NewRouter()
-	router.Use(loaders.NewMiddleware(s.db))
+	router.Use(loaders.NewMiddleware(repositories))
+
 	srv := &http.Server{Addr: fmt.Sprintf(":%d", s.port), Handler: router}
 
-	resolver := resolvers.NewResolver(func(ctx context.Context) *loaders.Loaders { return loaders.CtxLoaders(ctx) })
+	resolver := resolvers.NewResolver(&loaders.LoaderFactory{})
 
 	server := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: resolver}))
 	server.SetRecoverFunc(func(ctx context.Context, err interface{}) error {

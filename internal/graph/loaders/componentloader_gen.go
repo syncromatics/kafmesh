@@ -9,8 +9,8 @@ import (
 	"github.com/syncromatics/kafmesh/internal/graph/model"
 )
 
-// ComponentLoaderConfig captures the config to create a new ComponentLoader
-type ComponentLoaderConfig struct {
+// componentLoaderConfig captures the config to create a new componentLoader
+type componentLoaderConfig struct {
 	// Fetch is a method that provides the data for the loader
 	Fetch func(keys []int) ([]*model.Component, []error)
 
@@ -21,17 +21,17 @@ type ComponentLoaderConfig struct {
 	MaxBatch int
 }
 
-// NewComponentLoader creates a new ComponentLoader given a fetch, wait, and maxBatch
-func NewComponentLoader(config ComponentLoaderConfig) *ComponentLoader {
-	return &ComponentLoader{
+// NewcomponentLoader creates a new componentLoader given a fetch, wait, and maxBatch
+func NewcomponentLoader(config componentLoaderConfig) *componentLoader {
+	return &componentLoader{
 		fetch:    config.Fetch,
 		wait:     config.Wait,
 		maxBatch: config.MaxBatch,
 	}
 }
 
-// ComponentLoader batches and caches requests
-type ComponentLoader struct {
+// componentLoader batches and caches requests
+type componentLoader struct {
 	// this method provides the data for the loader
 	fetch func(keys []int) ([]*model.Component, []error)
 
@@ -63,14 +63,14 @@ type componentLoaderBatch struct {
 }
 
 // Load a Component by key, batching and caching will be applied automatically
-func (l *ComponentLoader) Load(key int) (*model.Component, error) {
+func (l *componentLoader) Load(key int) (*model.Component, error) {
 	return l.LoadThunk(key)()
 }
 
 // LoadThunk returns a function that when called will block waiting for a Component.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *ComponentLoader) LoadThunk(key int) func() (*model.Component, error) {
+func (l *componentLoader) LoadThunk(key int) func() (*model.Component, error) {
 	l.mu.Lock()
 	if it, ok := l.cache[key]; ok {
 		l.mu.Unlock()
@@ -113,7 +113,7 @@ func (l *ComponentLoader) LoadThunk(key int) func() (*model.Component, error) {
 
 // LoadAll fetches many keys at once. It will be broken into appropriate sized
 // sub batches depending on how the loader is configured
-func (l *ComponentLoader) LoadAll(keys []int) ([]*model.Component, []error) {
+func (l *componentLoader) LoadAll(keys []int) ([]*model.Component, []error) {
 	results := make([]func() (*model.Component, error), len(keys))
 
 	for i, key := range keys {
@@ -131,7 +131,7 @@ func (l *ComponentLoader) LoadAll(keys []int) ([]*model.Component, []error) {
 // LoadAllThunk returns a function that when called will block waiting for a Components.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *ComponentLoader) LoadAllThunk(keys []int) func() ([]*model.Component, []error) {
+func (l *componentLoader) LoadAllThunk(keys []int) func() ([]*model.Component, []error) {
 	results := make([]func() (*model.Component, error), len(keys))
 	for i, key := range keys {
 		results[i] = l.LoadThunk(key)
@@ -149,7 +149,7 @@ func (l *ComponentLoader) LoadAllThunk(keys []int) func() ([]*model.Component, [
 // Prime the cache with the provided key and value. If the key already exists, no change is made
 // and false is returned.
 // (To forcefully prime the cache, clear the key first with loader.clear(key).prime(key, value).)
-func (l *ComponentLoader) Prime(key int, value *model.Component) bool {
+func (l *componentLoader) Prime(key int, value *model.Component) bool {
 	l.mu.Lock()
 	var found bool
 	if _, found = l.cache[key]; !found {
@@ -163,13 +163,13 @@ func (l *ComponentLoader) Prime(key int, value *model.Component) bool {
 }
 
 // Clear the value at key from the cache, if it exists
-func (l *ComponentLoader) Clear(key int) {
+func (l *componentLoader) Clear(key int) {
 	l.mu.Lock()
 	delete(l.cache, key)
 	l.mu.Unlock()
 }
 
-func (l *ComponentLoader) unsafeSet(key int, value *model.Component) {
+func (l *componentLoader) unsafeSet(key int, value *model.Component) {
 	if l.cache == nil {
 		l.cache = map[int]*model.Component{}
 	}
@@ -178,7 +178,7 @@ func (l *ComponentLoader) unsafeSet(key int, value *model.Component) {
 
 // keyIndex will return the location of the key in the batch, if its not found
 // it will add the key to the batch
-func (b *componentLoaderBatch) keyIndex(l *ComponentLoader, key int) int {
+func (b *componentLoaderBatch) keyIndex(l *componentLoader, key int) int {
 	for i, existingKey := range b.keys {
 		if key == existingKey {
 			return i
@@ -202,7 +202,7 @@ func (b *componentLoaderBatch) keyIndex(l *ComponentLoader, key int) int {
 	return pos
 }
 
-func (b *componentLoaderBatch) startTimer(l *ComponentLoader) {
+func (b *componentLoaderBatch) startTimer(l *componentLoader) {
 	time.Sleep(l.wait)
 	l.mu.Lock()
 
@@ -218,7 +218,7 @@ func (b *componentLoaderBatch) startTimer(l *ComponentLoader) {
 	b.end(l)
 }
 
-func (b *componentLoaderBatch) end(l *ComponentLoader) {
+func (b *componentLoaderBatch) end(l *componentLoader) {
 	b.data, b.error = l.fetch(b.keys)
 	close(b.done)
 }

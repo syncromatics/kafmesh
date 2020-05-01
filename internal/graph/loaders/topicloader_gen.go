@@ -9,8 +9,8 @@ import (
 	"github.com/syncromatics/kafmesh/internal/graph/model"
 )
 
-// TopicLoaderConfig captures the config to create a new TopicLoader
-type TopicLoaderConfig struct {
+// topicLoaderConfig captures the config to create a new topicLoader
+type topicLoaderConfig struct {
 	// Fetch is a method that provides the data for the loader
 	Fetch func(keys []int) ([]*model.Topic, []error)
 
@@ -21,17 +21,17 @@ type TopicLoaderConfig struct {
 	MaxBatch int
 }
 
-// NewTopicLoader creates a new TopicLoader given a fetch, wait, and maxBatch
-func NewTopicLoader(config TopicLoaderConfig) *TopicLoader {
-	return &TopicLoader{
+// NewtopicLoader creates a new topicLoader given a fetch, wait, and maxBatch
+func NewtopicLoader(config topicLoaderConfig) *topicLoader {
+	return &topicLoader{
 		fetch:    config.Fetch,
 		wait:     config.Wait,
 		maxBatch: config.MaxBatch,
 	}
 }
 
-// TopicLoader batches and caches requests
-type TopicLoader struct {
+// topicLoader batches and caches requests
+type topicLoader struct {
 	// this method provides the data for the loader
 	fetch func(keys []int) ([]*model.Topic, []error)
 
@@ -63,14 +63,14 @@ type topicLoaderBatch struct {
 }
 
 // Load a Topic by key, batching and caching will be applied automatically
-func (l *TopicLoader) Load(key int) (*model.Topic, error) {
+func (l *topicLoader) Load(key int) (*model.Topic, error) {
 	return l.LoadThunk(key)()
 }
 
 // LoadThunk returns a function that when called will block waiting for a Topic.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *TopicLoader) LoadThunk(key int) func() (*model.Topic, error) {
+func (l *topicLoader) LoadThunk(key int) func() (*model.Topic, error) {
 	l.mu.Lock()
 	if it, ok := l.cache[key]; ok {
 		l.mu.Unlock()
@@ -113,7 +113,7 @@ func (l *TopicLoader) LoadThunk(key int) func() (*model.Topic, error) {
 
 // LoadAll fetches many keys at once. It will be broken into appropriate sized
 // sub batches depending on how the loader is configured
-func (l *TopicLoader) LoadAll(keys []int) ([]*model.Topic, []error) {
+func (l *topicLoader) LoadAll(keys []int) ([]*model.Topic, []error) {
 	results := make([]func() (*model.Topic, error), len(keys))
 
 	for i, key := range keys {
@@ -131,7 +131,7 @@ func (l *TopicLoader) LoadAll(keys []int) ([]*model.Topic, []error) {
 // LoadAllThunk returns a function that when called will block waiting for a Topics.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *TopicLoader) LoadAllThunk(keys []int) func() ([]*model.Topic, []error) {
+func (l *topicLoader) LoadAllThunk(keys []int) func() ([]*model.Topic, []error) {
 	results := make([]func() (*model.Topic, error), len(keys))
 	for i, key := range keys {
 		results[i] = l.LoadThunk(key)
@@ -149,7 +149,7 @@ func (l *TopicLoader) LoadAllThunk(keys []int) func() ([]*model.Topic, []error) 
 // Prime the cache with the provided key and value. If the key already exists, no change is made
 // and false is returned.
 // (To forcefully prime the cache, clear the key first with loader.clear(key).prime(key, value).)
-func (l *TopicLoader) Prime(key int, value *model.Topic) bool {
+func (l *topicLoader) Prime(key int, value *model.Topic) bool {
 	l.mu.Lock()
 	var found bool
 	if _, found = l.cache[key]; !found {
@@ -163,13 +163,13 @@ func (l *TopicLoader) Prime(key int, value *model.Topic) bool {
 }
 
 // Clear the value at key from the cache, if it exists
-func (l *TopicLoader) Clear(key int) {
+func (l *topicLoader) Clear(key int) {
 	l.mu.Lock()
 	delete(l.cache, key)
 	l.mu.Unlock()
 }
 
-func (l *TopicLoader) unsafeSet(key int, value *model.Topic) {
+func (l *topicLoader) unsafeSet(key int, value *model.Topic) {
 	if l.cache == nil {
 		l.cache = map[int]*model.Topic{}
 	}
@@ -178,7 +178,7 @@ func (l *TopicLoader) unsafeSet(key int, value *model.Topic) {
 
 // keyIndex will return the location of the key in the batch, if its not found
 // it will add the key to the batch
-func (b *topicLoaderBatch) keyIndex(l *TopicLoader, key int) int {
+func (b *topicLoaderBatch) keyIndex(l *topicLoader, key int) int {
 	for i, existingKey := range b.keys {
 		if key == existingKey {
 			return i
@@ -202,7 +202,7 @@ func (b *topicLoaderBatch) keyIndex(l *TopicLoader, key int) int {
 	return pos
 }
 
-func (b *topicLoaderBatch) startTimer(l *TopicLoader) {
+func (b *topicLoaderBatch) startTimer(l *topicLoader) {
 	time.Sleep(l.wait)
 	l.mu.Lock()
 
@@ -218,7 +218,7 @@ func (b *topicLoaderBatch) startTimer(l *TopicLoader) {
 	b.end(l)
 }
 
-func (b *topicLoaderBatch) end(l *TopicLoader) {
+func (b *topicLoaderBatch) end(l *topicLoader) {
 	b.data, b.error = l.fetch(b.keys)
 	close(b.done)
 }

@@ -9,8 +9,8 @@ import (
 	"github.com/syncromatics/kafmesh/internal/graph/model"
 )
 
-// LookupSliceLoaderConfig captures the config to create a new LookupSliceLoader
-type LookupSliceLoaderConfig struct {
+// lookupSliceLoaderConfig captures the config to create a new lookupSliceLoader
+type lookupSliceLoaderConfig struct {
 	// Fetch is a method that provides the data for the loader
 	Fetch func(keys []int) ([][]*model.ProcessorLookup, []error)
 
@@ -21,17 +21,17 @@ type LookupSliceLoaderConfig struct {
 	MaxBatch int
 }
 
-// NewLookupSliceLoader creates a new LookupSliceLoader given a fetch, wait, and maxBatch
-func NewLookupSliceLoader(config LookupSliceLoaderConfig) *LookupSliceLoader {
-	return &LookupSliceLoader{
+// NewlookupSliceLoader creates a new lookupSliceLoader given a fetch, wait, and maxBatch
+func NewlookupSliceLoader(config lookupSliceLoaderConfig) *lookupSliceLoader {
+	return &lookupSliceLoader{
 		fetch:    config.Fetch,
 		wait:     config.Wait,
 		maxBatch: config.MaxBatch,
 	}
 }
 
-// LookupSliceLoader batches and caches requests
-type LookupSliceLoader struct {
+// lookupSliceLoader batches and caches requests
+type lookupSliceLoader struct {
 	// this method provides the data for the loader
 	fetch func(keys []int) ([][]*model.ProcessorLookup, []error)
 
@@ -63,14 +63,14 @@ type lookupSliceLoaderBatch struct {
 }
 
 // Load a ProcessorLookup by key, batching and caching will be applied automatically
-func (l *LookupSliceLoader) Load(key int) ([]*model.ProcessorLookup, error) {
+func (l *lookupSliceLoader) Load(key int) ([]*model.ProcessorLookup, error) {
 	return l.LoadThunk(key)()
 }
 
 // LoadThunk returns a function that when called will block waiting for a ProcessorLookup.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *LookupSliceLoader) LoadThunk(key int) func() ([]*model.ProcessorLookup, error) {
+func (l *lookupSliceLoader) LoadThunk(key int) func() ([]*model.ProcessorLookup, error) {
 	l.mu.Lock()
 	if it, ok := l.cache[key]; ok {
 		l.mu.Unlock()
@@ -113,7 +113,7 @@ func (l *LookupSliceLoader) LoadThunk(key int) func() ([]*model.ProcessorLookup,
 
 // LoadAll fetches many keys at once. It will be broken into appropriate sized
 // sub batches depending on how the loader is configured
-func (l *LookupSliceLoader) LoadAll(keys []int) ([][]*model.ProcessorLookup, []error) {
+func (l *lookupSliceLoader) LoadAll(keys []int) ([][]*model.ProcessorLookup, []error) {
 	results := make([]func() ([]*model.ProcessorLookup, error), len(keys))
 
 	for i, key := range keys {
@@ -131,7 +131,7 @@ func (l *LookupSliceLoader) LoadAll(keys []int) ([][]*model.ProcessorLookup, []e
 // LoadAllThunk returns a function that when called will block waiting for a ProcessorLookups.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *LookupSliceLoader) LoadAllThunk(keys []int) func() ([][]*model.ProcessorLookup, []error) {
+func (l *lookupSliceLoader) LoadAllThunk(keys []int) func() ([][]*model.ProcessorLookup, []error) {
 	results := make([]func() ([]*model.ProcessorLookup, error), len(keys))
 	for i, key := range keys {
 		results[i] = l.LoadThunk(key)
@@ -149,7 +149,7 @@ func (l *LookupSliceLoader) LoadAllThunk(keys []int) func() ([][]*model.Processo
 // Prime the cache with the provided key and value. If the key already exists, no change is made
 // and false is returned.
 // (To forcefully prime the cache, clear the key first with loader.clear(key).prime(key, value).)
-func (l *LookupSliceLoader) Prime(key int, value []*model.ProcessorLookup) bool {
+func (l *lookupSliceLoader) Prime(key int, value []*model.ProcessorLookup) bool {
 	l.mu.Lock()
 	var found bool
 	if _, found = l.cache[key]; !found {
@@ -164,13 +164,13 @@ func (l *LookupSliceLoader) Prime(key int, value []*model.ProcessorLookup) bool 
 }
 
 // Clear the value at key from the cache, if it exists
-func (l *LookupSliceLoader) Clear(key int) {
+func (l *lookupSliceLoader) Clear(key int) {
 	l.mu.Lock()
 	delete(l.cache, key)
 	l.mu.Unlock()
 }
 
-func (l *LookupSliceLoader) unsafeSet(key int, value []*model.ProcessorLookup) {
+func (l *lookupSliceLoader) unsafeSet(key int, value []*model.ProcessorLookup) {
 	if l.cache == nil {
 		l.cache = map[int][]*model.ProcessorLookup{}
 	}
@@ -179,7 +179,7 @@ func (l *LookupSliceLoader) unsafeSet(key int, value []*model.ProcessorLookup) {
 
 // keyIndex will return the location of the key in the batch, if its not found
 // it will add the key to the batch
-func (b *lookupSliceLoaderBatch) keyIndex(l *LookupSliceLoader, key int) int {
+func (b *lookupSliceLoaderBatch) keyIndex(l *lookupSliceLoader, key int) int {
 	for i, existingKey := range b.keys {
 		if key == existingKey {
 			return i
@@ -203,7 +203,7 @@ func (b *lookupSliceLoaderBatch) keyIndex(l *LookupSliceLoader, key int) int {
 	return pos
 }
 
-func (b *lookupSliceLoaderBatch) startTimer(l *LookupSliceLoader) {
+func (b *lookupSliceLoaderBatch) startTimer(l *lookupSliceLoader) {
 	time.Sleep(l.wait)
 	l.mu.Lock()
 
@@ -219,7 +219,7 @@ func (b *lookupSliceLoaderBatch) startTimer(l *LookupSliceLoader) {
 	b.end(l)
 }
 
-func (b *lookupSliceLoaderBatch) end(l *LookupSliceLoader) {
+func (b *lookupSliceLoaderBatch) end(l *lookupSliceLoader) {
 	b.data, b.error = l.fetch(b.keys)
 	close(b.done)
 }

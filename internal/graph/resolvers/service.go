@@ -7,14 +7,19 @@ import (
 	"github.com/syncromatics/kafmesh/internal/graph/model"
 )
 
+// ServiceLoader is the dataloader for a service
+type ServiceLoader interface {
+	ComponentsByService(int) ([]*model.Component, error)
+}
+
 var _ generated.ServiceResolver = &ServiceResolver{}
 
 // ServiceResolver resolves the service's relationships
 type ServiceResolver struct {
-	loader loaderFunc
+	*Resolver
 }
 
 // Components returns the service's components
 func (s *ServiceResolver) Components(ctx context.Context, service *model.Service) ([]*model.Component, error) {
-	return s.loader(ctx).ServiceLoader.ComponentsByServiceID.Load(service.ID)
+	return s.DataLoaders.ServiceLoader(ctx).ComponentsByService(service.ID)
 }

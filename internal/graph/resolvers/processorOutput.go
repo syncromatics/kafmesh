@@ -7,19 +7,25 @@ import (
 	"github.com/syncromatics/kafmesh/internal/graph/model"
 )
 
+// ProcessorOutputLoader is the dataloader for a processor output
+type ProcessorOutputLoader interface {
+	ProcessorByOutput(int) (*model.Processor, error)
+	TopicByOutput(int) (*model.Topic, error)
+}
+
 var _ generated.ProcessorOutputResolver = &ProcessorOutputResolver{}
 
 // ProcessorOutputResolver resolves the output's relationships
 type ProcessorOutputResolver struct {
-	loader loaderFunc
+	*Resolver
 }
 
 // Processor returns the output's processor
 func (r *ProcessorOutputResolver) Processor(ctx context.Context, output *model.ProcessorOutput) (*model.Processor, error) {
-	return r.loader(ctx).ProcessorOutputLoader.ProcessorByOutput.Load(output.ID)
+	return r.DataLoaders.ProcessorOutputLoader(ctx).ProcessorByOutput(output.ID)
 }
 
 // Topic returns the output's topic
 func (r *ProcessorOutputResolver) Topic(ctx context.Context, output *model.ProcessorOutput) (*model.Topic, error) {
-	return r.loader(ctx).ProcessorOutputLoader.TopicByOutput.Load(output.ID)
+	return r.DataLoaders.ProcessorOutputLoader(ctx).TopicByOutput(output.ID)
 }

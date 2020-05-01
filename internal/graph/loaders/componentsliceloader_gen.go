@@ -9,8 +9,8 @@ import (
 	"github.com/syncromatics/kafmesh/internal/graph/model"
 )
 
-// ComponentSliceLoaderConfig captures the config to create a new ComponentSliceLoader
-type ComponentSliceLoaderConfig struct {
+// componentSliceLoaderConfig captures the config to create a new componentSliceLoader
+type componentSliceLoaderConfig struct {
 	// Fetch is a method that provides the data for the loader
 	Fetch func(keys []int) ([][]*model.Component, []error)
 
@@ -21,17 +21,17 @@ type ComponentSliceLoaderConfig struct {
 	MaxBatch int
 }
 
-// NewComponentSliceLoader creates a new ComponentSliceLoader given a fetch, wait, and maxBatch
-func NewComponentSliceLoader(config ComponentSliceLoaderConfig) *ComponentSliceLoader {
-	return &ComponentSliceLoader{
+// NewcomponentSliceLoader creates a new componentSliceLoader given a fetch, wait, and maxBatch
+func NewcomponentSliceLoader(config componentSliceLoaderConfig) *componentSliceLoader {
+	return &componentSliceLoader{
 		fetch:    config.Fetch,
 		wait:     config.Wait,
 		maxBatch: config.MaxBatch,
 	}
 }
 
-// ComponentSliceLoader batches and caches requests
-type ComponentSliceLoader struct {
+// componentSliceLoader batches and caches requests
+type componentSliceLoader struct {
 	// this method provides the data for the loader
 	fetch func(keys []int) ([][]*model.Component, []error)
 
@@ -63,14 +63,14 @@ type componentSliceLoaderBatch struct {
 }
 
 // Load a Component by key, batching and caching will be applied automatically
-func (l *ComponentSliceLoader) Load(key int) ([]*model.Component, error) {
+func (l *componentSliceLoader) Load(key int) ([]*model.Component, error) {
 	return l.LoadThunk(key)()
 }
 
 // LoadThunk returns a function that when called will block waiting for a Component.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *ComponentSliceLoader) LoadThunk(key int) func() ([]*model.Component, error) {
+func (l *componentSliceLoader) LoadThunk(key int) func() ([]*model.Component, error) {
 	l.mu.Lock()
 	if it, ok := l.cache[key]; ok {
 		l.mu.Unlock()
@@ -113,7 +113,7 @@ func (l *ComponentSliceLoader) LoadThunk(key int) func() ([]*model.Component, er
 
 // LoadAll fetches many keys at once. It will be broken into appropriate sized
 // sub batches depending on how the loader is configured
-func (l *ComponentSliceLoader) LoadAll(keys []int) ([][]*model.Component, []error) {
+func (l *componentSliceLoader) LoadAll(keys []int) ([][]*model.Component, []error) {
 	results := make([]func() ([]*model.Component, error), len(keys))
 
 	for i, key := range keys {
@@ -131,7 +131,7 @@ func (l *ComponentSliceLoader) LoadAll(keys []int) ([][]*model.Component, []erro
 // LoadAllThunk returns a function that when called will block waiting for a Components.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *ComponentSliceLoader) LoadAllThunk(keys []int) func() ([][]*model.Component, []error) {
+func (l *componentSliceLoader) LoadAllThunk(keys []int) func() ([][]*model.Component, []error) {
 	results := make([]func() ([]*model.Component, error), len(keys))
 	for i, key := range keys {
 		results[i] = l.LoadThunk(key)
@@ -149,7 +149,7 @@ func (l *ComponentSliceLoader) LoadAllThunk(keys []int) func() ([][]*model.Compo
 // Prime the cache with the provided key and value. If the key already exists, no change is made
 // and false is returned.
 // (To forcefully prime the cache, clear the key first with loader.clear(key).prime(key, value).)
-func (l *ComponentSliceLoader) Prime(key int, value []*model.Component) bool {
+func (l *componentSliceLoader) Prime(key int, value []*model.Component) bool {
 	l.mu.Lock()
 	var found bool
 	if _, found = l.cache[key]; !found {
@@ -164,13 +164,13 @@ func (l *ComponentSliceLoader) Prime(key int, value []*model.Component) bool {
 }
 
 // Clear the value at key from the cache, if it exists
-func (l *ComponentSliceLoader) Clear(key int) {
+func (l *componentSliceLoader) Clear(key int) {
 	l.mu.Lock()
 	delete(l.cache, key)
 	l.mu.Unlock()
 }
 
-func (l *ComponentSliceLoader) unsafeSet(key int, value []*model.Component) {
+func (l *componentSliceLoader) unsafeSet(key int, value []*model.Component) {
 	if l.cache == nil {
 		l.cache = map[int][]*model.Component{}
 	}
@@ -179,7 +179,7 @@ func (l *ComponentSliceLoader) unsafeSet(key int, value []*model.Component) {
 
 // keyIndex will return the location of the key in the batch, if its not found
 // it will add the key to the batch
-func (b *componentSliceLoaderBatch) keyIndex(l *ComponentSliceLoader, key int) int {
+func (b *componentSliceLoaderBatch) keyIndex(l *componentSliceLoader, key int) int {
 	for i, existingKey := range b.keys {
 		if key == existingKey {
 			return i
@@ -203,7 +203,7 @@ func (b *componentSliceLoaderBatch) keyIndex(l *ComponentSliceLoader, key int) i
 	return pos
 }
 
-func (b *componentSliceLoaderBatch) startTimer(l *ComponentSliceLoader) {
+func (b *componentSliceLoaderBatch) startTimer(l *componentSliceLoader) {
 	time.Sleep(l.wait)
 	l.mu.Lock()
 
@@ -219,7 +219,7 @@ func (b *componentSliceLoaderBatch) startTimer(l *ComponentSliceLoader) {
 	b.end(l)
 }
 
-func (b *componentSliceLoaderBatch) end(l *ComponentSliceLoader) {
+func (b *componentSliceLoaderBatch) end(l *componentSliceLoader) {
 	b.data, b.error = l.fetch(b.keys)
 	close(b.done)
 }

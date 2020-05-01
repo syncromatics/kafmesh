@@ -1,119 +1,65 @@
 package loaders
 
 import (
+	"context"
 	"time"
 
-	"github.com/lib/pq"
-	"github.com/pkg/errors"
 	"github.com/syncromatics/kafmesh/internal/graph/model"
+	"github.com/syncromatics/kafmesh/internal/graph/resolvers"
 )
 
-// ProcessorOutputs contains data loaders for processor output relationships
-type ProcessorOutputs struct {
-	ProcessorByOutput *ProcessorLoader
-	TopicByOutput     *TopicLoader
+// ProcessorOutputRepository is the datastore repository for processor outputs
+type ProcessorOutputRepository interface {
+	ProcessorByOutputs(ctx context.Context, outputs []int) ([]*model.Processor, error)
+	TopicByOutputs(ctx context.Context, outputs []int) ([]*model.Topic, error)
 }
 
-func configureProcessorOutputs(loaders *Loaders) {
-	loader := &ProcessorOutputs{}
-	loaders.ProcessorOutputLoader = loader
+var _ resolvers.ProcessorOutputLoader = &ProcessorOutputLoader{}
 
-	loader.ProcessorByOutput = &ProcessorLoader{
+// ProcessorOutputLoader contains data loaders for processor output relationships
+type ProcessorOutputLoader struct {
+	processorByOutput *processorLoader
+	topicByOutput     *topicLoader
+}
+
+// NewProcessorOutputLoader creates a new ProcessorOutputLoader
+func NewProcessorOutputLoader(ctx context.Context, repository ProcessorOutputRepository) *ProcessorOutputLoader {
+	loader := &ProcessorOutputLoader{}
+
+	loader.processorByOutput = &processorLoader{
 		wait:     100 * time.Millisecond,
 		maxBatch: 100,
 		fetch: func(keys []int) ([]*model.Processor, []error) {
-			var ids []int
-			for _, key := range keys {
-				ids = append(ids, key)
-			}
-
-			rows, err := loaders.db.QueryContext(loaders.context, `
-			select
-				processor_outputs.id,
-				processors.id,
-				processors.name,
-				processors.description
-			from
-				processors
-			inner join
-				processor_outputs on processor_outputs.processor=processors.id
-			where
-				processor_outputs.id = ANY ($1)
-			`, pq.Array(ids))
+			r, err := repository.ProcessorByOutputs(ctx, keys)
 			if err != nil {
-				return nil, []error{errors.Wrap(err, "failed to query for lookup processors")}
+				return nil, []error{err}
 			}
-			defer rows.Close()
-
-			processors := map[int]*model.Processor{}
-			var id int
-			for rows.Next() {
-				processor := &model.Processor{}
-				err = rows.Scan(&id, &processor.ID, &processor.Name, &processor.Description)
-				if err != nil {
-					return nil, []error{errors.Wrap(err, "failed to scan processor row")}
-				}
-				processors[id] = processor
-			}
-
-			results := []*model.Processor{}
-			for _, c := range ids {
-				s, ok := processors[c]
-				if !ok {
-					return nil, []error{errors.Errorf("did not find processor for processor input %d", c)}
-				}
-				results = append(results, s)
-			}
-
-			return results, nil
+			return r, nil
 		},
 	}
 
-	loader.TopicByOutput = &TopicLoader{
+	loader.topicByOutput = &topicLoader{
 		wait:     100 * time.Millisecond,
 		maxBatch: 100,
 		fetch: func(keys []int) ([]*model.Topic, []error) {
-			var ids []int
-			for _, key := range keys {
-				ids = append(ids, key)
-			}
-
-			rows, err := loaders.db.QueryContext(loaders.context, `
-			select
-				processor_outputs.id,
-				topics.id,
-				topics.name,
-				topics.message
-			from
-				topics
-			inner join
-				processor_outputs on processor_outputs.topic=topics.id
-			where
-				processor_outputs.id = ANY ($1)
-			`, pq.Array(ids))
+			r, err := repository.TopicByOutputs(ctx, keys)
 			if err != nil {
-				return nil, []error{errors.Wrap(err, "failed to query for processor input topic")}
-			}
-			defer rows.Close()
-
-			topics := map[int]*model.Topic{}
-			var id int
-			for rows.Next() {
-				topic := &model.Topic{}
-				err = rows.Scan(&id, &topic.ID, &topic.Name, &topic.Message)
-				if err != nil {
-					return nil, []error{errors.Wrap(err, "failed to scan topic row")}
-				}
-				topics[id] = topic
+				return nil, []error{err}
 			}
 
-			results := []*model.Topic{}
-			for _, c := range ids {
-				s, _ := topics[c]
-				results = append(results, s)
-			}
-
-			return results, nil
+			return r, nil
 		},
 	}
+
+	return loader
+}
+
+// ProcessorByOutput returns the processor for an output
+func (l *ProcessorOutputLoader) ProcessorByOutput(outputID int) (*model.Processor, error) {
+	return l.processorByOutput.Load(outputID)
+}
+
+// TopicByOutput returns the topic for an output
+func (l *ProcessorOutputLoader) TopicByOutput(outputID int) (*model.Topic, error) {
+	return l.topicByOutput.Load(outputID)
 }

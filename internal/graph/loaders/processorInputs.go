@@ -1,119 +1,64 @@
 package loaders
 
 import (
+	"context"
 	"time"
 
-	"github.com/lib/pq"
-	"github.com/pkg/errors"
 	"github.com/syncromatics/kafmesh/internal/graph/model"
+	"github.com/syncromatics/kafmesh/internal/graph/resolvers"
 )
 
-// ProcessorInputs contains data loaders for processor input relationships
-type ProcessorInputs struct {
-	ProcessorByInput *ProcessorLoader
-	TopicByInput     *TopicLoader
+// ProcessorInputRepository is the datastore repository for processor inputs
+type ProcessorInputRepository interface {
+	ProcessorByInputs(context.Context, []int) ([]*model.Processor, error)
+	TopicByInputs(context.Context, []int) ([]*model.Topic, error)
 }
 
-func configureProcessorInputs(loaders *Loaders) {
-	loader := &ProcessorInputs{}
-	loaders.ProcessorInputLoader = loader
+var _ resolvers.ProcessorInputLoader = &ProcessorInputLoader{}
 
-	loader.ProcessorByInput = &ProcessorLoader{
+// ProcessorInputLoader contains data loaders for processor input relationships
+type ProcessorInputLoader struct {
+	processorByInput *processorLoader
+	topicByInput     *topicLoader
+}
+
+// NewProcessorInputLoader creates a new processor inputs loader
+func NewProcessorInputLoader(ctx context.Context, repository ProcessorInputRepository) *ProcessorInputLoader {
+	loader := &ProcessorInputLoader{}
+
+	loader.processorByInput = &processorLoader{
 		wait:     100 * time.Millisecond,
 		maxBatch: 100,
 		fetch: func(keys []int) ([]*model.Processor, []error) {
-			var inputs []int
-			for _, key := range keys {
-				inputs = append(inputs, key)
-			}
-
-			rows, err := loaders.db.QueryContext(loaders.context, `
-			select
-				processor_inputs.id,
-				processors.id,
-				processors.name,
-				processors.description
-			from
-				processors
-			inner join
-				processor_inputs on processor_inputs.processor=processors.id
-			where
-				processor_inputs.id = ANY ($1)
-			`, pq.Array(inputs))
+			r, err := repository.ProcessorByInputs(ctx, keys)
 			if err != nil {
-				return nil, []error{errors.Wrap(err, "failed to query for input processors")}
+				return nil, []error{err}
 			}
-			defer rows.Close()
-
-			processors := map[int]*model.Processor{}
-			var inputID int
-			for rows.Next() {
-				processor := &model.Processor{}
-				err = rows.Scan(&inputID, &processor.ID, &processor.Name, &processor.Description)
-				if err != nil {
-					return nil, []error{errors.Wrap(err, "failed to scan processor row")}
-				}
-				processors[inputID] = processor
-			}
-
-			results := []*model.Processor{}
-			for _, c := range inputs {
-				s, ok := processors[c]
-				if !ok {
-					return nil, []error{errors.Errorf("did not find processor for processor input %d", c)}
-				}
-				results = append(results, s)
-			}
-
-			return results, nil
+			return r, nil
 		},
 	}
 
-	loader.TopicByInput = &TopicLoader{
+	loader.topicByInput = &topicLoader{
 		wait:     100 * time.Millisecond,
 		maxBatch: 100,
 		fetch: func(keys []int) ([]*model.Topic, []error) {
-			var inputs []int
-			for _, key := range keys {
-				inputs = append(inputs, key)
-			}
-
-			rows, err := loaders.db.QueryContext(loaders.context, `
-			select
-				processor_inputs.id,
-				topics.id,
-				topics.name,
-				topics.message
-			from
-				topics
-			inner join
-				processor_inputs on processor_inputs.topic=topics.id
-			where
-				processor_inputs.id = ANY ($1)
-			`, pq.Array(inputs))
+			r, err := repository.TopicByInputs(ctx, keys)
 			if err != nil {
-				return nil, []error{errors.Wrap(err, "failed to query for processor input topic")}
+				return nil, []error{err}
 			}
-			defer rows.Close()
-
-			topics := map[int]*model.Topic{}
-			var processorID int
-			for rows.Next() {
-				topic := &model.Topic{}
-				err = rows.Scan(&processorID, &topic.ID, &topic.Name, &topic.Message)
-				if err != nil {
-					return nil, []error{errors.Wrap(err, "failed to scan topic row")}
-				}
-				topics[processorID] = topic
-			}
-
-			results := []*model.Topic{}
-			for _, c := range inputs {
-				s, _ := topics[c]
-				results = append(results, s)
-			}
-
-			return results, nil
+			return r, nil
 		},
 	}
+
+	return loader
+}
+
+// ProcessorByInput returns the processor for the input
+func (l *ProcessorInputLoader) ProcessorByInput(inputID int) (*model.Processor, error) {
+	return l.processorByInput.Load(inputID)
+}
+
+// TopicByInput returns the topic for the input
+func (l *ProcessorInputLoader) TopicByInput(inputID int) (*model.Topic, error) {
+	return l.topicByInput.Load(inputID)
 }

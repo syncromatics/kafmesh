@@ -9,8 +9,8 @@ import (
 	"github.com/syncromatics/kafmesh/internal/graph/model"
 )
 
-// SourceSliceLoaderConfig captures the config to create a new SourceSliceLoader
-type SourceSliceLoaderConfig struct {
+// sourceSliceLoaderConfig captures the config to create a new sourceSliceLoader
+type sourceSliceLoaderConfig struct {
 	// Fetch is a method that provides the data for the loader
 	Fetch func(keys []int) ([][]*model.Source, []error)
 
@@ -21,17 +21,17 @@ type SourceSliceLoaderConfig struct {
 	MaxBatch int
 }
 
-// NewSourceSliceLoader creates a new SourceSliceLoader given a fetch, wait, and maxBatch
-func NewSourceSliceLoader(config SourceSliceLoaderConfig) *SourceSliceLoader {
-	return &SourceSliceLoader{
+// NewsourceSliceLoader creates a new sourceSliceLoader given a fetch, wait, and maxBatch
+func NewsourceSliceLoader(config sourceSliceLoaderConfig) *sourceSliceLoader {
+	return &sourceSliceLoader{
 		fetch:    config.Fetch,
 		wait:     config.Wait,
 		maxBatch: config.MaxBatch,
 	}
 }
 
-// SourceSliceLoader batches and caches requests
-type SourceSliceLoader struct {
+// sourceSliceLoader batches and caches requests
+type sourceSliceLoader struct {
 	// this method provides the data for the loader
 	fetch func(keys []int) ([][]*model.Source, []error)
 
@@ -63,14 +63,14 @@ type sourceSliceLoaderBatch struct {
 }
 
 // Load a Source by key, batching and caching will be applied automatically
-func (l *SourceSliceLoader) Load(key int) ([]*model.Source, error) {
+func (l *sourceSliceLoader) Load(key int) ([]*model.Source, error) {
 	return l.LoadThunk(key)()
 }
 
 // LoadThunk returns a function that when called will block waiting for a Source.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *SourceSliceLoader) LoadThunk(key int) func() ([]*model.Source, error) {
+func (l *sourceSliceLoader) LoadThunk(key int) func() ([]*model.Source, error) {
 	l.mu.Lock()
 	if it, ok := l.cache[key]; ok {
 		l.mu.Unlock()
@@ -113,7 +113,7 @@ func (l *SourceSliceLoader) LoadThunk(key int) func() ([]*model.Source, error) {
 
 // LoadAll fetches many keys at once. It will be broken into appropriate sized
 // sub batches depending on how the loader is configured
-func (l *SourceSliceLoader) LoadAll(keys []int) ([][]*model.Source, []error) {
+func (l *sourceSliceLoader) LoadAll(keys []int) ([][]*model.Source, []error) {
 	results := make([]func() ([]*model.Source, error), len(keys))
 
 	for i, key := range keys {
@@ -131,7 +131,7 @@ func (l *SourceSliceLoader) LoadAll(keys []int) ([][]*model.Source, []error) {
 // LoadAllThunk returns a function that when called will block waiting for a Sources.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *SourceSliceLoader) LoadAllThunk(keys []int) func() ([][]*model.Source, []error) {
+func (l *sourceSliceLoader) LoadAllThunk(keys []int) func() ([][]*model.Source, []error) {
 	results := make([]func() ([]*model.Source, error), len(keys))
 	for i, key := range keys {
 		results[i] = l.LoadThunk(key)
@@ -149,7 +149,7 @@ func (l *SourceSliceLoader) LoadAllThunk(keys []int) func() ([][]*model.Source, 
 // Prime the cache with the provided key and value. If the key already exists, no change is made
 // and false is returned.
 // (To forcefully prime the cache, clear the key first with loader.clear(key).prime(key, value).)
-func (l *SourceSliceLoader) Prime(key int, value []*model.Source) bool {
+func (l *sourceSliceLoader) Prime(key int, value []*model.Source) bool {
 	l.mu.Lock()
 	var found bool
 	if _, found = l.cache[key]; !found {
@@ -164,13 +164,13 @@ func (l *SourceSliceLoader) Prime(key int, value []*model.Source) bool {
 }
 
 // Clear the value at key from the cache, if it exists
-func (l *SourceSliceLoader) Clear(key int) {
+func (l *sourceSliceLoader) Clear(key int) {
 	l.mu.Lock()
 	delete(l.cache, key)
 	l.mu.Unlock()
 }
 
-func (l *SourceSliceLoader) unsafeSet(key int, value []*model.Source) {
+func (l *sourceSliceLoader) unsafeSet(key int, value []*model.Source) {
 	if l.cache == nil {
 		l.cache = map[int][]*model.Source{}
 	}
@@ -179,7 +179,7 @@ func (l *SourceSliceLoader) unsafeSet(key int, value []*model.Source) {
 
 // keyIndex will return the location of the key in the batch, if its not found
 // it will add the key to the batch
-func (b *sourceSliceLoaderBatch) keyIndex(l *SourceSliceLoader, key int) int {
+func (b *sourceSliceLoaderBatch) keyIndex(l *sourceSliceLoader, key int) int {
 	for i, existingKey := range b.keys {
 		if key == existingKey {
 			return i
@@ -203,7 +203,7 @@ func (b *sourceSliceLoaderBatch) keyIndex(l *SourceSliceLoader, key int) int {
 	return pos
 }
 
-func (b *sourceSliceLoaderBatch) startTimer(l *SourceSliceLoader) {
+func (b *sourceSliceLoaderBatch) startTimer(l *sourceSliceLoader) {
 	time.Sleep(l.wait)
 	l.mu.Lock()
 
@@ -219,7 +219,7 @@ func (b *sourceSliceLoaderBatch) startTimer(l *SourceSliceLoader) {
 	b.end(l)
 }
 
-func (b *sourceSliceLoaderBatch) end(l *SourceSliceLoader) {
+func (b *sourceSliceLoaderBatch) end(l *sourceSliceLoader) {
 	b.data, b.error = l.fetch(b.keys)
 	close(b.done)
 }

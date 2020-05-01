@@ -1,160 +1,86 @@
 package loaders
 
 import (
+	"context"
 	"time"
 
-	"github.com/lib/pq"
-	"github.com/pkg/errors"
 	"github.com/syncromatics/kafmesh/internal/graph/model"
+	"github.com/syncromatics/kafmesh/internal/graph/resolvers"
 )
 
-// Views contains data loaders for view relationships
-type Views struct {
-	ComponentByView *ComponentLoader
-	PodsByView      *PodSliceLoader
-	TopicByView     *TopicLoader
+// ViewRepository is the datastore repository for views
+type ViewRepository interface {
+	ComponentByViews(ctx context.Context, views []int) ([]*model.Component, error)
+	PodsByViews(ctx context.Context, views []int) ([][]*model.Pod, error)
+	TopicByViews(ctx context.Context, views []int) ([]*model.Topic, error)
 }
 
-func configureViews(loaders *Loaders) {
-	loader := &Views{}
-	loaders.ViewLoader = loader
+var _ resolvers.ViewLoader = &ViewLoader{}
 
-	loader.ComponentByView = &ComponentLoader{
+// ViewLoader contains data loaders for view relationships
+type ViewLoader struct {
+	componentByView *componentLoader
+	podsByView      *podSliceLoader
+	topicByView     *topicLoader
+}
+
+// NewViewLoader creates a new ViewLoader
+func NewViewLoader(ctx context.Context, repository ViewRepository) *ViewLoader {
+	loader := &ViewLoader{}
+
+	loader.componentByView = &componentLoader{
 		wait:     100 * time.Millisecond,
 		maxBatch: 100,
 		fetch: func(keys []int) ([]*model.Component, []error) {
-			rows, err := loaders.db.QueryContext(loaders.context, `
-			select
-				views.id,
-				components.id,
-				components.name,
-				components.description
-			from
-				components
-			inner join
-				views on views.component=components.id
-			where
-				views.id = ANY ($1)
-			`, pq.Array(keys))
+			r, err := repository.ComponentByViews(ctx, keys)
 			if err != nil {
-				return nil, []error{errors.Wrap(err, "failed to query for components")}
-			}
-			defer rows.Close()
-
-			components := map[int]*model.Component{}
-			var id int
-			for rows.Next() {
-				component := &model.Component{}
-				err = rows.Scan(&id, &component.ID, &component.Name, &component.Description)
-				if err != nil {
-					return nil, []error{errors.Wrap(err, "failed to scan component row")}
-				}
-				components[id] = component
+				return nil, []error{err}
 			}
 
-			results := []*model.Component{}
-			for _, c := range keys {
-				s, ok := components[c]
-				if !ok {
-					return nil, []error{errors.Errorf("did not find component for view %d", c)}
-				}
-				results = append(results, s)
-			}
-
-			return results, nil
+			return r, nil
 		},
 	}
 
-	loader.PodsByView = &PodSliceLoader{
+	loader.podsByView = &podSliceLoader{
 		wait:     100 * time.Millisecond,
 		maxBatch: 100,
 		fetch: func(keys []int) ([][]*model.Pod, []error) {
-			rows, err := loaders.db.QueryContext(loaders.context, `
-			select
-				pod_views.view,
-				pods.id,
-				pods.name
-			from
-				pods
-			inner join
-				pod_views ON pod_views.pod=pods.id
-			where
-				pod_views.view = ANY ($1)
-			`, pq.Array(keys))
+			r, err := repository.PodsByViews(ctx, keys)
 			if err != nil {
-				return nil, []error{errors.Wrap(err, "failed to query for view pods")}
-			}
-			defer rows.Close()
-
-			pods := map[int][]*model.Pod{}
-			var id int
-			for rows.Next() {
-				pod := &model.Pod{}
-				err = rows.Scan(&id, &pod.ID, &pod.Name)
-				if err != nil {
-					return nil, []error{errors.Wrap(err, "failed to scan pods")}
-				}
-				_, ok := pods[id]
-				if !ok {
-					pods[id] = []*model.Pod{}
-				}
-
-				pods[id] = append(pods[id], pod)
+				return nil, []error{err}
 			}
 
-			results := [][]*model.Pod{}
-			for _, s := range keys {
-				_, ok := pods[s]
-				if !ok {
-					results = append(results, []*model.Pod{})
-				} else {
-					results = append(results, pods[s])
-				}
-			}
-			return results, nil
+			return r, nil
 		},
 	}
 
-	loader.TopicByView = &TopicLoader{
+	loader.topicByView = &topicLoader{
 		wait:     100 * time.Millisecond,
 		maxBatch: 100,
 		fetch: func(keys []int) ([]*model.Topic, []error) {
-			rows, err := loaders.db.QueryContext(loaders.context, `
-			select
-				views.id,
-				topics.id,
-				topics.name,
-				topics.message
-			from
-				topics
-			inner join
-				views on views.topic=topics.id
-			where
-				views.id = ANY ($1)
-			`, pq.Array(keys))
+			r, err := repository.TopicByViews(ctx, keys)
 			if err != nil {
-				return nil, []error{errors.Wrap(err, "failed to query for view topic")}
-			}
-			defer rows.Close()
-
-			topics := map[int]*model.Topic{}
-			var id int
-			for rows.Next() {
-				topic := &model.Topic{}
-				err = rows.Scan(&id, &topic.ID, &topic.Name, &topic.Message)
-				if err != nil {
-					return nil, []error{errors.Wrap(err, "failed to scan topic row")}
-				}
-				topics[id] = topic
+				return nil, []error{err}
 			}
 
-			results := []*model.Topic{}
-			for _, c := range keys {
-				s, _ := topics[c]
-				results = append(results, s)
-			}
-
-			return results, nil
+			return r, nil
 		},
 	}
+
+	return loader
+}
+
+// ComponentByView returns the component for the view
+func (l *ViewLoader) ComponentByView(viewID int) (*model.Component, error) {
+	return l.componentByView.Load(viewID)
+}
+
+// PodsByView returns the pods for the view
+func (l *ViewLoader) PodsByView(viewID int) ([]*model.Pod, error) {
+	return l.podsByView.Load(viewID)
+}
+
+// TopicByView returns the topic for the view
+func (l *ViewLoader) TopicByView(viewID int) (*model.Topic, error) {
+	return l.topicByView.Load(viewID)
 }

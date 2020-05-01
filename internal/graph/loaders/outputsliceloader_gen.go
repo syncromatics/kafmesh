@@ -9,8 +9,8 @@ import (
 	"github.com/syncromatics/kafmesh/internal/graph/model"
 )
 
-// OutputSliceLoaderConfig captures the config to create a new OutputSliceLoader
-type OutputSliceLoaderConfig struct {
+// outputSliceLoaderConfig captures the config to create a new outputSliceLoader
+type outputSliceLoaderConfig struct {
 	// Fetch is a method that provides the data for the loader
 	Fetch func(keys []int) ([][]*model.ProcessorOutput, []error)
 
@@ -21,17 +21,17 @@ type OutputSliceLoaderConfig struct {
 	MaxBatch int
 }
 
-// NewOutputSliceLoader creates a new OutputSliceLoader given a fetch, wait, and maxBatch
-func NewOutputSliceLoader(config OutputSliceLoaderConfig) *OutputSliceLoader {
-	return &OutputSliceLoader{
+// NewoutputSliceLoader creates a new outputSliceLoader given a fetch, wait, and maxBatch
+func NewoutputSliceLoader(config outputSliceLoaderConfig) *outputSliceLoader {
+	return &outputSliceLoader{
 		fetch:    config.Fetch,
 		wait:     config.Wait,
 		maxBatch: config.MaxBatch,
 	}
 }
 
-// OutputSliceLoader batches and caches requests
-type OutputSliceLoader struct {
+// outputSliceLoader batches and caches requests
+type outputSliceLoader struct {
 	// this method provides the data for the loader
 	fetch func(keys []int) ([][]*model.ProcessorOutput, []error)
 
@@ -63,14 +63,14 @@ type outputSliceLoaderBatch struct {
 }
 
 // Load a ProcessorOutput by key, batching and caching will be applied automatically
-func (l *OutputSliceLoader) Load(key int) ([]*model.ProcessorOutput, error) {
+func (l *outputSliceLoader) Load(key int) ([]*model.ProcessorOutput, error) {
 	return l.LoadThunk(key)()
 }
 
 // LoadThunk returns a function that when called will block waiting for a ProcessorOutput.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *OutputSliceLoader) LoadThunk(key int) func() ([]*model.ProcessorOutput, error) {
+func (l *outputSliceLoader) LoadThunk(key int) func() ([]*model.ProcessorOutput, error) {
 	l.mu.Lock()
 	if it, ok := l.cache[key]; ok {
 		l.mu.Unlock()
@@ -113,7 +113,7 @@ func (l *OutputSliceLoader) LoadThunk(key int) func() ([]*model.ProcessorOutput,
 
 // LoadAll fetches many keys at once. It will be broken into appropriate sized
 // sub batches depending on how the loader is configured
-func (l *OutputSliceLoader) LoadAll(keys []int) ([][]*model.ProcessorOutput, []error) {
+func (l *outputSliceLoader) LoadAll(keys []int) ([][]*model.ProcessorOutput, []error) {
 	results := make([]func() ([]*model.ProcessorOutput, error), len(keys))
 
 	for i, key := range keys {
@@ -131,7 +131,7 @@ func (l *OutputSliceLoader) LoadAll(keys []int) ([][]*model.ProcessorOutput, []e
 // LoadAllThunk returns a function that when called will block waiting for a ProcessorOutputs.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *OutputSliceLoader) LoadAllThunk(keys []int) func() ([][]*model.ProcessorOutput, []error) {
+func (l *outputSliceLoader) LoadAllThunk(keys []int) func() ([][]*model.ProcessorOutput, []error) {
 	results := make([]func() ([]*model.ProcessorOutput, error), len(keys))
 	for i, key := range keys {
 		results[i] = l.LoadThunk(key)
@@ -149,7 +149,7 @@ func (l *OutputSliceLoader) LoadAllThunk(keys []int) func() ([][]*model.Processo
 // Prime the cache with the provided key and value. If the key already exists, no change is made
 // and false is returned.
 // (To forcefully prime the cache, clear the key first with loader.clear(key).prime(key, value).)
-func (l *OutputSliceLoader) Prime(key int, value []*model.ProcessorOutput) bool {
+func (l *outputSliceLoader) Prime(key int, value []*model.ProcessorOutput) bool {
 	l.mu.Lock()
 	var found bool
 	if _, found = l.cache[key]; !found {
@@ -164,13 +164,13 @@ func (l *OutputSliceLoader) Prime(key int, value []*model.ProcessorOutput) bool 
 }
 
 // Clear the value at key from the cache, if it exists
-func (l *OutputSliceLoader) Clear(key int) {
+func (l *outputSliceLoader) Clear(key int) {
 	l.mu.Lock()
 	delete(l.cache, key)
 	l.mu.Unlock()
 }
 
-func (l *OutputSliceLoader) unsafeSet(key int, value []*model.ProcessorOutput) {
+func (l *outputSliceLoader) unsafeSet(key int, value []*model.ProcessorOutput) {
 	if l.cache == nil {
 		l.cache = map[int][]*model.ProcessorOutput{}
 	}
@@ -179,7 +179,7 @@ func (l *OutputSliceLoader) unsafeSet(key int, value []*model.ProcessorOutput) {
 
 // keyIndex will return the location of the key in the batch, if its not found
 // it will add the key to the batch
-func (b *outputSliceLoaderBatch) keyIndex(l *OutputSliceLoader, key int) int {
+func (b *outputSliceLoaderBatch) keyIndex(l *outputSliceLoader, key int) int {
 	for i, existingKey := range b.keys {
 		if key == existingKey {
 			return i
@@ -203,7 +203,7 @@ func (b *outputSliceLoaderBatch) keyIndex(l *OutputSliceLoader, key int) int {
 	return pos
 }
 
-func (b *outputSliceLoaderBatch) startTimer(l *OutputSliceLoader) {
+func (b *outputSliceLoaderBatch) startTimer(l *outputSliceLoader) {
 	time.Sleep(l.wait)
 	l.mu.Lock()
 
@@ -219,7 +219,7 @@ func (b *outputSliceLoaderBatch) startTimer(l *OutputSliceLoader) {
 	b.end(l)
 }
 
-func (b *outputSliceLoaderBatch) end(l *OutputSliceLoader) {
+func (b *outputSliceLoaderBatch) end(l *outputSliceLoader) {
 	b.data, b.error = l.fetch(b.keys)
 	close(b.done)
 }
