@@ -6,6 +6,8 @@ import (
 	"github.com/syncromatics/kafmesh/internal/graph/generated"
 )
 
+//go:generate mockgen -source=./resolver.go -destination=./resolver_mock_test.go -package=resolvers_test
+
 // DataLoaders provides data loaders for models from the context
 type DataLoaders interface {
 	ComponentLoader(context.Context) ComponentLoader

@@ -3,9 +3,12 @@ package resolvers
 import (
 	"context"
 
+	"github.com/pkg/errors"
 	"github.com/syncromatics/kafmesh/internal/graph/generated"
 	"github.com/syncromatics/kafmesh/internal/graph/model"
 )
+
+//go:generate mockgen -source=./service.go -destination=./service_mock_test.go -package=resolvers_test
 
 // ServiceLoader is the dataloader for a service
 type ServiceLoader interface {
@@ -21,5 +24,9 @@ type ServiceResolver struct {
 
 // Components returns the service's components
 func (s *ServiceResolver) Components(ctx context.Context, service *model.Service) ([]*model.Component, error) {
-	return s.DataLoaders.ServiceLoader(ctx).ComponentsByService(service.ID)
+	results, err := s.DataLoaders.ServiceLoader(ctx).ComponentsByService(service.ID)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get components from loader")
+	}
+	return results, nil
 }

@@ -5,7 +5,11 @@ import (
 
 	"github.com/syncromatics/kafmesh/internal/graph/generated"
 	"github.com/syncromatics/kafmesh/internal/graph/model"
+
+	"github.com/pkg/errors"
 )
+
+//go:generate mockgen -source=./viewSink.go -destination=./viewSink_mock_test.go -package=resolvers_test
 
 // ViewSinkLoader is the dataloader for a view sink
 type ViewSinkLoader interface {
@@ -23,15 +27,27 @@ type ViewSinkResolver struct {
 
 // Component returns the view sink's component
 func (r *ViewSinkResolver) Component(ctx context.Context, viewSink *model.ViewSink) (*model.Component, error) {
-	return r.DataLoaders.ViewSinkLoader(ctx).ComponentByViewSink(viewSink.ID)
+	results, err := r.DataLoaders.ViewSinkLoader(ctx).ComponentByViewSink(viewSink.ID)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get component from loader")
+	}
+	return results, err
 }
 
 // Pods returns the view sink's pods
 func (r *ViewSinkResolver) Pods(ctx context.Context, viewSink *model.ViewSink) ([]*model.Pod, error) {
-	return r.DataLoaders.ViewSinkLoader(ctx).PodsByViewSink(viewSink.ID)
+	results, err := r.DataLoaders.ViewSinkLoader(ctx).PodsByViewSink(viewSink.ID)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get pods from loader")
+	}
+	return results, err
 }
 
 // Topic returns the view sink's topic
 func (r *ViewSinkResolver) Topic(ctx context.Context, viewSink *model.ViewSink) (*model.Topic, error) {
-	return r.DataLoaders.ViewSinkLoader(ctx).TopicByViewSink(viewSink.ID)
+	results, err := r.DataLoaders.ViewSinkLoader(ctx).TopicByViewSink(viewSink.ID)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get topic from loader")
+	}
+	return results, err
 }
