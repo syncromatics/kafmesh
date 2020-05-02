@@ -66,6 +66,17 @@ func discover_{{ .MethodName }}(service *runner.Service) error {
 			},
 {{- end }}
 		},
+		Outputs: []runner.OutputDiscovery{
+{{- range .Outputs }}
+			runner.OutputDiscovery{
+				TopicDiscovery: runner.TopicDiscovery{
+					Message: "{{ .Message }}",
+					Topic: "{{ .Topic }}",
+					Type: {{ .Type }},
+				},
+			},
+{{- end }}
+		},
 {{- if .Persistence }}
 		Persistence: &runner.PersistentDiscovery{
 			TopicDiscovery: runner.TopicDiscovery{
