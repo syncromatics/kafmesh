@@ -74,6 +74,6 @@ func main() {
 	cancel()
 
 	if err := group.Wait(); err != nil {
-		log.Fatal("errgroup failed", err)
+		log.Fatal("errgroup failed", "error", err)
 	}
 }

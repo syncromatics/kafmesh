@@ -5,10 +5,11 @@ import (
 	"testing"
 	"time"
 
-	gomock "github.com/golang/mock/gomock"
-	"github.com/pkg/errors"
 	"github.com/syncromatics/kafmesh/internal/graph/loaders"
 	"github.com/syncromatics/kafmesh/internal/graph/model"
+
+	gomock "github.com/golang/mock/gomock"
+	"github.com/pkg/errors"
 	"gotest.tools/assert"
 )
 

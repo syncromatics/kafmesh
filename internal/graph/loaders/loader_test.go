@@ -66,6 +66,7 @@ func Test_Loaders(t *testing.T) {
 
 	handler := loaders.NewMiddleware(repositories, 10*time.Millisecond)
 
+	called := false
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		factory := loaders.LoaderFactory{}
 
@@ -84,13 +85,15 @@ func Test_Loaders(t *testing.T) {
 		assert.Assert(t, factory.ViewLoader(r.Context()) != nil)
 		assert.Assert(t, factory.ViewSinkLoader(r.Context()) != nil)
 		assert.Assert(t, factory.ViewSourceLoader(r.Context()) != nil)
+
+		called = true
 	})
 
 	rr := httptest.NewRecorder()
 
 	req, err := http.NewRequest("GET", "/", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NilError(t, err)
 	handler(next).ServeHTTP(rr, req)
+
+	assert.Assert(t, called)
 }

@@ -4,10 +4,11 @@ import (
 	"context"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/syncromatics/kafmesh/internal/graph/loaders/generated"
 	"github.com/syncromatics/kafmesh/internal/graph/model"
 	"github.com/syncromatics/kafmesh/internal/graph/resolvers"
+
+	"github.com/pkg/errors"
 )
 
 //go:generate mockgen -source=./services.go -destination=./services_mock_test.go -package=loaders_test

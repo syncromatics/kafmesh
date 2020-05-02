@@ -3,9 +3,10 @@ package resolvers
 import (
 	"context"
 
-	"github.com/pkg/errors"
 	"github.com/syncromatics/kafmesh/internal/graph/generated"
 	"github.com/syncromatics/kafmesh/internal/graph/model"
+
+	"github.com/pkg/errors"
 )
 
 //go:generate mockgen -source=./pod.go -destination=./pod_mock_test.go -package=resolvers_test

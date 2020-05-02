@@ -42,9 +42,9 @@ func Test_View_Pods(t *testing.T) {
 }
 
 func Test_View_Topic(t *testing.T) {
-	repo := repos.Source()
+	repo := repos.View()
 
-	r, err := repo.TopicBySources(context.Background(), []int{1, 2, 3, 4})
+	r, err := repo.TopicByViews(context.Background(), []int{1, 2, 3, 4})
 	assert.NilError(t, err)
 	assert.DeepEqual(t, r, []*model.Topic{
 		&model.Topic{ID: 1, Name: "topic1", Message: "topic1.message"},
