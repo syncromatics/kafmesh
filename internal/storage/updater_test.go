@@ -82,12 +82,24 @@ func Test_Updater(t *testing.T) {
 									Message: "processor1.message",
 								},
 							},
+							&discoveryv1.Input{
+								Topic: &discoveryv1.TopicDefinition{
+									Topic:   "processor1.input2.topic",
+									Message: "processor1.input2.message",
+								},
+							},
 						},
 						Joins: []*discoveryv1.Join{
 							&discoveryv1.Join{
 								Topic: &discoveryv1.TopicDefinition{
 									Topic:   "processor1.join.topic",
 									Message: "processor1.join.message",
+								},
+							},
+							&discoveryv1.Join{
+								Topic: &discoveryv1.TopicDefinition{
+									Topic:   "processor1.join2.topic",
+									Message: "processor1.join2.message",
 								},
 							},
 						},
@@ -98,12 +110,24 @@ func Test_Updater(t *testing.T) {
 									Message: "processor1.lookup.message",
 								},
 							},
+							&discoveryv1.Lookup{
+								Topic: &discoveryv1.TopicDefinition{
+									Topic:   "processor1.lookup2.topic",
+									Message: "processor1.lookup2.message",
+								},
+							},
 						},
 						Outputs: []*discoveryv1.Output{
 							&discoveryv1.Output{
 								Topic: &discoveryv1.TopicDefinition{
 									Topic:   "processor1.output.topic",
 									Message: "processor1.output.message",
+								},
+							},
+							&discoveryv1.Output{
+								Topic: &discoveryv1.TopicDefinition{
+									Topic:   "processor1.output2.topic",
+									Message: "processor1.output2.message",
 								},
 							},
 						},
