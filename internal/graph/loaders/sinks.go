@@ -4,9 +4,14 @@ import (
 	"context"
 	"time"
 
+	"github.com/syncromatics/kafmesh/internal/graph/loaders/generated"
 	"github.com/syncromatics/kafmesh/internal/graph/model"
 	"github.com/syncromatics/kafmesh/internal/graph/resolvers"
+
+	"github.com/pkg/errors"
 )
+
+//go:generate mockgen -source=./sinks.go -destination=./sinks_mock_test.go -package=loaders_test
 
 // SinkRepository is the datastore repository for sinks
 type SinkRepository interface {
@@ -19,53 +24,53 @@ var _ resolvers.SinkLoader = &SinkLoader{}
 
 // SinkLoader contains data loaders for sink relationships
 type SinkLoader struct {
-	componentBySink *componentLoader
-	podsBySink      *podSliceLoader
-	topicBySink     *topicLoader
+	componentBySink *generated.ComponentLoader
+	podsBySink      *generated.PodSliceLoader
+	topicBySink     *generated.TopicLoader
 }
 
 // NewSinkLoader creates a new SinkLoader
-func NewSinkLoader(ctx context.Context, repository SinkRepository) *SinkLoader {
+func NewSinkLoader(ctx context.Context, repository SinkRepository, waitTime time.Duration) *SinkLoader {
 	loader := &SinkLoader{}
 
-	loader.componentBySink = &componentLoader{
-		wait:     100 * time.Millisecond,
-		maxBatch: 100,
-		fetch: func(keys []int) ([]*model.Component, []error) {
+	loader.componentBySink = generated.NewComponentLoader(generated.ComponentLoaderConfig{
+		Wait:     waitTime,
+		MaxBatch: 100,
+		Fetch: func(keys []int) ([]*model.Component, []error) {
 			r, err := repository.ComponentBySinks(ctx, keys)
 			if err != nil {
-				return nil, []error{err}
+				return nil, []error{errors.Wrap(err, "failed to get component from repository")}
 			}
 
 			return r, nil
 		},
-	}
+	})
 
-	loader.podsBySink = &podSliceLoader{
-		wait:     100 * time.Millisecond,
-		maxBatch: 100,
-		fetch: func(keys []int) ([][]*model.Pod, []error) {
+	loader.podsBySink = generated.NewPodSliceLoader(generated.PodSliceLoaderConfig{
+		Wait:     waitTime,
+		MaxBatch: 100,
+		Fetch: func(keys []int) ([][]*model.Pod, []error) {
 			r, err := repository.PodsBySinks(ctx, keys)
 			if err != nil {
-				return nil, []error{err}
+				return nil, []error{errors.Wrap(err, "failed to get pods from repository")}
 			}
 
 			return r, nil
 		},
-	}
+	})
 
-	loader.topicBySink = &topicLoader{
-		wait:     100 * time.Millisecond,
-		maxBatch: 100,
-		fetch: func(keys []int) ([]*model.Topic, []error) {
+	loader.topicBySink = generated.NewTopicLoader(generated.TopicLoaderConfig{
+		Wait:     waitTime,
+		MaxBatch: 100,
+		Fetch: func(keys []int) ([]*model.Topic, []error) {
 			r, err := repository.TopicBySinks(ctx, keys)
 			if err != nil {
-				return nil, []error{err}
+				return nil, []error{errors.Wrap(err, "failed to get topic from repository")}
 			}
 
 			return r, nil
 		},
-	}
+	})
 
 	return loader
 }

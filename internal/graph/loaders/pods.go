@@ -4,10 +4,14 @@ import (
 	"context"
 	"time"
 
+	"github.com/syncromatics/kafmesh/internal/graph/loaders/generated"
+	"github.com/syncromatics/kafmesh/internal/graph/model"
 	"github.com/syncromatics/kafmesh/internal/graph/resolvers"
 
-	"github.com/syncromatics/kafmesh/internal/graph/model"
+	"github.com/pkg/errors"
 )
+
+//go:generate mockgen -source=./pods.go -destination=./pods_mock_test.go -package=loaders_test
 
 // PodRepository is the datastore repository for pods
 type PodRepository interface {
@@ -23,89 +27,89 @@ var _ resolvers.PodLoader = &PodLoader{}
 
 // PodLoader contains data loaders for pod relationships
 type PodLoader struct {
-	processorsByPod  *processorSliceLoader
-	sinksByPod       *sinkSliceLoader
-	sourcesByPod     *sourceSliceLoader
-	viewSinksByPod   *viewSinkSliceLoader
-	viewSourcesByPod *viewSourceSliceLoader
-	viewsByPod       *viewSliceLoader
+	processorsByPod  *generated.ProcessorSliceLoader
+	sinksByPod       *generated.SinkSliceLoader
+	sourcesByPod     *generated.SourceSliceLoader
+	viewSinksByPod   *generated.ViewSinkSliceLoader
+	viewSourcesByPod *generated.ViewSourceSliceLoader
+	viewsByPod       *generated.ViewSliceLoader
 }
 
 // NewPodLoader creates a new pod data loader
-func NewPodLoader(ctx context.Context, repository PodRepository) *PodLoader {
+func NewPodLoader(ctx context.Context, repository PodRepository, waitTime time.Duration) *PodLoader {
 	loader := &PodLoader{}
 
-	loader.processorsByPod = &processorSliceLoader{
-		wait:     100 * time.Millisecond,
-		maxBatch: 100,
-		fetch: func(keys []int) ([][]*model.Processor, []error) {
+	loader.processorsByPod = generated.NewProcessorSliceLoader(generated.ProcessorSliceLoaderConfig{
+		Wait:     waitTime,
+		MaxBatch: 100,
+		Fetch: func(keys []int) ([][]*model.Processor, []error) {
 			r, err := repository.ProcessorsByPods(ctx, keys)
 			if err != nil {
-				return nil, []error{err}
+				return nil, []error{errors.Wrap(err, "failed to get processors from repository")}
 			}
 			return r, nil
 		},
-	}
+	})
 
-	loader.sinksByPod = &sinkSliceLoader{
-		wait:     100 * time.Millisecond,
-		maxBatch: 100,
-		fetch: func(keys []int) ([][]*model.Sink, []error) {
+	loader.sinksByPod = generated.NewSinkSliceLoader(generated.SinkSliceLoaderConfig{
+		Wait:     waitTime,
+		MaxBatch: 100,
+		Fetch: func(keys []int) ([][]*model.Sink, []error) {
 			r, err := repository.SinksByPods(ctx, keys)
 			if err != nil {
-				return nil, []error{err}
+				return nil, []error{errors.Wrap(err, "failed to get sinks from repository")}
 			}
 			return r, nil
 		},
-	}
+	})
 
-	loader.sourcesByPod = &sourceSliceLoader{
-		wait:     100 * time.Millisecond,
-		maxBatch: 100,
-		fetch: func(keys []int) ([][]*model.Source, []error) {
+	loader.sourcesByPod = generated.NewSourceSliceLoader(generated.SourceSliceLoaderConfig{
+		Wait:     waitTime,
+		MaxBatch: 100,
+		Fetch: func(keys []int) ([][]*model.Source, []error) {
 			r, err := repository.SourcesByPods(ctx, keys)
 			if err != nil {
-				return nil, []error{err}
+				return nil, []error{errors.Wrap(err, "failed to get sources from repository")}
 			}
 			return r, nil
 		},
-	}
+	})
 
-	loader.viewSinksByPod = &viewSinkSliceLoader{
-		wait:     100 * time.Millisecond,
-		maxBatch: 100,
-		fetch: func(keys []int) ([][]*model.ViewSink, []error) {
+	loader.viewSinksByPod = generated.NewViewSinkSliceLoader(generated.ViewSinkSliceLoaderConfig{
+		Wait:     waitTime,
+		MaxBatch: 100,
+		Fetch: func(keys []int) ([][]*model.ViewSink, []error) {
 			r, err := repository.ViewSinksByPods(ctx, keys)
 			if err != nil {
-				return nil, []error{err}
+				return nil, []error{errors.Wrap(err, "failed to get view sinks from repository")}
 			}
 			return r, nil
 		},
-	}
+	})
 
-	loader.viewSourcesByPod = &viewSourceSliceLoader{
-		wait:     100 * time.Millisecond,
-		maxBatch: 100,
-		fetch: func(keys []int) ([][]*model.ViewSource, []error) {
+	loader.viewSourcesByPod = generated.NewViewSourceSliceLoader(generated.ViewSourceSliceLoaderConfig{
+		Wait:     waitTime,
+		MaxBatch: 100,
+		Fetch: func(keys []int) ([][]*model.ViewSource, []error) {
 			r, err := repository.ViewSourcesByPods(ctx, keys)
 			if err != nil {
-				return nil, []error{err}
+				return nil, []error{errors.Wrap(err, "failed to get view sources from repository")}
 			}
 			return r, nil
 		},
-	}
+	})
 
-	loader.viewsByPod = &viewSliceLoader{
-		wait:     100 * time.Millisecond,
-		maxBatch: 100,
-		fetch: func(keys []int) ([][]*model.View, []error) {
+	loader.viewsByPod = generated.NewViewSliceLoader(generated.ViewSliceLoaderConfig{
+		Wait:     waitTime,
+		MaxBatch: 100,
+		Fetch: func(keys []int) ([][]*model.View, []error) {
 			r, err := repository.ViewsByPods(ctx, keys)
 			if err != nil {
-				return nil, []error{err}
+				return nil, []error{errors.Wrap(err, "failed to get views from repository")}
 			}
 			return r, nil
 		},
-	}
+	})
 
 	return loader
 }

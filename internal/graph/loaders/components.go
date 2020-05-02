@@ -4,9 +4,14 @@ import (
 	"context"
 	"time"
 
+	"github.com/syncromatics/kafmesh/internal/graph/loaders/generated"
 	"github.com/syncromatics/kafmesh/internal/graph/model"
 	"github.com/syncromatics/kafmesh/internal/graph/resolvers"
+
+	"github.com/pkg/errors"
 )
+
+//go:generate mockgen -source=./components.go -destination=./components_mock_test.go -package=loaders_test
 
 // ComponentRepository is the datastore repository for components
 type ComponentRepository interface {
@@ -23,101 +28,101 @@ var _ resolvers.ComponentLoader = &ComponentLoader{}
 
 // ComponentLoader is the dataloader for component relationships
 type ComponentLoader struct {
-	serviceByComponent     *serviceLoader
-	processorsByComponent  *processorSliceLoader
-	sinksByComponent       *sinkSliceLoader
-	sourcesByComponent     *sourceSliceLoader
-	viewSinksByComponent   *viewSinkSliceLoader
-	viewSourcesByComponent *viewSourceSliceLoader
-	viewsByComponent       *viewSliceLoader
+	serviceByComponent     *generated.ServiceLoader
+	processorsByComponent  *generated.ProcessorSliceLoader
+	sinksByComponent       *generated.SinkSliceLoader
+	sourcesByComponent     *generated.SourceSliceLoader
+	viewSinksByComponent   *generated.ViewSinkSliceLoader
+	viewSourcesByComponent *generated.ViewSourceSliceLoader
+	viewsByComponent       *generated.ViewSliceLoader
 }
 
 // NewComponentLoader creates a new component dataloader
-func NewComponentLoader(ctx context.Context, repository ComponentRepository) *ComponentLoader {
+func NewComponentLoader(ctx context.Context, repository ComponentRepository, waitTime time.Duration) *ComponentLoader {
 	loader := &ComponentLoader{}
-	loader.serviceByComponent = &serviceLoader{
-		wait:     100 * time.Millisecond,
-		maxBatch: 100,
-		fetch: func(keys []int) ([]*model.Service, []error) {
+	loader.serviceByComponent = generated.NewServiceLoader(generated.ServiceLoaderConfig{
+		Wait:     waitTime,
+		MaxBatch: 100,
+		Fetch: func(keys []int) ([]*model.Service, []error) {
 			r, err := repository.ServicesByComponents(ctx, keys)
 			if err != nil {
-				return nil, []error{err}
+				return nil, []error{errors.Wrap(err, "failed to get services from repository")}
 			}
 			return r, nil
 		},
-	}
+	})
 
-	loader.processorsByComponent = &processorSliceLoader{
-		wait:     100 * time.Millisecond,
-		maxBatch: 100,
-		fetch: func(keys []int) ([][]*model.Processor, []error) {
+	loader.processorsByComponent = generated.NewProcessorSliceLoader(generated.ProcessorSliceLoaderConfig{
+		Wait:     waitTime,
+		MaxBatch: 100,
+		Fetch: func(keys []int) ([][]*model.Processor, []error) {
 			r, err := repository.ProcessorsByComponents(ctx, keys)
 			if err != nil {
-				return nil, []error{err}
+				return nil, []error{errors.Wrap(err, "failed to get processors from repository")}
 			}
 			return r, nil
 		},
-	}
+	})
 
-	loader.sinksByComponent = &sinkSliceLoader{
-		wait:     100 * time.Millisecond,
-		maxBatch: 100,
-		fetch: func(keys []int) ([][]*model.Sink, []error) {
+	loader.sinksByComponent = generated.NewSinkSliceLoader(generated.SinkSliceLoaderConfig{
+		Wait:     waitTime,
+		MaxBatch: 100,
+		Fetch: func(keys []int) ([][]*model.Sink, []error) {
 			r, err := repository.SinksByComponents(ctx, keys)
 			if err != nil {
-				return nil, []error{err}
+				return nil, []error{errors.Wrap(err, "failed to get sinks from repository")}
 			}
 			return r, nil
 		},
-	}
+	})
 
-	loader.sourcesByComponent = &sourceSliceLoader{
-		wait:     100 * time.Millisecond,
-		maxBatch: 100,
-		fetch: func(keys []int) ([][]*model.Source, []error) {
+	loader.sourcesByComponent = generated.NewSourceSliceLoader(generated.SourceSliceLoaderConfig{
+		Wait:     waitTime,
+		MaxBatch: 100,
+		Fetch: func(keys []int) ([][]*model.Source, []error) {
 			r, err := repository.SourcesByComponents(ctx, keys)
 			if err != nil {
-				return nil, []error{err}
+				return nil, []error{errors.Wrap(err, "failed to get sources from repository")}
 			}
 			return r, nil
 		},
-	}
+	})
 
-	loader.viewSinksByComponent = &viewSinkSliceLoader{
-		wait:     100 * time.Millisecond,
-		maxBatch: 100,
-		fetch: func(keys []int) ([][]*model.ViewSink, []error) {
+	loader.viewSinksByComponent = generated.NewViewSinkSliceLoader(generated.ViewSinkSliceLoaderConfig{
+		Wait:     waitTime,
+		MaxBatch: 100,
+		Fetch: func(keys []int) ([][]*model.ViewSink, []error) {
 			r, err := repository.ViewSinksByComponents(ctx, keys)
 			if err != nil {
-				return nil, []error{err}
+				return nil, []error{errors.Wrap(err, "failed to get view sinks from repository")}
 			}
 			return r, nil
 		},
-	}
+	})
 
-	loader.viewSourcesByComponent = &viewSourceSliceLoader{
-		wait:     100 * time.Millisecond,
-		maxBatch: 100,
-		fetch: func(keys []int) ([][]*model.ViewSource, []error) {
+	loader.viewSourcesByComponent = generated.NewViewSourceSliceLoader(generated.ViewSourceSliceLoaderConfig{
+		Wait:     waitTime,
+		MaxBatch: 100,
+		Fetch: func(keys []int) ([][]*model.ViewSource, []error) {
 			r, err := repository.ViewSourcesByComponents(ctx, keys)
 			if err != nil {
-				return nil, []error{err}
+				return nil, []error{errors.Wrap(err, "failed to get view sources from repository")}
 			}
 			return r, nil
 		},
-	}
+	})
 
-	loader.viewsByComponent = &viewSliceLoader{
-		wait:     100 * time.Millisecond,
-		maxBatch: 100,
-		fetch: func(keys []int) ([][]*model.View, []error) {
+	loader.viewsByComponent = generated.NewViewSliceLoader(generated.ViewSliceLoaderConfig{
+		Wait:     waitTime,
+		MaxBatch: 100,
+		Fetch: func(keys []int) ([][]*model.View, []error) {
 			r, err := repository.ViewsByComponents(ctx, keys)
 			if err != nil {
-				return nil, []error{err}
+				return nil, []error{errors.Wrap(err, "failed to get views from repository")}
 			}
 			return r, nil
 		},
-	}
+	})
 	return loader
 }
 

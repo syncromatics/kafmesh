@@ -4,9 +4,14 @@ import (
 	"context"
 	"time"
 
+	"github.com/syncromatics/kafmesh/internal/graph/loaders/generated"
 	"github.com/syncromatics/kafmesh/internal/graph/model"
 	"github.com/syncromatics/kafmesh/internal/graph/resolvers"
+
+	"github.com/pkg/errors"
 )
+
+//go:generate mockgen -source=./topics.go -destination=./topics_mock_test.go -package=loaders_test
 
 // TopicRepository is the datastore repository for topics
 type TopicRepository interface {
@@ -26,151 +31,151 @@ var _ resolvers.TopicLoader = &TopicLoader{}
 
 // TopicLoader contains data loaders for topic relationships
 type TopicLoader struct {
-	processorInputsByTopic       *inputSliceLoader
-	processorJoinsByTopic        *joinSliceLoader
-	processorLookupsByTopic      *lookupSliceLoader
-	processorOutputsByTopic      *outputSliceLoader
-	processorPersistencesByTopic *processorSliceLoader
-	sinksByTopic                 *sinkSliceLoader
-	sourcesByTopic               *sourceSliceLoader
-	viewSinksByTopic             *viewSinkSliceLoader
-	viewSourcesByTopic           *viewSourceSliceLoader
-	viewsByTopic                 *viewSliceLoader
+	processorInputsByTopic       *generated.InputSliceLoader
+	processorJoinsByTopic        *generated.JoinSliceLoader
+	processorLookupsByTopic      *generated.LookupSliceLoader
+	processorOutputsByTopic      *generated.OutputSliceLoader
+	processorPersistencesByTopic *generated.ProcessorSliceLoader
+	sinksByTopic                 *generated.SinkSliceLoader
+	sourcesByTopic               *generated.SourceSliceLoader
+	viewSinksByTopic             *generated.ViewSinkSliceLoader
+	viewSourcesByTopic           *generated.ViewSourceSliceLoader
+	viewsByTopic                 *generated.ViewSliceLoader
 }
 
 // NewTopicLoader creates a new TopicLoader
-func NewTopicLoader(ctx context.Context, repository TopicRepository) *TopicLoader {
+func NewTopicLoader(ctx context.Context, repository TopicRepository, waitTime time.Duration) *TopicLoader {
 	loader := &TopicLoader{}
 
-	loader.processorInputsByTopic = &inputSliceLoader{
-		wait:     100 * time.Millisecond,
-		maxBatch: 100,
-		fetch: func(keys []int) ([][]*model.ProcessorInput, []error) {
+	loader.processorInputsByTopic = generated.NewInputSliceLoader(generated.InputSliceLoaderConfig{
+		Wait:     waitTime,
+		MaxBatch: 100,
+		Fetch: func(keys []int) ([][]*model.ProcessorInput, []error) {
 			r, err := repository.ProcessorInputsByTopics(ctx, keys)
 			if err != nil {
-				return nil, []error{err}
+				return nil, []error{errors.Wrap(err, "failed to get inputs from repository")}
 			}
 
 			return r, nil
 		},
-	}
+	})
 
-	loader.processorJoinsByTopic = &joinSliceLoader{
-		wait:     100 * time.Millisecond,
-		maxBatch: 100,
-		fetch: func(keys []int) ([][]*model.ProcessorJoin, []error) {
+	loader.processorJoinsByTopic = generated.NewJoinSliceLoader(generated.JoinSliceLoaderConfig{
+		Wait:     waitTime,
+		MaxBatch: 100,
+		Fetch: func(keys []int) ([][]*model.ProcessorJoin, []error) {
 			r, err := repository.ProcessorJoinsByTopics(ctx, keys)
 			if err != nil {
-				return nil, []error{err}
+				return nil, []error{errors.Wrap(err, "failed to get joins from repository")}
 			}
 
 			return r, nil
 		},
-	}
+	})
 
-	loader.processorLookupsByTopic = &lookupSliceLoader{
-		wait:     100 * time.Millisecond,
-		maxBatch: 100,
-		fetch: func(keys []int) ([][]*model.ProcessorLookup, []error) {
+	loader.processorLookupsByTopic = generated.NewLookupSliceLoader(generated.LookupSliceLoaderConfig{
+		Wait:     waitTime,
+		MaxBatch: 100,
+		Fetch: func(keys []int) ([][]*model.ProcessorLookup, []error) {
 			r, err := repository.ProcessorLookupsByTopics(ctx, keys)
 			if err != nil {
-				return nil, []error{err}
+				return nil, []error{errors.Wrap(err, "failed to get lookups from repository")}
 			}
 
 			return r, nil
 		},
-	}
+	})
 
-	loader.processorOutputsByTopic = &outputSliceLoader{
-		wait:     100 * time.Millisecond,
-		maxBatch: 100,
-		fetch: func(keys []int) ([][]*model.ProcessorOutput, []error) {
+	loader.processorOutputsByTopic = generated.NewOutputSliceLoader(generated.OutputSliceLoaderConfig{
+		Wait:     waitTime,
+		MaxBatch: 100,
+		Fetch: func(keys []int) ([][]*model.ProcessorOutput, []error) {
 			r, err := repository.ProcessorOutputsByTopics(ctx, keys)
 			if err != nil {
-				return nil, []error{err}
+				return nil, []error{errors.Wrap(err, "failed to get outputs from repository")}
 			}
 
 			return r, nil
 		},
-	}
+	})
 
-	loader.processorPersistencesByTopic = &processorSliceLoader{
-		wait:     100 * time.Millisecond,
-		maxBatch: 100,
-		fetch: func(keys []int) ([][]*model.Processor, []error) {
+	loader.processorPersistencesByTopic = generated.NewProcessorSliceLoader(generated.ProcessorSliceLoaderConfig{
+		Wait:     waitTime,
+		MaxBatch: 100,
+		Fetch: func(keys []int) ([][]*model.Processor, []error) {
 			r, err := repository.ProcessorPersistencesByTopics(ctx, keys)
 			if err != nil {
-				return nil, []error{err}
+				return nil, []error{errors.Wrap(err, "failed to get processors from repository")}
 			}
 
 			return r, nil
 		},
-	}
+	})
 
-	loader.sinksByTopic = &sinkSliceLoader{
-		wait:     100 * time.Millisecond,
-		maxBatch: 100,
-		fetch: func(keys []int) ([][]*model.Sink, []error) {
+	loader.sinksByTopic = generated.NewSinkSliceLoader(generated.SinkSliceLoaderConfig{
+		Wait:     waitTime,
+		MaxBatch: 100,
+		Fetch: func(keys []int) ([][]*model.Sink, []error) {
 			r, err := repository.SinksByTopics(ctx, keys)
 			if err != nil {
-				return nil, []error{err}
+				return nil, []error{errors.Wrap(err, "failed to get sinks from repository")}
 			}
 
 			return r, nil
 		},
-	}
+	})
 
-	loader.sourcesByTopic = &sourceSliceLoader{
-		wait:     100 * time.Millisecond,
-		maxBatch: 100,
-		fetch: func(keys []int) ([][]*model.Source, []error) {
+	loader.sourcesByTopic = generated.NewSourceSliceLoader(generated.SourceSliceLoaderConfig{
+		Wait:     waitTime,
+		MaxBatch: 100,
+		Fetch: func(keys []int) ([][]*model.Source, []error) {
 			r, err := repository.SourcesByTopics(ctx, keys)
 			if err != nil {
-				return nil, []error{err}
+				return nil, []error{errors.Wrap(err, "failed to get sources from repository")}
 			}
 
 			return r, nil
 		},
-	}
+	})
 
-	loader.viewSinksByTopic = &viewSinkSliceLoader{
-		wait:     100 * time.Millisecond,
-		maxBatch: 100,
-		fetch: func(keys []int) ([][]*model.ViewSink, []error) {
+	loader.viewSinksByTopic = generated.NewViewSinkSliceLoader(generated.ViewSinkSliceLoaderConfig{
+		Wait:     waitTime,
+		MaxBatch: 100,
+		Fetch: func(keys []int) ([][]*model.ViewSink, []error) {
 			r, err := repository.ViewSinksByTopics(ctx, keys)
 			if err != nil {
-				return nil, []error{err}
+				return nil, []error{errors.Wrap(err, "failed to get view sinks from repository")}
 			}
 
 			return r, nil
 		},
-	}
+	})
 
-	loader.viewSourcesByTopic = &viewSourceSliceLoader{
-		wait:     100 * time.Millisecond,
-		maxBatch: 100,
-		fetch: func(keys []int) ([][]*model.ViewSource, []error) {
+	loader.viewSourcesByTopic = generated.NewViewSourceSliceLoader(generated.ViewSourceSliceLoaderConfig{
+		Wait:     waitTime,
+		MaxBatch: 100,
+		Fetch: func(keys []int) ([][]*model.ViewSource, []error) {
 			r, err := repository.ViewSourcesByTopics(ctx, keys)
 			if err != nil {
-				return nil, []error{err}
+				return nil, []error{errors.Wrap(err, "failed to get view sources from repository")}
 			}
 
 			return r, nil
 		},
-	}
+	})
 
-	loader.viewsByTopic = &viewSliceLoader{
-		wait:     100 * time.Millisecond,
-		maxBatch: 100,
-		fetch: func(keys []int) ([][]*model.View, []error) {
+	loader.viewsByTopic = generated.NewViewSliceLoader(generated.ViewSliceLoaderConfig{
+		Wait:     waitTime,
+		MaxBatch: 100,
+		Fetch: func(keys []int) ([][]*model.View, []error) {
 			r, err := repository.ViewsByTopics(ctx, keys)
 			if err != nil {
-				return nil, []error{err}
+				return nil, []error{errors.Wrap(err, "failed to get views from repository")}
 			}
 
 			return r, nil
 		},
-	}
+	})
 
 	return loader
 }

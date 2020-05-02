@@ -5,7 +5,11 @@ import (
 
 	"github.com/syncromatics/kafmesh/internal/graph/model"
 	"github.com/syncromatics/kafmesh/internal/graph/resolvers"
+
+	"github.com/pkg/errors"
 )
+
+//go:generate mockgen -source=./query.go -destination=./query_mock_test.go -package=loaders_test
 
 // QueryRepository is the datastore repository for root queries
 type QueryRepository interface {
@@ -29,15 +33,27 @@ func NewQueryLoader(ctx context.Context, repository QueryRepository) *QueryLoade
 
 // GetAllServices returns all services
 func (l *QueryLoader) GetAllServices() ([]*model.Service, error) {
-	return l.repository.GetAllServices(l.ctx)
+	results, err := l.repository.GetAllServices(l.ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed getting all services from repository")
+	}
+	return results, nil
 }
 
 // GetAllPods returns all pods
 func (l *QueryLoader) GetAllPods() ([]*model.Pod, error) {
-	return l.repository.GetAllPods(l.ctx)
+	results, err := l.repository.GetAllPods(l.ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed getting all pods from repository")
+	}
+	return results, nil
 }
 
 // GetAllTopics returns all topics
 func (l *QueryLoader) GetAllTopics() ([]*model.Topic, error) {
-	return l.repository.GetAllTopics(l.ctx)
+	results, err := l.repository.GetAllTopics(l.ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed getting all topics from repository")
+	}
+	return results, nil
 }

@@ -4,9 +4,14 @@ import (
 	"context"
 	"time"
 
+	"github.com/syncromatics/kafmesh/internal/graph/loaders/generated"
 	"github.com/syncromatics/kafmesh/internal/graph/model"
 	"github.com/syncromatics/kafmesh/internal/graph/resolvers"
+
+	"github.com/pkg/errors"
 )
+
+//go:generate mockgen -source=./processors.go -destination=./processors_mock_test.go -package=loaders_test
 
 // ProcessorRepository is the datastore repository for processors
 type ProcessorRepository interface {
@@ -23,109 +28,109 @@ var _ resolvers.ProcessorLoader = &ProcessorLoader{}
 
 // ProcessorLoader contains data loaders for processor relationships
 type ProcessorLoader struct {
-	componentByProcessor   *componentLoader
-	inputsByProcessor      *inputSliceLoader
-	joinsByProcessor       *joinSliceLoader
-	lookupsByProcessor     *lookupSliceLoader
-	outputsByProcessor     *outputSliceLoader
-	podsByProcessor        *podSliceLoader
-	persistenceByProcessor *topicLoader
+	componentByProcessor   *generated.ComponentLoader
+	inputsByProcessor      *generated.InputSliceLoader
+	joinsByProcessor       *generated.JoinSliceLoader
+	lookupsByProcessor     *generated.LookupSliceLoader
+	outputsByProcessor     *generated.OutputSliceLoader
+	podsByProcessor        *generated.PodSliceLoader
+	persistenceByProcessor *generated.TopicLoader
 }
 
 // NewProcessorLoader creates a new ProcessorLoader
-func NewProcessorLoader(ctx context.Context, repository ProcessorRepository) *ProcessorLoader {
+func NewProcessorLoader(ctx context.Context, repository ProcessorRepository, waitTime time.Duration) *ProcessorLoader {
 	loader := &ProcessorLoader{}
 
-	loader.componentByProcessor = &componentLoader{
-		wait:     100 * time.Millisecond,
-		maxBatch: 100,
-		fetch: func(keys []int) ([]*model.Component, []error) {
+	loader.componentByProcessor = generated.NewComponentLoader(generated.ComponentLoaderConfig{
+		Wait:     waitTime,
+		MaxBatch: 100,
+		Fetch: func(keys []int) ([]*model.Component, []error) {
 			r, err := repository.ComponentByProcessors(ctx, keys)
 			if err != nil {
-				return nil, []error{err}
+				return nil, []error{errors.Wrap(err, "failed to get component from repository")}
 			}
 
 			return r, nil
 		},
-	}
+	})
 
-	loader.inputsByProcessor = &inputSliceLoader{
-		wait:     100 * time.Millisecond,
-		maxBatch: 100,
-		fetch: func(keys []int) ([][]*model.ProcessorInput, []error) {
+	loader.inputsByProcessor = generated.NewInputSliceLoader(generated.InputSliceLoaderConfig{
+		Wait:     waitTime,
+		MaxBatch: 100,
+		Fetch: func(keys []int) ([][]*model.ProcessorInput, []error) {
 			r, err := repository.InputsByProcessors(ctx, keys)
 			if err != nil {
-				return nil, []error{err}
+				return nil, []error{errors.Wrap(err, "failed to get inputs from repository")}
 			}
 
 			return r, nil
 		},
-	}
+	})
 
-	loader.joinsByProcessor = &joinSliceLoader{
-		wait:     100 * time.Millisecond,
-		maxBatch: 100,
-		fetch: func(keys []int) ([][]*model.ProcessorJoin, []error) {
+	loader.joinsByProcessor = generated.NewJoinSliceLoader(generated.JoinSliceLoaderConfig{
+		Wait:     waitTime,
+		MaxBatch: 100,
+		Fetch: func(keys []int) ([][]*model.ProcessorJoin, []error) {
 			r, err := repository.JoinsByProcessors(ctx, keys)
 			if err != nil {
-				return nil, []error{err}
+				return nil, []error{errors.Wrap(err, "failed to get joins from repository")}
 			}
 
 			return r, nil
 		},
-	}
+	})
 
-	loader.lookupsByProcessor = &lookupSliceLoader{
-		wait:     100 * time.Millisecond,
-		maxBatch: 100,
-		fetch: func(keys []int) ([][]*model.ProcessorLookup, []error) {
+	loader.lookupsByProcessor = generated.NewLookupSliceLoader(generated.LookupSliceLoaderConfig{
+		Wait:     waitTime,
+		MaxBatch: 100,
+		Fetch: func(keys []int) ([][]*model.ProcessorLookup, []error) {
 			r, err := repository.LookupsByProcessors(ctx, keys)
 			if err != nil {
-				return nil, []error{err}
+				return nil, []error{errors.Wrap(err, "failed to get lookups from repository")}
 			}
 
 			return r, nil
 		},
-	}
+	})
 
-	loader.outputsByProcessor = &outputSliceLoader{
-		wait:     100 * time.Millisecond,
-		maxBatch: 100,
-		fetch: func(keys []int) ([][]*model.ProcessorOutput, []error) {
+	loader.outputsByProcessor = generated.NewOutputSliceLoader(generated.OutputSliceLoaderConfig{
+		Wait:     waitTime,
+		MaxBatch: 100,
+		Fetch: func(keys []int) ([][]*model.ProcessorOutput, []error) {
 			r, err := repository.OutputsByProcessors(ctx, keys)
 			if err != nil {
-				return nil, []error{err}
+				return nil, []error{errors.Wrap(err, "failed to get outputs from repository")}
 			}
 
 			return r, nil
 		},
-	}
+	})
 
-	loader.podsByProcessor = &podSliceLoader{
-		wait:     100 * time.Millisecond,
-		maxBatch: 100,
-		fetch: func(keys []int) ([][]*model.Pod, []error) {
+	loader.podsByProcessor = generated.NewPodSliceLoader(generated.PodSliceLoaderConfig{
+		Wait:     waitTime,
+		MaxBatch: 100,
+		Fetch: func(keys []int) ([][]*model.Pod, []error) {
 			r, err := repository.PodsByProcessors(ctx, keys)
 			if err != nil {
-				return nil, []error{err}
+				return nil, []error{errors.Wrap(err, "failed to get pods from repository")}
 			}
 
 			return r, nil
 		},
-	}
+	})
 
-	loader.persistenceByProcessor = &topicLoader{
-		wait:     100 * time.Millisecond,
-		maxBatch: 100,
-		fetch: func(keys []int) ([]*model.Topic, []error) {
+	loader.persistenceByProcessor = generated.NewTopicLoader(generated.TopicLoaderConfig{
+		Wait:     waitTime,
+		MaxBatch: 100,
+		Fetch: func(keys []int) ([]*model.Topic, []error) {
 			r, err := repository.PersistenceByProcessors(ctx, keys)
 			if err != nil {
-				return nil, []error{err}
+				return nil, []error{errors.Wrap(err, "failed to get persistence from repository")}
 			}
 
 			return r, nil
 		},
-	}
+	})
 
 	return loader
 }

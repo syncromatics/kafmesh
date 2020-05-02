@@ -4,9 +4,14 @@ import (
 	"context"
 	"time"
 
+	"github.com/syncromatics/kafmesh/internal/graph/loaders/generated"
 	"github.com/syncromatics/kafmesh/internal/graph/model"
 	"github.com/syncromatics/kafmesh/internal/graph/resolvers"
+
+	"github.com/pkg/errors"
 )
+
+//go:generate mockgen -source=./views.go -destination=./views_mock_test.go -package=loaders_test
 
 // ViewRepository is the datastore repository for views
 type ViewRepository interface {
@@ -19,53 +24,53 @@ var _ resolvers.ViewLoader = &ViewLoader{}
 
 // ViewLoader contains data loaders for view relationships
 type ViewLoader struct {
-	componentByView *componentLoader
-	podsByView      *podSliceLoader
-	topicByView     *topicLoader
+	componentByView *generated.ComponentLoader
+	podsByView      *generated.PodSliceLoader
+	topicByView     *generated.TopicLoader
 }
 
 // NewViewLoader creates a new ViewLoader
-func NewViewLoader(ctx context.Context, repository ViewRepository) *ViewLoader {
+func NewViewLoader(ctx context.Context, repository ViewRepository, waitTime time.Duration) *ViewLoader {
 	loader := &ViewLoader{}
 
-	loader.componentByView = &componentLoader{
-		wait:     100 * time.Millisecond,
-		maxBatch: 100,
-		fetch: func(keys []int) ([]*model.Component, []error) {
+	loader.componentByView = generated.NewComponentLoader(generated.ComponentLoaderConfig{
+		Wait:     waitTime,
+		MaxBatch: 100,
+		Fetch: func(keys []int) ([]*model.Component, []error) {
 			r, err := repository.ComponentByViews(ctx, keys)
 			if err != nil {
-				return nil, []error{err}
+				return nil, []error{errors.Wrap(err, "failed to get component from repository")}
 			}
 
 			return r, nil
 		},
-	}
+	})
 
-	loader.podsByView = &podSliceLoader{
-		wait:     100 * time.Millisecond,
-		maxBatch: 100,
-		fetch: func(keys []int) ([][]*model.Pod, []error) {
+	loader.podsByView = generated.NewPodSliceLoader(generated.PodSliceLoaderConfig{
+		Wait:     waitTime,
+		MaxBatch: 100,
+		Fetch: func(keys []int) ([][]*model.Pod, []error) {
 			r, err := repository.PodsByViews(ctx, keys)
 			if err != nil {
-				return nil, []error{err}
+				return nil, []error{errors.Wrap(err, "failed to get pods from repository")}
 			}
 
 			return r, nil
 		},
-	}
+	})
 
-	loader.topicByView = &topicLoader{
-		wait:     100 * time.Millisecond,
-		maxBatch: 100,
-		fetch: func(keys []int) ([]*model.Topic, []error) {
+	loader.topicByView = generated.NewTopicLoader(generated.TopicLoaderConfig{
+		Wait:     waitTime,
+		MaxBatch: 100,
+		Fetch: func(keys []int) ([]*model.Topic, []error) {
 			r, err := repository.TopicByViews(ctx, keys)
 			if err != nil {
-				return nil, []error{err}
+				return nil, []error{errors.Wrap(err, "failed to get topic from repository")}
 			}
 
 			return r, nil
 		},
-	}
+	})
 
 	return loader
 }

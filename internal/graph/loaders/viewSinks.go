@@ -4,10 +4,14 @@ import (
 	"context"
 	"time"
 
+	"github.com/syncromatics/kafmesh/internal/graph/loaders/generated"
+	"github.com/syncromatics/kafmesh/internal/graph/model"
 	"github.com/syncromatics/kafmesh/internal/graph/resolvers"
 
-	"github.com/syncromatics/kafmesh/internal/graph/model"
+	"github.com/pkg/errors"
 )
+
+//go:generate mockgen -source=./viewSinks.go -destination=./viewSinks_mock_test.go -package=loaders_test
 
 // ViewSinkRepository is the datastore repository for view sinks
 type ViewSinkRepository interface {
@@ -20,53 +24,53 @@ var _ resolvers.ViewSinkLoader = &ViewSinkLoader{}
 
 // ViewSinkLoader contains data loaders for view sink relationships
 type ViewSinkLoader struct {
-	componentByViewSink *componentLoader
-	podsByViewSink      *podSliceLoader
-	topicByViewSink     *topicLoader
+	componentByViewSink *generated.ComponentLoader
+	podsByViewSink      *generated.PodSliceLoader
+	topicByViewSink     *generated.TopicLoader
 }
 
 // NewViewSinkLoader creates a new ViewSinkLoader
-func NewViewSinkLoader(ctx context.Context, repository ViewSinkRepository) *ViewSinkLoader {
+func NewViewSinkLoader(ctx context.Context, repository ViewSinkRepository, waitTime time.Duration) *ViewSinkLoader {
 	loader := &ViewSinkLoader{}
 
-	loader.componentByViewSink = &componentLoader{
-		wait:     100 * time.Millisecond,
-		maxBatch: 100,
-		fetch: func(keys []int) ([]*model.Component, []error) {
+	loader.componentByViewSink = generated.NewComponentLoader(generated.ComponentLoaderConfig{
+		Wait:     waitTime,
+		MaxBatch: 100,
+		Fetch: func(keys []int) ([]*model.Component, []error) {
 			r, err := repository.ComponentByViewSinks(ctx, keys)
 			if err != nil {
-				return nil, []error{err}
+				return nil, []error{errors.Wrap(err, "failed to get component from repository")}
 			}
 
 			return r, nil
 		},
-	}
+	})
 
-	loader.podsByViewSink = &podSliceLoader{
-		wait:     100 * time.Millisecond,
-		maxBatch: 100,
-		fetch: func(keys []int) ([][]*model.Pod, []error) {
+	loader.podsByViewSink = generated.NewPodSliceLoader(generated.PodSliceLoaderConfig{
+		Wait:     waitTime,
+		MaxBatch: 100,
+		Fetch: func(keys []int) ([][]*model.Pod, []error) {
 			r, err := repository.PodsByViewSinks(ctx, keys)
 			if err != nil {
-				return nil, []error{err}
+				return nil, []error{errors.Wrap(err, "failed to get pods from repository")}
 			}
 
 			return r, nil
 		},
-	}
+	})
 
-	loader.topicByViewSink = &topicLoader{
-		wait:     100 * time.Millisecond,
-		maxBatch: 100,
-		fetch: func(keys []int) ([]*model.Topic, []error) {
+	loader.topicByViewSink = generated.NewTopicLoader(generated.TopicLoaderConfig{
+		Wait:     waitTime,
+		MaxBatch: 100,
+		Fetch: func(keys []int) ([]*model.Topic, []error) {
 			r, err := repository.TopicByViewSinks(ctx, keys)
 			if err != nil {
-				return nil, []error{err}
+				return nil, []error{errors.Wrap(err, "failed to get topic from repository")}
 			}
 
 			return r, nil
 		},
-	}
+	})
 
 	return loader
 }

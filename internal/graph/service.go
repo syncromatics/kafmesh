@@ -36,7 +36,7 @@ func (s *Service) Run(ctx context.Context) func() error {
 	repositories := repositories.All(s.db)
 
 	router := chi.NewRouter()
-	router.Use(loaders.NewMiddleware(repositories))
+	router.Use(loaders.NewMiddleware(repositories, 30*time.Millisecond))
 
 	srv := &http.Server{Addr: fmt.Sprintf(":%d", s.port), Handler: router}
 

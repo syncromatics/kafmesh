@@ -3,9 +3,12 @@ package loaders
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/syncromatics/kafmesh/internal/graph/resolvers"
 )
+
+//go:generate mockgen -source=./loader.go -destination=./loader_mock_test.go -package=loaders_test
 
 // Repositories is a collection of all data repositories
 type Repositories interface {
@@ -50,31 +53,31 @@ type Loaders struct {
 }
 
 // NewLoaders creates a new Loaders
-func NewLoaders(ctx context.Context, repositories Repositories) *Loaders {
+func NewLoaders(ctx context.Context, repositories Repositories, waitTime time.Duration) *Loaders {
 	return &Loaders{
-		ComponentLoader:       NewComponentLoader(ctx, repositories.Component()),
-		ServiceLoader:         NewServiceLoader(ctx, repositories.Service()),
-		ProcessorLoader:       NewProcessorLoader(ctx, repositories.Processor()),
-		ProcessorInputLoader:  NewProcessorInputLoader(ctx, repositories.ProcessorInput()),
-		ProcessorJoinLoader:   NewProcessorJoinLoader(ctx, repositories.ProcessorJoin()),
-		ProcessorLookupLoader: NewProcessorLookupLoader(ctx, repositories.ProcessorLookup()),
-		ProcessorOutputLoader: NewProcessorOutputLoader(ctx, repositories.ProcessorOutput()),
-		SinkLoader:            NewSinkLoader(ctx, repositories.Sink()),
-		SourceLoader:          NewSourceLoader(ctx, repositories.Source()),
-		ViewSinkLoader:        NewViewSinkLoader(ctx, repositories.ViewSink()),
-		ViewSourceLoader:      NewViewSourceLoader(ctx, repositories.ViewSource()),
-		PodLoader:             NewPodLoader(ctx, repositories.Pod()),
-		TopicLoader:           NewTopicLoader(ctx, repositories.Topic()),
+		ComponentLoader:       NewComponentLoader(ctx, repositories.Component(), waitTime),
+		ServiceLoader:         NewServiceLoader(ctx, repositories.Service(), waitTime),
+		ProcessorLoader:       NewProcessorLoader(ctx, repositories.Processor(), waitTime),
+		ProcessorInputLoader:  NewProcessorInputLoader(ctx, repositories.ProcessorInput(), waitTime),
+		ProcessorJoinLoader:   NewProcessorJoinLoader(ctx, repositories.ProcessorJoin(), waitTime),
+		ProcessorLookupLoader: NewProcessorLookupLoader(ctx, repositories.ProcessorLookup(), waitTime),
+		ProcessorOutputLoader: NewProcessorOutputLoader(ctx, repositories.ProcessorOutput(), waitTime),
+		SinkLoader:            NewSinkLoader(ctx, repositories.Sink(), waitTime),
+		SourceLoader:          NewSourceLoader(ctx, repositories.Source(), waitTime),
+		ViewSinkLoader:        NewViewSinkLoader(ctx, repositories.ViewSink(), waitTime),
+		ViewSourceLoader:      NewViewSourceLoader(ctx, repositories.ViewSource(), waitTime),
+		PodLoader:             NewPodLoader(ctx, repositories.Pod(), waitTime),
+		TopicLoader:           NewTopicLoader(ctx, repositories.Topic(), waitTime),
 		QueryLoader:           NewQueryLoader(ctx, repositories.Query()),
-		ViewLoader:            NewViewLoader(ctx, repositories.View()),
+		ViewLoader:            NewViewLoader(ctx, repositories.View(), waitTime),
 	}
 }
 
 // NewMiddleware wires up the dataloaders into the http pipeline
-func NewMiddleware(repositories Repositories) func(next http.Handler) http.Handler {
+func NewMiddleware(repositories Repositories, waitTime time.Duration) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			loaders := NewLoaders(r.Context(), repositories)
+			loaders := NewLoaders(r.Context(), repositories, waitTime)
 			dlCtx := context.WithValue(r.Context(), ctxKey, loaders)
 			next.ServeHTTP(w, r.WithContext(dlCtx))
 		})

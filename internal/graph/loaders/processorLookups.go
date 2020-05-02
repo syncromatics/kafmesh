@@ -4,9 +4,14 @@ import (
 	"context"
 	"time"
 
+	"github.com/syncromatics/kafmesh/internal/graph/loaders/generated"
 	"github.com/syncromatics/kafmesh/internal/graph/model"
 	"github.com/syncromatics/kafmesh/internal/graph/resolvers"
+
+	"github.com/pkg/errors"
 )
+
+//go:generate mockgen -source=./processorLookups.go -destination=./processorLookups_mock_test.go -package=loaders_test
 
 // ProcessorLookupRepository is the datastore repository for processor lookups
 type ProcessorLookupRepository interface {
@@ -18,37 +23,37 @@ var _ resolvers.ProcessorLookupLoader = &ProcessorLookupLoader{}
 
 // ProcessorLookupLoader contains data loaders for processor lookup relationships
 type ProcessorLookupLoader struct {
-	processorByLookup *processorLoader
-	topicByLookup     *topicLoader
+	processorByLookup *generated.ProcessorLoader
+	topicByLookup     *generated.TopicLoader
 }
 
 // NewProcessorLookupLoader creates a new ProcessorLookupLoader
-func NewProcessorLookupLoader(ctx context.Context, repository ProcessorLookupRepository) *ProcessorLookupLoader {
+func NewProcessorLookupLoader(ctx context.Context, repository ProcessorLookupRepository, waitTime time.Duration) *ProcessorLookupLoader {
 	loader := &ProcessorLookupLoader{}
 
-	loader.processorByLookup = &processorLoader{
-		wait:     100 * time.Millisecond,
-		maxBatch: 100,
-		fetch: func(keys []int) ([]*model.Processor, []error) {
+	loader.processorByLookup = generated.NewProcessorLoader(generated.ProcessorLoaderConfig{
+		Wait:     waitTime,
+		MaxBatch: 100,
+		Fetch: func(keys []int) ([]*model.Processor, []error) {
 			r, err := repository.ProcessorByLookups(ctx, keys)
 			if err != nil {
-				return nil, []error{err}
+				return nil, []error{errors.Wrap(err, "failed to get processor from repository")}
 			}
 			return r, nil
 		},
-	}
+	})
 
-	loader.topicByLookup = &topicLoader{
-		wait:     100 * time.Millisecond,
-		maxBatch: 100,
-		fetch: func(keys []int) ([]*model.Topic, []error) {
+	loader.topicByLookup = generated.NewTopicLoader(generated.TopicLoaderConfig{
+		Wait:     waitTime,
+		MaxBatch: 100,
+		Fetch: func(keys []int) ([]*model.Topic, []error) {
 			r, err := repository.TopicByLookups(ctx, keys)
 			if err != nil {
-				return nil, []error{err}
+				return nil, []error{errors.Wrap(err, "failed to get topic from repository")}
 			}
 			return r, nil
 		},
-	}
+	})
 
 	return loader
 }

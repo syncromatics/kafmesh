@@ -4,9 +4,14 @@ import (
 	"context"
 	"time"
 
+	"github.com/syncromatics/kafmesh/internal/graph/loaders/generated"
 	"github.com/syncromatics/kafmesh/internal/graph/model"
 	"github.com/syncromatics/kafmesh/internal/graph/resolvers"
+
+	"github.com/pkg/errors"
 )
+
+//go:generate mockgen -source=./processorJoins.go -destination=./processorJoins_mock_test.go -package=loaders_test
 
 // ProcessorJoinRepository is the datastore respository for processor joins
 type ProcessorJoinRepository interface {
@@ -18,37 +23,37 @@ var _ resolvers.ProcessorJoinLoader = &ProcessorJoinLoader{}
 
 // ProcessorJoinLoader contains data loaders for processor join relationships
 type ProcessorJoinLoader struct {
-	processorByJoin *processorLoader
-	topicByJoin     *topicLoader
+	processorByJoin *generated.ProcessorLoader
+	topicByJoin     *generated.TopicLoader
 }
 
 // NewProcessorJoinLoader creates a new ProcessorJoinLoader
-func NewProcessorJoinLoader(ctx context.Context, repository ProcessorJoinRepository) *ProcessorJoinLoader {
+func NewProcessorJoinLoader(ctx context.Context, repository ProcessorJoinRepository, waitTime time.Duration) *ProcessorJoinLoader {
 	loader := &ProcessorJoinLoader{}
 
-	loader.processorByJoin = &processorLoader{
-		wait:     100 * time.Millisecond,
-		maxBatch: 100,
-		fetch: func(keys []int) ([]*model.Processor, []error) {
+	loader.processorByJoin = generated.NewProcessorLoader(generated.ProcessorLoaderConfig{
+		Wait:     waitTime,
+		MaxBatch: 100,
+		Fetch: func(keys []int) ([]*model.Processor, []error) {
 			r, err := repository.ProcessorByJoins(ctx, keys)
 			if err != nil {
-				return nil, []error{err}
+				return nil, []error{errors.Wrap(err, "failed to get processor from repository")}
 			}
 			return r, nil
 		},
-	}
+	})
 
-	loader.topicByJoin = &topicLoader{
-		wait:     100 * time.Millisecond,
-		maxBatch: 100,
-		fetch: func(keys []int) ([]*model.Topic, []error) {
+	loader.topicByJoin = generated.NewTopicLoader(generated.TopicLoaderConfig{
+		Wait:     waitTime,
+		MaxBatch: 100,
+		Fetch: func(keys []int) ([]*model.Topic, []error) {
 			r, err := repository.TopicByJoins(ctx, keys)
 			if err != nil {
-				return nil, []error{err}
+				return nil, []error{errors.Wrap(err, "failed to get topic from repository")}
 			}
 			return r, nil
 		},
-	}
+	})
 
 	return loader
 }

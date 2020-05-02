@@ -4,9 +4,13 @@ import (
 	"context"
 	"time"
 
+	"github.com/pkg/errors"
+	"github.com/syncromatics/kafmesh/internal/graph/loaders/generated"
 	"github.com/syncromatics/kafmesh/internal/graph/model"
 	"github.com/syncromatics/kafmesh/internal/graph/resolvers"
 )
+
+//go:generate mockgen -source=./services.go -destination=./services_mock_test.go -package=loaders_test
 
 // ServiceRepository is the datastore repository for services
 type ServiceRepository interface {
@@ -17,24 +21,24 @@ var _ resolvers.ServiceLoader = &ServiceLoader{}
 
 // ServiceLoader contains data loaders for service relationships
 type ServiceLoader struct {
-	componentsByServiceID *componentSliceLoader
+	componentsByServiceID *generated.ComponentSliceLoader
 }
 
 // NewServiceLoader creates a new ServiceLoader
-func NewServiceLoader(ctx context.Context, repository ServiceRepository) *ServiceLoader {
+func NewServiceLoader(ctx context.Context, repository ServiceRepository, waitTime time.Duration) *ServiceLoader {
 	loader := &ServiceLoader{}
-	loader.componentsByServiceID = &componentSliceLoader{
-		wait:     100 * time.Millisecond,
-		maxBatch: 100,
-		fetch: func(keys []int) ([][]*model.Component, []error) {
+	loader.componentsByServiceID = generated.NewComponentSliceLoader(generated.ComponentSliceLoaderConfig{
+		Wait:     waitTime,
+		MaxBatch: 100,
+		Fetch: func(keys []int) ([][]*model.Component, []error) {
 			r, err := repository.ComponentsByServices(ctx, keys)
 			if err != nil {
-				return nil, []error{err}
+				return nil, []error{errors.Wrap(err, "failed to get components from repository")}
 			}
 
 			return r, nil
 		},
-	}
+	})
 
 	return loader
 }
