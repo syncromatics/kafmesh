@@ -5,10 +5,10 @@ import (
 	"database/sql"
 
 	"github.com/syncromatics/kafmesh/internal/graph/loaders"
+	"github.com/syncromatics/kafmesh/internal/graph/model"
 
 	"github.com/lib/pq"
 	"github.com/pkg/errors"
-	"github.com/syncromatics/kafmesh/internal/graph/model"
 )
 
 var _ loaders.SinkRepository = &Sink{}

@@ -31,7 +31,7 @@ func (r *Component) ServicesByComponents(ctx context.Context, components []int) 
 		inner join
 			components on components.service=services.id
 		where
-			service = ANY ($1)
+			components.id = ANY ($1)
 		`, pq.Array(components))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to query for component services")
@@ -46,6 +46,7 @@ func (r *Component) ServicesByComponents(ctx context.Context, components []int) 
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to scan service row")
 		}
+		componentServices[componentID] = service
 	}
 
 	services := []*model.Service{}

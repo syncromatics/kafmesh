@@ -4,9 +4,10 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/pkg/errors"
 	"github.com/syncromatics/kafmesh/internal/graph/loaders"
 	"github.com/syncromatics/kafmesh/internal/graph/model"
+
+	"github.com/pkg/errors"
 )
 
 var _ loaders.QueryRepository = &Query{}
