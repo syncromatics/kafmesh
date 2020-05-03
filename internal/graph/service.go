@@ -17,6 +17,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/go-chi/chi"
 	"github.com/pkg/errors"
+	"github.com/rs/cors"
 	"github.com/syncromatics/go-kit/log"
 )
 
@@ -36,6 +37,12 @@ func (s *Service) Run(ctx context.Context) func() error {
 	repositories := repositories.All(s.db)
 
 	router := chi.NewRouter()
+	router.Use(cors.New(cors.Options{
+		AllowedOrigins:   []string{"*"},
+		AllowCredentials: true,
+		Debug:            true,
+	}).Handler)
+
 	router.Use(loaders.NewMiddleware(repositories, 30*time.Millisecond))
 
 	srv := &http.Server{Addr: fmt.Sprintf(":%d", s.port), Handler: router}
