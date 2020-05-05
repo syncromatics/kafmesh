@@ -102,7 +102,7 @@ func Register_{{ .Name }}_Sink(service *runner.Service, sink {{ .Package }}.{{ .
 		return errors.Wrap(err, "failed to register runner with service")
 	}
 
-	err = discover_{{ .Name }}_Sink(service)
+	err = discover_{{ .ExportName }}_Sink(service)
 	if err != nil {
 		return errors.Wrap(err, "failed to register with discovery")
 	}
@@ -174,8 +174,9 @@ type serviceView struct {
 }
 
 type serviceSink struct {
-	Name    string
-	Package string
+	Name       string
+	ExportName string
+	Package    string
 }
 
 type serviceViewSource struct {
@@ -249,8 +250,9 @@ func buildServiceOptions(service *models.Service, components []*models.Component
 
 		for _, s := range c.Sinks {
 			proc := serviceSink{
-				Package: c.Name,
-				Name:    s.ToSafeName(),
+				Package:    c.Name,
+				ExportName: fmt.Sprintf("%s_%s", c.ToSafeName(), s.ToSafeMessageTypeName()),
+				Name:       s.ToSafeName(),
 			}
 			options.Sinks = append(options.Sinks, proc)
 		}
