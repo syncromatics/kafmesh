@@ -99,7 +99,7 @@ func Register_EnrichedDataPostgres_Sink(service *runner.Service, sink details.En
 		return errors.Wrap(err, "failed to register runner with service")
 	}
 
-	err = discover_EnrichedDataPostgres_Sink(service)
+	err = discover_Details_TestSerialDetailsEnriched_Sink(service)
 	if err != nil {
 		return errors.Wrap(err, "failed to register with discovery")
 	}

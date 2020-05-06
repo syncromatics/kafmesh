@@ -35,7 +35,7 @@ func discover_{{ .MethodName }}(service *runner.Service) error {
 		Description: "{{ .Description }}",
 		Inputs: []runner.InputDiscovery{
 {{- range .Inputs }}
-			runner.InputDiscovery{
+			{
 				TopicDiscovery: runner.TopicDiscovery{
 					Message: "{{ .Message }}",
 					Topic: "{{ .Topic }}",
@@ -46,7 +46,7 @@ func discover_{{ .MethodName }}(service *runner.Service) error {
 		},
 		Joins: []runner.JoinDiscovery{
 {{- range .Joins }}
-			runner.JoinDiscovery{
+			{
 				TopicDiscovery: runner.TopicDiscovery{
 					Message: "{{ .Message }}",
 					Topic: "{{ .Topic }}",
@@ -57,7 +57,7 @@ func discover_{{ .MethodName }}(service *runner.Service) error {
 		},
 		Lookups: []runner.LookupDiscovery{
 {{- range .Lookups }}
-			runner.LookupDiscovery{
+			{
 				TopicDiscovery: runner.TopicDiscovery{
 					Message: "{{ .Message }}",
 					Topic: "{{ .Topic }}",
@@ -107,7 +107,7 @@ func discover_{{ .MethodName }}(service *runner.Service) error {
 
 {{ range .Sinks }}
 func discover_{{ .MethodName }}(service *runner.Service) error {
-	sink := runner.SourceDiscovery{
+	sink := runner.SinkDiscovery{
 		ServiceDiscovery : runner.ServiceDiscovery {
 			Name: "{{ .Service.Name}}",
 			Description: "{{ .Service.Description }}",
