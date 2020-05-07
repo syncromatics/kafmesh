@@ -108,6 +108,56 @@ func Test_Deleter(t *testing.T) {
 							},
 						},
 					},
+					&discoveryv1.Processor{
+						Name:        "processor2",
+						Description: "this is processor 2",
+						GroupName:   "group.2.processor",
+
+						Persistence: &discoveryv1.Persistence{
+							Topic: &discoveryv1.TopicDefinition{
+								Topic:   "processor2.persistence.topic",
+								Message: "processor2.persistence.message",
+							},
+						},
+						Inputs: []*discoveryv1.Input{
+							&discoveryv1.Input{
+								Topic: &discoveryv1.TopicDefinition{
+									Topic:   "processor2.topic",
+									Message: "processor2.message",
+								},
+							},
+							&discoveryv1.Input{
+								Topic: &discoveryv1.TopicDefinition{
+									Topic:   "processor2.input2.topic",
+									Message: "processor2.input2.message",
+								},
+							},
+						},
+						Joins: []*discoveryv1.Join{
+							&discoveryv1.Join{
+								Topic: &discoveryv1.TopicDefinition{
+									Topic:   "processor2.join.topic",
+									Message: "processor2.join.message",
+								},
+							},
+						},
+						Lookups: []*discoveryv1.Lookup{
+							&discoveryv1.Lookup{
+								Topic: &discoveryv1.TopicDefinition{
+									Topic:   "processor2.lookup.topic",
+									Message: "processor2.lookup.message",
+								},
+							},
+						},
+						Outputs: []*discoveryv1.Output{
+							&discoveryv1.Output{
+								Topic: &discoveryv1.TopicDefinition{
+									Topic:   "processor2.output.topic",
+									Message: "processor2.output.message",
+								},
+							},
+						},
+					},
 				},
 			},
 			&discoveryv1.Component{
@@ -135,6 +185,58 @@ func Test_Deleter(t *testing.T) {
 				Name:        "component1",
 				Description: "this is component1",
 
+				Processors: []*discoveryv1.Processor{
+					&discoveryv1.Processor{
+						Name:        "processor2",
+						Description: "this is processor 2",
+						GroupName:   "group.2.processor",
+
+						Persistence: &discoveryv1.Persistence{
+							Topic: &discoveryv1.TopicDefinition{
+								Topic:   "processor2.persistence.topic",
+								Message: "processor2.persistence.message",
+							},
+						},
+						Inputs: []*discoveryv1.Input{
+							&discoveryv1.Input{
+								Topic: &discoveryv1.TopicDefinition{
+									Topic:   "processor2.topic",
+									Message: "processor2.message",
+								},
+							},
+							&discoveryv1.Input{
+								Topic: &discoveryv1.TopicDefinition{
+									Topic:   "processor2.input2.topic",
+									Message: "processor2.input2.message",
+								},
+							},
+						},
+						Joins: []*discoveryv1.Join{
+							&discoveryv1.Join{
+								Topic: &discoveryv1.TopicDefinition{
+									Topic:   "processor2.join.topic",
+									Message: "processor2.join.message",
+								},
+							},
+						},
+						Lookups: []*discoveryv1.Lookup{
+							&discoveryv1.Lookup{
+								Topic: &discoveryv1.TopicDefinition{
+									Topic:   "processor2.lookup.topic",
+									Message: "processor2.lookup.message",
+								},
+							},
+						},
+						Outputs: []*discoveryv1.Output{
+							&discoveryv1.Output{
+								Topic: &discoveryv1.TopicDefinition{
+									Topic:   "processor2.output.topic",
+									Message: "processor2.output.message",
+								},
+							},
+						},
+					},
+				},
 				Sources: []*discoveryv1.Source{
 					&discoveryv1.Source{
 						Topic: &discoveryv1.TopicDefinition{

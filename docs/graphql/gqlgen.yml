@@ -1,0 +1,20 @@
+schema:
+  - docs/graphql/*.graphql
+
+exec:
+  filename: internal/graph/generated/generated.go
+  package: generated
+
+model:
+  filename: internal/graph/model/models_gen.go
+  package: model
+
+resolver:
+  filename: internal/graph/resolvers/resolver.go
+  package: resolvers
+  type: Resolver
+
+models:
+  ID:
+    model:
+      - github.com/99designs/gqlgen/graphql.IntID

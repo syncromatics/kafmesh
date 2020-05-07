@@ -245,28 +245,28 @@ func (u *Updater) updateProcessor(ctx context.Context, txn *sql.Tx, componentID 
 	}
 
 	_, err = txn.ExecContext(ctx, `
-	delete from processor_inputs where processor=$1 and id != ANY($2);
+	delete from processor_inputs where processor=$1 and not (id = ANY($2));
 	`, processorID, pq.Array(inputs))
 	if err != nil {
 		return errors.Wrap(err, "failed to cleanup inputs")
 	}
 
 	_, err = txn.ExecContext(ctx, `
-	delete from processor_joins where processor=$1 and id != ANY($2);
+	delete from processor_joins where processor=$1 and not (id = ANY($2));
 	`, processorID, pq.Array(joins))
 	if err != nil {
 		return errors.Wrap(err, "failed to cleanup joins")
 	}
 
 	_, err = txn.ExecContext(ctx, `
-	delete from processor_lookups where processor=$1 and id != ANY($2);
+	delete from processor_lookups where processor=$1 and not (id = ANY($2));
 	`, processorID, pq.Array(lookups))
 	if err != nil {
 		return errors.Wrap(err, "failed to cleanup lookups")
 	}
 
 	_, err = txn.ExecContext(ctx, `
-	delete from processor_outputs where processor=$1 and id != ANY($2);
+	delete from processor_outputs where processor=$1 and not (id = ANY($2));
 	`, processorID, pq.Array(outputs))
 	if err != nil {
 		return errors.Wrap(err, "failed to cleanup outputs")
