@@ -69,6 +69,7 @@ type Service struct {
 	Name        string       `json:"name"`
 	Description string       `json:"description"`
 	Components  []*Component `json:"components"`
+	DependsOn   []*Service   `json:"dependsOn"`
 }
 
 type Sink struct {

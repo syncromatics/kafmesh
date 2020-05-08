@@ -16,6 +16,7 @@ type QueryRepository interface {
 	GetAllServices(context.Context) ([]*model.Service, error)
 	GetAllPods(context.Context) ([]*model.Pod, error)
 	GetAllTopics(context.Context) ([]*model.Topic, error)
+	ServiceByID(context.Context, int) (*model.Service, error)
 }
 
 var _ resolvers.QueryLoader = &QueryLoader{}
@@ -54,6 +55,15 @@ func (l *QueryLoader) GetAllTopics() ([]*model.Topic, error) {
 	results, err := l.repository.GetAllTopics(l.ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed getting all topics from repository")
+	}
+	return results, nil
+}
+
+// ServiceByID returns a service by id
+func (l *QueryLoader) ServiceByID(id int) (*model.Service, error) {
+	results, err := l.repository.ServiceByID(l.ctx, id)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get service by id from repository")
 	}
 	return results, nil
 }

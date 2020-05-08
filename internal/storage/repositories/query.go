@@ -79,3 +79,27 @@ func (r *Query) GetAllTopics(ctx context.Context) ([]*model.Topic, error) {
 
 	return results, nil
 }
+
+// ServiceByID gets a service by id
+func (r *Query) ServiceByID(ctx context.Context, id int) (*model.Service, error) {
+	row := r.db.QueryRowContext(ctx, `
+select
+	id,
+	name,
+	description
+from
+	services
+where
+	id=$1`, id)
+
+	service := &model.Service{}
+	err := row.Scan(&service.ID, &service.Name, &service.Description)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to scan for service")
+	}
+
+	return service, nil
+}

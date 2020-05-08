@@ -78,3 +78,18 @@ func (mr *MockQueryRepositoryMockRecorder) GetAllTopics(arg0 interface{}) *gomoc
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllTopics", reflect.TypeOf((*MockQueryRepository)(nil).GetAllTopics), arg0)
 }
+
+// ServiceByID mocks base method
+func (m *MockQueryRepository) ServiceByID(arg0 context.Context, arg1 int) (*model.Service, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ServiceByID", arg0, arg1)
+	ret0, _ := ret[0].(*model.Service)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ServiceByID indicates an expected call of ServiceByID
+func (mr *MockQueryRepositoryMockRecorder) ServiceByID(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ServiceByID", reflect.TypeOf((*MockQueryRepository)(nil).ServiceByID), arg0, arg1)
+}

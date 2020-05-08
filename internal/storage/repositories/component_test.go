@@ -147,7 +147,9 @@ func Test_Component_Views(t *testing.T) {
 			&model.View{ID: 3},
 			&model.View{ID: 4},
 		},
-		[]*model.View{},
+		[]*model.View{
+			&model.View{ID: 5},
+		},
 		[]*model.View{},
 	})
 }
