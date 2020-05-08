@@ -67,7 +67,7 @@ func (r *Service) ComponentsByServices(ctx context.Context, services []int) ([][
 // DependsOn gets services that depend on services
 func (r *Service) DependsOn(ctx context.Context, ids []int) ([][]*model.Service, error) {
 	rows, err := r.db.QueryContext(ctx, `
-	select
+	select distinct
 		service_topic_dependencies.service,
 		services.id,
 		services.name,
