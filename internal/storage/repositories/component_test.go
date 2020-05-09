@@ -153,3 +153,23 @@ func Test_Component_Views(t *testing.T) {
 		[]*model.View{},
 	})
 }
+
+func Test_Component_DependsOn(t *testing.T) {
+	repo := repos.Component()
+
+	r, err := repo.DependsOn(context.Background(), []int{1, 2, 3, 4})
+	assert.NilError(t, err)
+	assert.DeepEqual(t, r, [][]*model.Component{
+		[]*model.Component{
+			&model.Component{ID: 2, Name: "component2", Description: "component2 description"},
+		},
+		[]*model.Component{
+			&model.Component{ID: 1, Name: "component1", Description: "component1 description"},
+		},
+		[]*model.Component{
+			&model.Component{ID: 1, Name: "component1", Description: "component1 description"},
+			&model.Component{ID: 2, Name: "component2", Description: "component2 description"},
+		},
+		[]*model.Component{},
+	})
+}

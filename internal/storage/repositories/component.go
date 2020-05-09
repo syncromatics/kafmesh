@@ -332,3 +332,57 @@ func (r *Component) ViewsByComponents(ctx context.Context, components []int) ([]
 	}
 	return results, nil
 }
+
+// DependsOn returns components dependent on components
+func (r *Component) DependsOn(ctx context.Context, ids []int) ([][]*model.Component, error) {
+	rows, err := r.db.QueryContext(ctx, `
+	select distinct
+		component_topic_dependencies.component,
+		components.id,
+		components.name,
+		components.description
+	from
+		components
+	inner join
+		component_topic_sources on component_topic_sources.component=components.id
+	inner join
+		component_topic_dependencies on component_topic_dependencies.topic=component_topic_sources.topic
+	where
+		component_topic_sources.component != component_topic_dependencies.component and
+		component_topic_dependencies.component = ANY ($1)
+	order by
+		component_topic_dependencies.component,
+		components.id
+	`, pq.Array(ids))
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to query for dependent components")
+	}
+	defer rows.Close()
+
+	components := map[int][]*model.Component{}
+	var id int
+	for rows.Next() {
+		component := &model.Component{}
+		err = rows.Scan(&id, &component.ID, &component.Name, &component.Description)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to scan component")
+		}
+		_, ok := components[id]
+		if !ok {
+			components[id] = []*model.Component{}
+		}
+
+		components[id] = append(components[id], component)
+	}
+
+	results := [][]*model.Component{}
+	for _, s := range ids {
+		_, ok := components[s]
+		if !ok {
+			results = append(results, []*model.Component{})
+		} else {
+			results = append(results, components[s])
+		}
+	}
+	return results, nil
+}

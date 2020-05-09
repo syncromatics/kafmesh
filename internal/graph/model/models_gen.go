@@ -13,6 +13,7 @@ type Component struct {
 	ViewSinks   []*ViewSink   `json:"viewSinks"`
 	ViewSources []*ViewSource `json:"viewSources"`
 	Views       []*View       `json:"views"`
+	DependsOn   []*Component  `json:"dependsOn"`
 }
 
 type Pod struct {

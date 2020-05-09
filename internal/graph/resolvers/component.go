@@ -20,6 +20,7 @@ type ComponentLoader interface {
 	ViewSinksByComponent(int) ([]*model.ViewSink, error)
 	ViewSourcesByComponent(int) ([]*model.ViewSource, error)
 	ViewsByComponent(int) ([]*model.View, error)
+	DependsOn(int) ([]*model.Component, error)
 }
 
 var _ generated.ComponentResolver = &ComponentResolver{}
@@ -88,6 +89,15 @@ func (r *ComponentResolver) Views(ctx context.Context, component *model.Componen
 	result, err := r.DataLoaders.ComponentLoader(ctx).ViewsByComponent(component.ID)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get views from loader")
+	}
+	return result, nil
+}
+
+// DependsOn returns the components this component depends on
+func (r *ComponentResolver) DependsOn(ctx context.Context, component *model.Component) ([]*model.Component, error) {
+	result, err := r.DataLoaders.ComponentLoader(ctx).DependsOn(component.ID)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get components depended on from loader")
 	}
 	return result, nil
 }
