@@ -17,6 +17,7 @@ type QueryLoader interface {
 	GetAllPods() ([]*model.Pod, error)
 	GetAllTopics() ([]*model.Topic, error)
 	ServiceByID(int) (*model.Service, error)
+	ComponentByID(int) (*model.Component, error)
 }
 
 var _ generated.QueryResolver = &QueryResolver{}
@@ -58,6 +59,15 @@ func (r *QueryResolver) ServiceByID(ctx context.Context, id int) (*model.Service
 	result, err := r.DataLoaders.QueryLoader(ctx).ServiceByID(id)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get service by id from loader")
+	}
+	return result, nil
+}
+
+// ComponentByID gets the component by id
+func (r *QueryResolver) ComponentByID(ctx context.Context, id int) (*model.Component, error) {
+	result, err := r.DataLoaders.QueryLoader(ctx).ComponentByID(id)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get component by id from loader")
 	}
 	return result, nil
 }

@@ -53,3 +53,11 @@ func Test_Query_ServiceByID(t *testing.T) {
 	assert.NilError(t, err)
 	assert.DeepEqual(t, r, &model.Service{ID: 2, Name: "service2", Description: "service2 description"})
 }
+
+func Test_Query_ComponentByID(t *testing.T) {
+	repo := repos.Query()
+
+	r, err := repo.ComponentByID(context.Background(), 2)
+	assert.NilError(t, err)
+	assert.DeepEqual(t, r, &model.Component{ID: 2, Name: "component2", Description: "component2 description"})
+}
