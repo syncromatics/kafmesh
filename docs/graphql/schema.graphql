@@ -3,6 +3,7 @@ type Service {
 	name: String!
 	description: String!
 	components: [Component!]! @goField(forceResolver: true)
+	dependsOn: [Service!]! @goField(forceResolver: true)
 }
 
 type Component {
@@ -128,6 +129,7 @@ type Query {
 	services: [Service!]!
 	pods: [Pod!]!
 	topics: [Topic!]!
+	serviceById(id: ID!): Service
 }
 
 schema {

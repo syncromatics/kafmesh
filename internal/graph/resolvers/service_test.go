@@ -45,3 +45,38 @@ func Test_Service_Components(t *testing.T) {
 	_, err = resolver.Components(context.Background(), &model.Service{ID: 13})
 	assert.ErrorContains(t, err, "failed to get components from loader: boom")
 }
+
+func Test_Service_DependsOn(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	loader := NewMockServiceLoader(ctrl)
+	loaders := NewMockDataLoaders(ctrl)
+	loaders.EXPECT().
+		ServiceLoader(gomock.Any()).
+		Return(loader).
+		Times(2)
+
+	resolver := &resolvers.ServiceResolver{
+		Resolver: &resolvers.Resolver{
+			DataLoaders: loaders,
+		},
+	}
+
+	loader.EXPECT().
+		DependsOn(12).
+		Return([]*model.Service{}, nil).
+		Times(1)
+
+	loader.EXPECT().
+		DependsOn(13).
+		Return(nil, errors.Errorf("boom")).
+		Times(1)
+
+	r, err := resolver.DependsOn(context.Background(), &model.Service{ID: 12})
+	assert.NilError(t, err)
+	assert.Assert(t, r != nil)
+
+	_, err = resolver.DependsOn(context.Background(), &model.Service{ID: 13})
+	assert.ErrorContains(t, err, "failed to get dependent services from loader: boom")
+}

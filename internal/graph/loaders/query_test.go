@@ -116,3 +116,36 @@ func Test_Query_GetAllTopicsShouldReturnError(t *testing.T) {
 	_, err := loader.GetAllTopics()
 	assert.ErrorContains(t, err, "failed getting all topics from repository: boom")
 }
+
+func Test_Query_ServiceByID(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	repository := NewMockQueryRepository(ctrl)
+	repository.EXPECT().
+		ServiceByID(gomock.Any(), 12).
+		Return(&model.Service{}, nil).
+		Times(1)
+
+	loader := loaders.NewQueryLoader(context.Background(), repository)
+
+	r, err := loader.ServiceByID(12)
+	assert.NilError(t, err)
+	assert.Assert(t, r != nil)
+}
+
+func Test_Query_ServiceByIDShouldReturnError(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	repository := NewMockQueryRepository(ctrl)
+	repository.EXPECT().
+		ServiceByID(gomock.Any(), 12).
+		Return(nil, errors.Errorf("boom")).
+		Times(1)
+
+	loader := loaders.NewQueryLoader(context.Background(), repository)
+
+	_, err := loader.ServiceByID(12)
+	assert.ErrorContains(t, err, "failed to get service by id from repository: boom")
+}

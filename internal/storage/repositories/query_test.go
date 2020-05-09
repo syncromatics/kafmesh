@@ -45,3 +45,11 @@ func Test_Query_GetAllTopics(t *testing.T) {
 		&model.Topic{ID: 4, Name: "topic4", Message: "topic4.message"},
 	})
 }
+
+func Test_Query_ServiceByID(t *testing.T) {
+	repo := repos.Query()
+
+	r, err := repo.ServiceByID(context.Background(), 2)
+	assert.NilError(t, err)
+	assert.DeepEqual(t, r, &model.Service{ID: 2, Name: "service2", Description: "service2 description"})
+}

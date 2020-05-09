@@ -16,6 +16,7 @@ type QueryLoader interface {
 	GetAllServices() ([]*model.Service, error)
 	GetAllPods() ([]*model.Pod, error)
 	GetAllTopics() ([]*model.Topic, error)
+	ServiceByID(int) (*model.Service, error)
 }
 
 var _ generated.QueryResolver = &QueryResolver{}
@@ -48,6 +49,15 @@ func (r *QueryResolver) Topics(ctx context.Context) ([]*model.Topic, error) {
 	result, err := r.DataLoaders.QueryLoader(ctx).GetAllTopics()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get topics from loader")
+	}
+	return result, nil
+}
+
+// ServiceByID gets the service by id
+func (r *QueryResolver) ServiceByID(ctx context.Context, id int) (*model.Service, error) {
+	result, err := r.DataLoaders.QueryLoader(ctx).ServiceByID(id)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get service by id from loader")
 	}
 	return result, nil
 }

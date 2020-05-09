@@ -47,3 +47,18 @@ func (mr *MockServiceLoaderMockRecorder) ComponentsByService(arg0 interface{}) *
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ComponentsByService", reflect.TypeOf((*MockServiceLoader)(nil).ComponentsByService), arg0)
 }
+
+// DependsOn mocks base method
+func (m *MockServiceLoader) DependsOn(arg0 int) ([]*model.Service, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DependsOn", arg0)
+	ret0, _ := ret[0].([]*model.Service)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DependsOn indicates an expected call of DependsOn
+func (mr *MockServiceLoaderMockRecorder) DependsOn(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DependsOn", reflect.TypeOf((*MockServiceLoader)(nil).DependsOn), arg0)
+}

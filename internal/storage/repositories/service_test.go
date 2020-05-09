@@ -27,3 +27,16 @@ func Test_Service_Components(t *testing.T) {
 		[]*model.Component{},
 	})
 }
+
+func Test_Service_DependsOn(t *testing.T) {
+	repo := repos.Service()
+
+	r, err := repo.DependsOn(context.Background(), []int{1, 2})
+	assert.NilError(t, err)
+	assert.DeepEqual(t, r, [][]*model.Service{
+		[]*model.Service{},
+		[]*model.Service{
+			&model.Service{ID: 1, Name: "service1", Description: "service1 description"},
+		},
+	})
+}

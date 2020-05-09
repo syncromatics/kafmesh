@@ -188,6 +188,7 @@ func Test_Topic_Views(t *testing.T) {
 		[]*model.View{
 			&model.View{ID: 1},
 			&model.View{ID: 3},
+			&model.View{ID: 5},
 		},
 		[]*model.View{
 			&model.View{ID: 2},

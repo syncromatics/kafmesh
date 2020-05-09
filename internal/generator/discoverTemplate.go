@@ -33,6 +33,7 @@ func discover_{{ .MethodName }}(service *runner.Service) error {
 		},
 		Name: "{{ .Name }}",
 		Description: "{{ .Description }}",
+		GroupName: "{{ .GroupName }}",
 		Inputs: []runner.InputDiscovery{
 {{- range .Inputs }}
 			{
@@ -242,6 +243,7 @@ type processorDiscoveryOptions struct {
 	Name        string
 	Description string
 	MethodName  string
+	GroupName   string
 	Service     *serviceDiscoveryOptions
 	Component   *componentDiscoveryOptions
 	Inputs      []runner.InputDiscovery
@@ -313,6 +315,7 @@ func generateDiscover(writer io.Writer, service *models.Service, components []*m
 				Component:   com,
 				Name:        processor.Name,
 				Description: processor.Description,
+				GroupName:   processor.GroupName(service, component),
 				MethodName:  fmt.Sprintf("%s_%s_Processor", component.ToSafeName(), processor.ToSafeName()),
 			}
 
@@ -381,7 +384,7 @@ func generateDiscover(writer io.Writer, service *models.Service, components []*m
 				proc.Persistence = &runner.PersistentDiscovery{
 					TopicDiscovery: runner.TopicDiscovery{
 						Message: processor.Persistence.ToFullMessageType(service),
-						Topic:   processor.Persistence.ToTopicName(service),
+						Topic:   processor.GroupName(service, component) + "-table",
 						Type:    t,
 					},
 				}

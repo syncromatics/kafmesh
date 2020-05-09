@@ -1,6 +1,7 @@
 package generated
 
 //go:generate dataloaden ServiceLoader int *github.com/syncromatics/kafmesh/internal/graph/model.Service
+//go:generate dataloaden ServiceSliceLoader int []*github.com/syncromatics/kafmesh/internal/graph/model.Service
 
 //go:generate dataloaden ProcessorLoader int *github.com/syncromatics/kafmesh/internal/graph/model.Processor
 //go:generate dataloaden ProcessorSliceLoader int []*github.com/syncromatics/kafmesh/internal/graph/model.Processor

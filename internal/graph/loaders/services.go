@@ -16,6 +16,7 @@ import (
 // ServiceRepository is the datastore repository for services
 type ServiceRepository interface {
 	ComponentsByServices(ctx context.Context, services []int) ([][]*model.Component, error)
+	DependsOn(context.Context, []int) ([][]*model.Service, error)
 }
 
 var _ resolvers.ServiceLoader = &ServiceLoader{}
@@ -23,6 +24,7 @@ var _ resolvers.ServiceLoader = &ServiceLoader{}
 // ServiceLoader contains data loaders for service relationships
 type ServiceLoader struct {
 	componentsByServiceID *generated.ComponentSliceLoader
+	dependsOnLoader       *generated.ServiceSliceLoader
 }
 
 // NewServiceLoader creates a new ServiceLoader
@@ -41,10 +43,28 @@ func NewServiceLoader(ctx context.Context, repository ServiceRepository, waitTim
 		},
 	})
 
+	loader.dependsOnLoader = generated.NewServiceSliceLoader(generated.ServiceSliceLoaderConfig{
+		Wait:     waitTime,
+		MaxBatch: 100,
+		Fetch: func(keys []int) ([][]*model.Service, []error) {
+			r, err := repository.DependsOn(ctx, keys)
+			if err != nil {
+				return nil, []error{errors.Wrap(err, "failed to get depends on services from repository")}
+			}
+
+			return r, nil
+		},
+	})
+
 	return loader
 }
 
 // ComponentsByService returns components for the service
 func (l *ServiceLoader) ComponentsByService(serviceID int) ([]*model.Component, error) {
 	return l.componentsByServiceID.Load(serviceID)
+}
+
+// DependsOn returns services this service depends on
+func (l *ServiceLoader) DependsOn(serviceID int) ([]*model.Service, error) {
+	return l.dependsOnLoader.Load(serviceID)
 }
