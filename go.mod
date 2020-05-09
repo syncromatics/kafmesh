@@ -25,7 +25,7 @@ require (
 	github.com/rs/cors v1.6.0
 	github.com/spf13/cobra v0.0.5
 	github.com/stretchr/testify v1.4.0
-	github.com/syncromatics/go-kit v1.2.1-0.20200416222456-151156469dfb
+	github.com/syncromatics/go-kit v1.3.0
 	github.com/syncromatics/proto-schema-registry v0.7.3
 	github.com/syndtr/goleveldb v1.0.0 // indirect
 	github.com/vektah/gqlparser/v2 v2.0.1

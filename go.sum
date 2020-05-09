@@ -382,6 +382,8 @@ github.com/stretchr/testify v1.4.0 h1:2E4SXV/wtOkTonXsotYi4li6zVWxYlZuYNCXe9XRJy
 github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81PSLYec5m4=
 github.com/syncromatics/go-kit v1.2.1-0.20200416222456-151156469dfb h1:sZ+kuE6OHnXoZzM+qPK9/+oZ8xMgD2xVfFShibyHLpI=
 github.com/syncromatics/go-kit v1.2.1-0.20200416222456-151156469dfb/go.mod h1:pyk8uW+NsCgTc4TKD8smjKmjgucAuSitg8NBVJ3sjUM=
+github.com/syncromatics/go-kit v1.3.0 h1:xLGdFR2MsUMvWuDYrw66vtSLr0YB8msGh9agyHzYAyU=
+github.com/syncromatics/go-kit v1.3.0/go.mod h1:pyk8uW+NsCgTc4TKD8smjKmjgucAuSitg8NBVJ3sjUM=
 github.com/syncromatics/proto-schema-registry v0.7.2/go.mod h1:w+0RMnAXC0TAbdrRx2fkN9bB1qnKY2FmNBL+5NFunSA=
 github.com/syncromatics/proto-schema-registry v0.7.3 h1:saVhr6wDESSP9PE0Vvt4gHB9uLlZClfAtgk+DPy2dK0=
 github.com/syncromatics/proto-schema-registry v0.7.3/go.mod h1:7inIgaUZwObBtr5muyvyD+GvWSwHJmMUWpfftc31bcw=
