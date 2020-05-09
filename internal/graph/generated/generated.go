@@ -120,10 +120,11 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Pods        func(childComplexity int) int
-		ServiceByID func(childComplexity int, id int) int
-		Services    func(childComplexity int) int
-		Topics      func(childComplexity int) int
+		ComponentByID func(childComplexity int, id int) int
+		Pods          func(childComplexity int) int
+		ServiceByID   func(childComplexity int, id int) int
+		Services      func(childComplexity int) int
+		Topics        func(childComplexity int) int
 	}
 
 	Service struct {
@@ -242,6 +243,7 @@ type QueryResolver interface {
 	Pods(ctx context.Context) ([]*model.Pod, error)
 	Topics(ctx context.Context) ([]*model.Topic, error)
 	ServiceByID(ctx context.Context, id int) (*model.Service, error)
+	ComponentByID(ctx context.Context, id int) (*model.Component, error)
 }
 type ServiceResolver interface {
 	Components(ctx context.Context, obj *model.Service) ([]*model.Component, error)
@@ -596,6 +598,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.ProcessorOutput.Topic(childComplexity), true
+
+	case "Query.componentById":
+		if e.complexity.Query.ComponentByID == nil {
+			break
+		}
+
+		args, err := ec.field_Query_componentById_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.ComponentByID(childComplexity, args["id"].(int)), true
 
 	case "Query.pods":
 		if e.complexity.Query.Pods == nil {
@@ -1128,6 +1142,7 @@ type Query {
 	pods: [Pod!]!
 	topics: [Topic!]!
 	serviceById(id: ID!): Service
+	componentById(id: ID!): Component
 }
 
 schema {
@@ -1152,6 +1167,20 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 		}
 	}
 	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_componentById_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["id"]; ok {
+		arg0, err = ec.unmarshalNID2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
 	return args, nil
 }
 
@@ -2768,6 +2797,44 @@ func (ec *executionContext) _Query_serviceById(ctx context.Context, field graphq
 	res := resTmp.(*model.Service)
 	fc.Result = res
 	return ec.marshalOService2ᚖgithubᚗcomᚋsyncromaticsᚋkafmeshᚋinternalᚋgraphᚋmodelᚐService(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_componentById(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Query",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_componentById_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().ComponentByID(rctx, args["id"].(int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Component)
+	fc.Result = res
+	return ec.marshalOComponent2ᚖgithubᚗcomᚋsyncromaticsᚋkafmeshᚋinternalᚋgraphᚋmodelᚐComponent(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -6088,6 +6155,17 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				res = ec._Query_serviceById(ctx, field)
 				return res
 			})
+		case "componentById":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_componentById(ctx, field)
+				return res
+			})
 		case "__type":
 			out.Values[i] = ec._Query___type(ctx, field)
 		case "__schema":
@@ -7968,6 +8046,17 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 		return graphql.Null
 	}
 	return ec.marshalOBoolean2bool(ctx, sel, *v)
+}
+
+func (ec *executionContext) marshalOComponent2githubᚗcomᚋsyncromaticsᚋkafmeshᚋinternalᚋgraphᚋmodelᚐComponent(ctx context.Context, sel ast.SelectionSet, v model.Component) graphql.Marshaler {
+	return ec._Component(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalOComponent2ᚖgithubᚗcomᚋsyncromaticsᚋkafmeshᚋinternalᚋgraphᚋmodelᚐComponent(ctx context.Context, sel ast.SelectionSet, v *model.Component) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Component(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOService2githubᚗcomᚋsyncromaticsᚋkafmeshᚋinternalᚋgraphᚋmodelᚐService(ctx context.Context, sel ast.SelectionSet, v model.Service) graphql.Marshaler {

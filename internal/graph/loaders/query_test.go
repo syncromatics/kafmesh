@@ -149,3 +149,36 @@ func Test_Query_ServiceByIDShouldReturnError(t *testing.T) {
 	_, err := loader.ServiceByID(12)
 	assert.ErrorContains(t, err, "failed to get service by id from repository: boom")
 }
+
+func Test_Query_ComponentByID(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	repository := NewMockQueryRepository(ctrl)
+	repository.EXPECT().
+		ComponentByID(gomock.Any(), 12).
+		Return(&model.Component{}, nil).
+		Times(1)
+
+	loader := loaders.NewQueryLoader(context.Background(), repository)
+
+	r, err := loader.ComponentByID(12)
+	assert.NilError(t, err)
+	assert.Assert(t, r != nil)
+}
+
+func Test_Query_ComponentByIDShouldReturnError(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	repository := NewMockQueryRepository(ctrl)
+	repository.EXPECT().
+		ComponentByID(gomock.Any(), 12).
+		Return(nil, errors.Errorf("boom")).
+		Times(1)
+
+	loader := loaders.NewQueryLoader(context.Background(), repository)
+
+	_, err := loader.ComponentByID(12)
+	assert.ErrorContains(t, err, "failed to get component by id from repository: boom")
+}

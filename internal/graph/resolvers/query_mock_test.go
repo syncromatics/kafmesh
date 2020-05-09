@@ -92,3 +92,18 @@ func (mr *MockQueryLoaderMockRecorder) ServiceByID(arg0 interface{}) *gomock.Cal
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ServiceByID", reflect.TypeOf((*MockQueryLoader)(nil).ServiceByID), arg0)
 }
+
+// ComponentByID mocks base method
+func (m *MockQueryLoader) ComponentByID(arg0 int) (*model.Component, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ComponentByID", arg0)
+	ret0, _ := ret[0].(*model.Component)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ComponentByID indicates an expected call of ComponentByID
+func (mr *MockQueryLoaderMockRecorder) ComponentByID(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ComponentByID", reflect.TypeOf((*MockQueryLoader)(nil).ComponentByID), arg0)
+}

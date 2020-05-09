@@ -103,3 +103,27 @@ where
 
 	return service, nil
 }
+
+// ComponentByID gets a service by id
+func (r *Query) ComponentByID(ctx context.Context, id int) (*model.Component, error) {
+	row := r.db.QueryRowContext(ctx, `
+select
+	id,
+	name,
+	description
+from
+	components
+where
+	id=$1`, id)
+
+	component := &model.Component{}
+	err := row.Scan(&component.ID, &component.Name, &component.Description)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to scan for component")
+	}
+
+	return component, nil
+}

@@ -223,3 +223,56 @@ func Test_Query_ServiceByIDShouldReturnError(t *testing.T) {
 	_, err := resolver.ServiceByID(context.Background(), 12)
 	assert.ErrorContains(t, err, "failed to get service by id from loader: boom")
 }
+
+func Test_Query_ComponentByID(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	loader := NewMockQueryLoader(ctrl)
+	loaders := NewMockDataLoaders(ctrl)
+	loaders.EXPECT().
+		QueryLoader(gomock.Any()).
+		Return(loader).
+		Times(1)
+
+	resolver := &resolvers.QueryResolver{
+		Resolver: &resolvers.Resolver{
+			DataLoaders: loaders,
+		},
+	}
+
+	loader.EXPECT().
+		ComponentByID(12).
+		Return(&model.Component{}, nil).
+		Times(1)
+
+	r, err := resolver.ComponentByID(context.Background(), 12)
+	assert.NilError(t, err)
+	assert.Assert(t, r != nil)
+}
+
+func Test_Query_ComponentByIDShouldReturnError(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	loader := NewMockQueryLoader(ctrl)
+	loaders := NewMockDataLoaders(ctrl)
+	loaders.EXPECT().
+		QueryLoader(gomock.Any()).
+		Return(loader).
+		Times(1)
+
+	resolver := &resolvers.QueryResolver{
+		Resolver: &resolvers.Resolver{
+			DataLoaders: loaders,
+		},
+	}
+
+	loader.EXPECT().
+		ComponentByID(12).
+		Return(nil, errors.Errorf("boom")).
+		Times(1)
+
+	_, err := resolver.ComponentByID(context.Background(), 12)
+	assert.ErrorContains(t, err, "failed to get component by id from loader: boom")
+}

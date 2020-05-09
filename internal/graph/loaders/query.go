@@ -17,6 +17,7 @@ type QueryRepository interface {
 	GetAllPods(context.Context) ([]*model.Pod, error)
 	GetAllTopics(context.Context) ([]*model.Topic, error)
 	ServiceByID(context.Context, int) (*model.Service, error)
+	ComponentByID(context.Context, int) (*model.Component, error)
 }
 
 var _ resolvers.QueryLoader = &QueryLoader{}
@@ -64,6 +65,15 @@ func (l *QueryLoader) ServiceByID(id int) (*model.Service, error) {
 	results, err := l.repository.ServiceByID(l.ctx, id)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get service by id from repository")
+	}
+	return results, nil
+}
+
+// ComponentByID returns a component by id
+func (l *QueryLoader) ComponentByID(id int) (*model.Component, error) {
+	results, err := l.repository.ComponentByID(l.ctx, id)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get component by id from repository")
 	}
 	return results, nil
 }
