@@ -22,6 +22,7 @@ type ComponentRepository interface {
 	ViewSinksByComponents(ctx context.Context, components []int) ([][]*model.ViewSink, error)
 	ViewSourcesByComponents(ctx context.Context, components []int) ([][]*model.ViewSource, error)
 	ViewsByComponents(ctx context.Context, components []int) ([][]*model.View, error)
+	DependsOn(context.Context, []int) ([][]*model.Component, error)
 }
 
 var _ resolvers.ComponentLoader = &ComponentLoader{}
@@ -35,6 +36,7 @@ type ComponentLoader struct {
 	viewSinksByComponent   *generated.ViewSinkSliceLoader
 	viewSourcesByComponent *generated.ViewSourceSliceLoader
 	viewsByComponent       *generated.ViewSliceLoader
+	dependsOn              *generated.ComponentSliceLoader
 }
 
 // NewComponentLoader creates a new component dataloader
@@ -123,6 +125,18 @@ func NewComponentLoader(ctx context.Context, repository ComponentRepository, wai
 			return r, nil
 		},
 	})
+
+	loader.dependsOn = generated.NewComponentSliceLoader(generated.ComponentSliceLoaderConfig{
+		Wait:     waitTime,
+		MaxBatch: 100,
+		Fetch: func(keys []int) ([][]*model.Component, []error) {
+			r, err := repository.DependsOn(ctx, keys)
+			if err != nil {
+				return nil, []error{errors.Wrap(err, "failed to get components depended on from repository")}
+			}
+			return r, nil
+		},
+	})
 	return loader
 }
 
@@ -159,4 +173,9 @@ func (c *ComponentLoader) ViewSourcesByComponent(componentID int) ([]*model.View
 // ViewsByComponent returns the views for the components
 func (c *ComponentLoader) ViewsByComponent(componentID int) ([]*model.View, error) {
 	return c.viewsByComponent.Load(componentID)
+}
+
+// DependsOn returns the components this component depends on
+func (c *ComponentLoader) DependsOn(componentID int) ([]*model.Component, error) {
+	return c.dependsOn.Load(componentID)
 }

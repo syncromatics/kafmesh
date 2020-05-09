@@ -201,3 +201,30 @@ func Test_Components_Views(t *testing.T) {
 	_, err = loader.ViewsByComponent(13)
 	assert.ErrorContains(t, err, "failed to get views from repository: boom")
 }
+
+func Test_Components_DependsOn(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	repository := NewMockComponentRepository(ctrl)
+	repository.EXPECT().
+		DependsOn(gomock.Any(), []int{12}).
+		Return([][]*model.Component{
+			[]*model.Component{&model.Component{}},
+		}, nil).
+		Times(1)
+
+	repository.EXPECT().
+		DependsOn(gomock.Any(), []int{13}).
+		Return(nil, errors.Errorf("boom")).
+		Times(1)
+
+	loader := loaders.NewComponentLoader(context.Background(), repository, 10*time.Millisecond)
+
+	r, err := loader.DependsOn(12)
+	assert.NilError(t, err)
+	assert.Assert(t, r != nil)
+
+	_, err = loader.DependsOn(13)
+	assert.ErrorContains(t, err, "failed to get components depended on from repository: boom")
+}

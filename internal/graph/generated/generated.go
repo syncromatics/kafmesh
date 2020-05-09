@@ -57,6 +57,7 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Component struct {
+		DependsOn   func(childComplexity int) int
 		Description func(childComplexity int) int
 		ID          func(childComplexity int) int
 		Name        func(childComplexity int) int
@@ -200,6 +201,7 @@ type ComponentResolver interface {
 	ViewSinks(ctx context.Context, obj *model.Component) ([]*model.ViewSink, error)
 	ViewSources(ctx context.Context, obj *model.Component) ([]*model.ViewSource, error)
 	Views(ctx context.Context, obj *model.Component) ([]*model.View, error)
+	DependsOn(ctx context.Context, obj *model.Component) ([]*model.Component, error)
 }
 type PodResolver interface {
 	Processors(ctx context.Context, obj *model.Pod) ([]*model.Processor, error)
@@ -300,6 +302,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "Component.dependsOn":
+		if e.complexity.Component.DependsOn == nil {
+			break
+		}
+
+		return e.complexity.Component.DependsOn(childComplexity), true
 
 	case "Component.description":
 		if e.complexity.Component.Description == nil {
@@ -1005,6 +1014,7 @@ type Component {
 	viewSinks: [ViewSink!]! @goField(forceResolver: true)
 	viewSources: [ViewSource!]! @goField(forceResolver: true)
 	views: [View!]! @goField(forceResolver: true)
+	dependsOn: [Component!]! @goField(forceResolver: true)
 }
 
 type Pod {
@@ -1533,6 +1543,40 @@ func (ec *executionContext) _Component_views(ctx context.Context, field graphql.
 	res := resTmp.([]*model.View)
 	fc.Result = res
 	return ec.marshalNView2ᚕᚖgithubᚗcomᚋsyncromaticsᚋkafmeshᚋinternalᚋgraphᚋmodelᚐViewᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Component_dependsOn(ctx context.Context, field graphql.CollectedField, obj *model.Component) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Component",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Component().DependsOn(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Component)
+	fc.Result = res
+	return ec.marshalNComponent2ᚕᚖgithubᚗcomᚋsyncromaticsᚋkafmeshᚋinternalᚋgraphᚋmodelᚐComponentᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Pod_id(ctx context.Context, field graphql.CollectedField, obj *model.Pod) (ret graphql.Marshaler) {
@@ -5473,6 +5517,20 @@ func (ec *executionContext) _Component(ctx context.Context, sel ast.SelectionSet
 					}
 				}()
 				res = ec._Component_views(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "dependsOn":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Component_dependsOn(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}

@@ -17,6 +17,7 @@ type Component {
 	viewSinks: [ViewSink!]! @goField(forceResolver: true)
 	viewSources: [ViewSource!]! @goField(forceResolver: true)
 	views: [View!]! @goField(forceResolver: true)
+	dependsOn: [Component!]! @goField(forceResolver: true)
 }
 
 type Pod {

@@ -256,3 +256,38 @@ func Test_Component_Views(t *testing.T) {
 	_, err = resolver.Views(context.Background(), &model.Component{ID: 13})
 	assert.ErrorContains(t, err, "failed to get views from loader: boom")
 }
+
+func Test_Component_DependsOn(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	loader := NewMockComponentLoader(ctrl)
+	loaders := NewMockDataLoaders(ctrl)
+	loaders.EXPECT().
+		ComponentLoader(gomock.Any()).
+		Return(loader).
+		Times(2)
+
+	resolver := &resolvers.ComponentResolver{
+		Resolver: &resolvers.Resolver{
+			DataLoaders: loaders,
+		},
+	}
+
+	loader.EXPECT().
+		DependsOn(12).
+		Return([]*model.Component{}, nil).
+		Times(1)
+
+	loader.EXPECT().
+		DependsOn(13).
+		Return(nil, errors.Errorf("boom")).
+		Times(1)
+
+	r, err := resolver.DependsOn(context.Background(), &model.Component{ID: 12})
+	assert.NilError(t, err)
+	assert.Assert(t, r != nil)
+
+	_, err = resolver.DependsOn(context.Background(), &model.Component{ID: 13})
+	assert.ErrorContains(t, err, "failed to get components depended on from loader: boom")
+}
