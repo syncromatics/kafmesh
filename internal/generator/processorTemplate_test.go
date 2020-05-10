@@ -24,6 +24,7 @@ package details
 
 import (
 	"context"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"time"
@@ -58,10 +59,11 @@ type Enricher_Processor interface {
 
 type Enricher_ProcessorContext_Impl struct {
 	ctx goka.Context
+	processorContext *runner.ProcessorContext
 }
 
-func new_Enricher_ProcessorContext_Impl(ctx goka.Context) *Enricher_ProcessorContext_Impl {
-	return &Enricher_ProcessorContext_Impl{ctx}
+func new_Enricher_ProcessorContext_Impl(ctx goka.Context, pc *runner.ProcessorContext) *Enricher_ProcessorContext_Impl {
+	return &Enricher_ProcessorContext_Impl{ctx, pc}
 }
 
 func (c *Enricher_ProcessorContext_Impl) Key() string {
@@ -75,36 +77,61 @@ func (c *Enricher_ProcessorContext_Impl) Timestamp() time.Time {
 func (c *Enricher_ProcessorContext_Impl) Lookup_TestSerialDetails(key string) *m1.Details {
 	v := c.ctx.Lookup("testMesh.testSerial.details", key)
 	if v == nil {
+		c.processorContext.Lookup("testMesh.testSerial.details", "testSerial.details", key, "")
 		return nil
 	}
-	return v.(*m1.Details)
+
+	m := v.(*m1.Details)
+	value, _ := json.Marshal(m)
+	c.processorContext.Lookup("testMesh.testSerial.details", "testSerial.details", key, string(value))
+
+	return m
 }
 
 func (c *Enricher_ProcessorContext_Impl) Join_TestSerialDetails() *m1.Details {
 	v := c.ctx.Join("testMesh.testSerial.details")
 	if v == nil {
+		c.processorContext.Join("testMesh.testSerial.details", "testSerial.details", "")
 		return nil
 	}
-	return v.(*m1.Details)
+	
+	m := v.(*m1.Details)
+	value, _ := json.Marshal(m)
+	c.processorContext.Join("testMesh.testSerial.details", "testSerial.details", string(value))
+
+	return m
 }
 
 func (c *Enricher_ProcessorContext_Impl) Output_TestSerialDetailsEnriched(key string, message *m1.DetailsEnriched) {
+	value, _ := json.Marshal(message)
+	c.processorContext.Output("testMesh.testSerial.detailsEnriched", "testSerial.detailsEnriched", key, string(value))
 	c.ctx.Emit("testMesh.testSerial.detailsEnriched", key, message)
 }
 
 func (c *Enricher_ProcessorContext_Impl) SaveState(state *m1.DetailsState) {
+	value, _ := json.Marshal(state)
+	c.processorContext.GetState("testMesh.details.enricher-table", "testSerial.detailsState", string(value))
+
 	c.ctx.SetValue(state)
 }
 
 func (c *Enricher_ProcessorContext_Impl) State() *m1.DetailsState {
 	v := c.ctx.Value()
+	var m *m1.DetailsState
 	if v == nil {
-		return &m1.DetailsState{}
+		m = &m1.DetailsState{}
+	} else {
+		m = v.(*m1.DetailsState)
 	}
-	return v.(*m1.DetailsState)
+
+	value, _ := json.Marshal(m)
+	c.processorContext.GetState("testMesh.details.enricher-table", "testSerial.detailsState", string(value))
+
+	return m
 }
 
-func Register_Enricher_Processor(options runner.ServiceOptions, service Enricher_Processor) (func(context.Context) func() error, error) {
+func Register_Enricher_Processor(service *runner.Service, impl Enricher_Processor) (func(context.Context) func() error, error) {
+	options := service.Options()
 	brokers := options.Brokers
 	protoWrapper := options.ProtoWrapper
 
@@ -154,16 +181,36 @@ func Register_Enricher_Processor(options runner.ServiceOptions, service Enricher
 	edges := []goka.Edge{
 		goka.Input(goka.Stream("testMesh.testId.test"), c0, func(ctx goka.Context, m interface{}) {
 			msg := m.(*m0.Test)
-			w := new_Enricher_ProcessorContext_Impl(ctx)
-			err := service.HandleTestIDTest(w, msg)
+
+			pc := service.ProcessorContext(ctx.Context(), "details", "enricher", ctx.Key())
+			defer pc.Finish()
+
+			v, err := json.Marshal(msg)
+			if err != nil {
+				ctx.Fail(err)
+			}
+			pc.Input("testMesh.testId.test", "testId.test", string(v))
+
+			w := new_Enricher_ProcessorContext_Impl(ctx, pc)
+			err = impl.HandleTestIDTest(w, msg)
 			if err != nil {
 				ctx.Fail(err)
 			}
 		}),
 		goka.Input(goka.Stream("testMesh.testId.test2"), c1, func(ctx goka.Context, m interface{}) {
 			msg := m.(*m0.Test2)
-			w := new_Enricher_ProcessorContext_Impl(ctx)
-			err := service.HandleTestIDTest2(w, msg)
+
+			pc := service.ProcessorContext(ctx.Context(), "details", "enricher", ctx.Key())
+			defer pc.Finish()
+
+			v, err := json.Marshal(msg)
+			if err != nil {
+				ctx.Fail(err)
+			}
+			pc.Input("testMesh.testId.test2", "testId.test2", string(v))
+
+			w := new_Enricher_ProcessorContext_Impl(ctx, pc)
+			err = impl.HandleTestIDTest2(w, msg)
 			if err != nil {
 				ctx.Fail(err)
 			}

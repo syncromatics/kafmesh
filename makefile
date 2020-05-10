@@ -11,7 +11,7 @@ proto-lint:
 
 generate: proto-lint
 	mkdir -p internal/protos
-	docker run -v "$(PWD)/docs/protos:/work" -v $(PWD):/output -u `id -u $(USER)`:`id -g $(USER)` uber/prototool:latest prototool generate
+	docker run -v "$(PWD)/docs/protos:/work" -v $(PWD):/output uber/prototool:1.8.1 prototool generate
 	statik -f -src=./docs/migrations -dest=./internal/storage
 	gqlgen generate --config docs/graphql/gqlgen.yml
 	go generate ./...
