@@ -21,6 +21,7 @@ require (
 	github.com/lib/pq v1.0.0
 	github.com/lovoo/goka v0.1.3
 	github.com/pkg/errors v0.9.1
+	github.com/prometheus/client_golang v0.9.3-0.20190127221311-3c4408c8b829
 	github.com/rakyll/statik v0.1.6
 	github.com/rs/cors v1.6.0
 	github.com/spf13/cobra v0.0.5

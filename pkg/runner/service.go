@@ -29,6 +29,7 @@ type Service struct {
 	brokers      []string
 	protoWrapper *ProtoWrapper
 	server       *grpc.Server
+	Metrics      *Metrics
 
 	mtx          sync.Mutex
 	configured   bool
@@ -44,6 +45,7 @@ func NewService(brokers []string, protoRegistry *Registry, grpcServer *grpc.Serv
 		protoWrapper: NewProtoWrapper(protoRegistry),
 		server:       grpcServer,
 		DiscoverInfo: &discoveryv1.Service{},
+		Metrics:      NewMetrics(),
 	}
 
 	pingv1.RegisterPingAPIServer(grpcServer, &services.PingAPI{})

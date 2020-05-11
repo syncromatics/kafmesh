@@ -186,7 +186,7 @@ func processComponent(rootPath string, outputPath string, mod string, modelsPath
 		}
 		defer file.Close()
 
-		co, err := buildSourceOptions(component.Name, mod, mPath, service, e)
+		co, err := buildSourceOptions(component.Name, mod, mPath, service, component, e)
 		if err != nil {
 			return errors.Wrap(err, "failed to build source options")
 		}
