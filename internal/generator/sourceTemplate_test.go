@@ -42,6 +42,7 @@ type TestSerialDetails_Source interface {
 
 type TestSerialDetails_Source_impl struct {
 	emitter *runner.Emitter
+	metrics *runner.Metrics
 }
 
 type TestSerialDetails_Source_Message struct {
@@ -61,7 +62,8 @@ func (m *impl_TestSerialDetails_Source_Message) Value() interface{} {
 	return m.msg.Value
 }
 
-func New_TestSerialDetails_Source(options runner.ServiceOptions) (*TestSerialDetails_Source_impl, error) {
+func New_TestSerialDetails_Source(service *runner.Service) (*TestSerialDetails_Source_impl, error) {
+	options := service.Options()
 	brokers := options.Brokers
 	protoWrapper := options.ProtoWrapper
 
@@ -81,6 +83,7 @@ func New_TestSerialDetails_Source(options runner.ServiceOptions) (*TestSerialDet
 
 	return &TestSerialDetails_Source_impl{
 		emitter: runner.NewEmitter(emitter),
+		metrics: service.Metrics,
 	}, nil
 }
 
@@ -89,7 +92,14 @@ func (e *TestSerialDetails_Source_impl) Watch(ctx context.Context) func() error 
 }
 
 func (e *TestSerialDetails_Source_impl) Emit(message TestSerialDetails_Source_Message) error {
-	return e.emitter.Emit(message.Key, message.Value)
+	err := e.emitter.Emit(message.Key, message.Value)
+	if err != nil {
+		e.metrics.SourceError("testMesh", "details", "testMesh.testSerial.details")
+		return err
+	}
+
+	e.metrics.SourceHit("testMesh", "details", "testMesh.testSerial.details", 1)
+	return nil
 }
 
 func (e *TestSerialDetails_Source_impl) EmitBulk(ctx context.Context, messages []TestSerialDetails_Source_Message) error {
@@ -97,7 +107,14 @@ func (e *TestSerialDetails_Source_impl) EmitBulk(ctx context.Context, messages [
 	for _, m := range messages {
 		b = append(b, &impl_TestSerialDetails_Source_Message{msg: m})
 	}
-	return e.emitter.EmitBulk(ctx, b)
+	err := e.emitter.EmitBulk(ctx, b)
+	if err != nil {
+		e.metrics.SourceError("testMesh", "details", "testMesh.testSerial.details")
+		return err
+	}
+
+	e.metrics.SourceHit("testMesh", "details", "testMesh.testSerial.details", len(b))
+	return nil
 }
 
 func (e *TestSerialDetails_Source_impl) Delete(key string) error {

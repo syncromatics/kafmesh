@@ -50,7 +50,7 @@ func Register_{{ .ExportName }}(service *runner.Service, processor {{ .Package }
 
 {{ range .Sources }}
 func New_{{ .ExportName }}_Source(service *runner.Service) ({{ .Package }}.{{ .Name }}_Source, error) {
-	e, err := {{ .Package }}.New_{{ .Name }}_Source(service.Options())
+	e, err := {{ .Package }}.New_{{ .Name }}_Source(service)
 	if err != nil {
 		return nil, err
 	}
