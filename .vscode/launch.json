@@ -16,6 +16,7 @@
                 "DATABASE_NAME" :"kafmesh",
                 "DATABASE_USER" :"postgres",
                 "DATABASE_PASSWORD": "$KAFMESH_DATABASE_PASSWORD",
+                "NO_SCAN" : "true"
             }
         }
     ]

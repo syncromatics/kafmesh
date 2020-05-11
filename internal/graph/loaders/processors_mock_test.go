@@ -138,3 +138,18 @@ func (mr *MockProcessorRepositoryMockRecorder) PersistenceByProcessors(ctx, proc
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PersistenceByProcessors", reflect.TypeOf((*MockProcessorRepository)(nil).PersistenceByProcessors), ctx, processors)
 }
+
+// ByID mocks base method
+func (m *MockProcessorRepository) ByID(arg0 context.Context, arg1 int) (*model.Processor, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ByID", arg0, arg1)
+	ret0, _ := ret[0].(*model.Processor)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ByID indicates an expected call of ByID
+func (mr *MockProcessorRepositoryMockRecorder) ByID(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ByID", reflect.TypeOf((*MockProcessorRepository)(nil).ByID), arg0, arg1)
+}

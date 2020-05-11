@@ -129,3 +129,11 @@ func Test_Processor_Persistence(t *testing.T) {
 		&model.Topic{ID: 2, Name: "topic2", Message: "topic2.message"},
 	})
 }
+
+func Test_Processor_ByID(t *testing.T) {
+	repo := repos.Processor()
+
+	r, err := repo.ByID(context.Background(), 2)
+	assert.NilError(t, err)
+	assert.DeepEqual(t, r, &model.Processor{ID: 2, Name: "processor2", Description: "processor2 description"})
+}

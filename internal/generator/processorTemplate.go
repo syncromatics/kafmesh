@@ -109,7 +109,7 @@ func (c *{{$c}}_ProcessorContext_Impl) {{.Name}}({{ .Args }} {
 {{- end -}}
 {{- with (eq .Type "save") }}
 	value, _ := json.Marshal(state)
-	c.processorContext.GetState("{{ $t.Topic }}", "{{$t.MessageTypeName}}", string(value))
+	c.processorContext.SetState("{{ $t.Topic }}", "{{$t.MessageTypeName}}", string(value))
 
 	c.ctx.SetValue(state)
 {{- end -}}

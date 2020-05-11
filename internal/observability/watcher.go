@@ -43,7 +43,6 @@ func (w *Watcher) WatchProcessor(ctx context.Context, request *watchv1.Processor
 	if err != nil {
 		return err
 	}
-
 	w.registerWatcher(key, id, &watch{
 		send:   send,
 		cancel: cancel,

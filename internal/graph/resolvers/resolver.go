@@ -27,17 +27,24 @@ type DataLoaders interface {
 	ViewSourceLoader(context.Context) ViewSourceLoader
 }
 
+// Subscribers provides subcription handlers
+type Subscribers interface {
+	Processor() ProcessorWatcher
+}
+
 var _ generated.ResolverRoot = &Resolver{}
 
 // Resolver resolvers models
 type Resolver struct {
 	DataLoaders DataLoaders
+	Subscribers Subscribers
 }
 
 // NewResolver creates a new resolver
-func NewResolver(loaders DataLoaders) *Resolver {
+func NewResolver(loaders DataLoaders, subscribers Subscribers) *Resolver {
 	return &Resolver{
 		DataLoaders: loaders,
+		Subscribers: subscribers,
 	}
 }
 
@@ -114,4 +121,9 @@ func (r *Resolver) ViewSink() generated.ViewSinkResolver {
 // ViewSource returns the view source resolver
 func (r *Resolver) ViewSource() generated.ViewSourceResolver {
 	return &ViewSourceResolver{r}
+}
+
+// Subscription returns the subscription resolver
+func (r *Resolver) Subscription() generated.SubscriptionResolver {
+	return &Subscription{r}
 }

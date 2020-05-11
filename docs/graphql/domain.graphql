@@ -1,0 +1,127 @@
+type Service {
+	id: ID!
+	name: String!
+	description: String!
+	components: [Component!]! @goField(forceResolver: true)
+	dependsOn: [Service!]! @goField(forceResolver: true)
+}
+
+type Component {
+	id: ID!
+	service: Service! @goField(forceResolver: true)
+	name: String!
+	description: String!
+	processors: [Processor!]! @goField(forceResolver: true)
+	sinks: [Sink!]! @goField(forceResolver: true)
+	sources: [Source!]! @goField(forceResolver: true)
+	viewSinks: [ViewSink!]! @goField(forceResolver: true)
+	viewSources: [ViewSource!]! @goField(forceResolver: true)
+	views: [View!]! @goField(forceResolver: true)
+	dependsOn: [Component!]! @goField(forceResolver: true)
+}
+
+type Pod {
+	id: ID!
+	name: String!
+	processors: [Processor!]! @goField(forceResolver: true)
+	sinks: [Sink!]! @goField(forceResolver: true)
+	sources: [Source!]! @goField(forceResolver: true)
+	viewSinks: [ViewSink!]! @goField(forceResolver: true)
+	viewSources: [ViewSource!]! @goField(forceResolver: true)
+	views: [View!]! @goField(forceResolver: true)
+}
+
+type ProcessorInput {
+	id: ID!
+	processor: Processor! @goField(forceResolver: true)
+	topic: Topic! @goField(forceResolver: true)
+}
+
+type ProcessorJoin {
+	id: ID!
+	processor: Processor! @goField(forceResolver: true)
+	topic: Topic! @goField(forceResolver: true)
+}
+
+type ProcessorLookup {
+	id: ID!
+	processor: Processor! @goField(forceResolver: true)
+	topic: Topic! @goField(forceResolver: true)
+}
+
+type ProcessorOutput {
+	id: ID!
+	processor: Processor! @goField(forceResolver: true)
+	topic: Topic! @goField(forceResolver: true)
+}
+
+type Processor {
+	id: ID!
+	component: Component! @goField(forceResolver: true)
+	name: String!
+	description: String!
+	groupName: String!
+	persistence: Topic @goField(forceResolver: true)
+	pods: [Pod!]! @goField(forceResolver: true)
+	inputs: [ProcessorInput!]! @goField(forceResolver: true)
+	joins: [ProcessorJoin!]! @goField(forceResolver: true)
+	lookups: [ProcessorLookup!]! @goField(forceResolver: true)
+	outputs: [ProcessorOutput!]! @goField(forceResolver: true)
+}
+
+type Sink {
+	id: ID!
+	component: Component! @goField(forceResolver: true)
+	name: String!
+	description: String!
+	topic: Topic! @goField(forceResolver: true)
+	pods: [Pod!]! @goField(forceResolver: true)
+}
+
+type Source {
+	id: ID!
+	component: Component! @goField(forceResolver: true)
+	topic: Topic! @goField(forceResolver: true)
+	pods: [Pod!]! @goField(forceResolver: true)
+}
+
+type Topic {
+	id: ID!
+	name: String!
+	message: String!
+	processorInputs: [ProcessorInput!]! @goField(forceResolver: true)
+	processorJoins: [ProcessorJoin!]! @goField(forceResolver: true)
+	processorLookups: [ProcessorLookup!]! @goField(forceResolver: true)
+	processorOutputs: [ProcessorOutput!]! @goField(forceResolver: true)
+	processorPersistences: [Processor!]! @goField(forceResolver: true)
+	sinks: [Sink!]! @goField(forceResolver: true)
+	sources: [Source!]! @goField(forceResolver: true)
+	viewSinks: [ViewSink!]! @goField(forceResolver: true)
+	viewSources: [ViewSource!]! @goField(forceResolver: true)
+	views: [View!]! @goField(forceResolver: true)
+}
+
+type ViewSink {
+	id: ID!
+	component: Component! @goField(forceResolver: true)
+	name: String!
+	description: String!
+	topic: Topic! @goField(forceResolver: true)
+	pods: [Pod!]! @goField(forceResolver: true)
+}
+
+type ViewSource {
+	id: ID!
+	component: Component! @goField(forceResolver: true)
+	description: String!
+	name: String!
+	topic: Topic! @goField(forceResolver: true)
+	pods: [Pod!]! @goField(forceResolver: true)
+}
+
+type View {
+	id: ID!
+	component: Component! @goField(forceResolver: true)
+	topic: Topic! @goField(forceResolver: true)
+	pods: [Pod!]! @goField(forceResolver: true)
+}

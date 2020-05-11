@@ -110,7 +110,7 @@ func (c *Enricher_ProcessorContext_Impl) Output_TestSerialDetailsEnriched(key st
 
 func (c *Enricher_ProcessorContext_Impl) SaveState(state *m1.DetailsState) {
 	value, _ := json.Marshal(state)
-	c.processorContext.GetState("testMesh.details.enricher-table", "testSerial.detailsState", string(value))
+	c.processorContext.SetState("testMesh.details.enricher-table", "testSerial.detailsState", string(value))
 
 	c.ctx.SetValue(state)
 }

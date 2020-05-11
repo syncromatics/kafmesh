@@ -2,6 +2,10 @@
 
 package model
 
+type Action interface {
+	IsAction()
+}
+
 type Component struct {
 	ID          int           `json:"id"`
 	Service     *Service      `json:"service"`
@@ -15,6 +19,53 @@ type Component struct {
 	Views       []*View       `json:"views"`
 	DependsOn   []*Component  `json:"dependsOn"`
 }
+
+type GetState struct {
+	Topic   string `json:"topic"`
+	Message string `json:"message"`
+	Value   string `json:"value"`
+}
+
+func (GetState) IsAction() {}
+
+type Input struct {
+	Topic   string `json:"topic"`
+	Message string `json:"message"`
+	Value   string `json:"value"`
+}
+
+type Join struct {
+	Topic   string `json:"topic"`
+	Message string `json:"message"`
+	Value   string `json:"value"`
+}
+
+func (Join) IsAction() {}
+
+type Lookup struct {
+	Topic   string `json:"topic"`
+	Message string `json:"message"`
+	Value   string `json:"value"`
+	Key     string `json:"key"`
+}
+
+func (Lookup) IsAction() {}
+
+type Operation struct {
+	Input     *Input   `json:"input"`
+	StartTime int      `json:"startTime"`
+	EndTime   int      `json:"endTime"`
+	Actions   []Action `json:"actions"`
+}
+
+type Output struct {
+	Topic   string `json:"topic"`
+	Message string `json:"message"`
+	Value   string `json:"value"`
+	Key     string `json:"key"`
+}
+
+func (Output) IsAction() {}
 
 type Pod struct {
 	ID          int           `json:"id"`
@@ -73,6 +124,14 @@ type Service struct {
 	DependsOn   []*Service   `json:"dependsOn"`
 }
 
+type SetState struct {
+	Topic   string `json:"topic"`
+	Message string `json:"message"`
+	Value   string `json:"value"`
+}
+
+func (SetState) IsAction() {}
+
 type Sink struct {
 	ID          int        `json:"id"`
 	Component   *Component `json:"component"`
@@ -128,4 +187,9 @@ type ViewSource struct {
 	Name        string     `json:"name"`
 	Topic       *Topic     `json:"topic"`
 	Pods        []*Pod     `json:"pods"`
+}
+
+type WatchProcessorInput struct {
+	ProcessorID int    `json:"processorId"`
+	Key         string `json:"key"`
 }

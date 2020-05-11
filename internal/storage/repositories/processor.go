@@ -323,3 +323,27 @@ func (r *Processor) PersistenceByProcessors(ctx context.Context, processors []in
 
 	return results, nil
 }
+
+// ByID returns a processor with the id given
+func (r *Processor) ByID(ctx context.Context, id int) (*model.Processor, error) {
+	row := r.db.QueryRowContext(ctx, `
+select
+	id,
+	name,
+	description
+from
+	processors
+where
+	id=$1`, id)
+
+	processor := &model.Processor{}
+	err := row.Scan(&processor.ID, &processor.Name, &processor.Description)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to scan for processor")
+	}
+
+	return processor, nil
+}

@@ -16,6 +16,7 @@ import (
 type settings struct {
 	KubernetesConfig *rest.Config
 	DatabaseSettings *database.PostgresDatabaseSettings
+	ShouldScan       bool
 }
 
 func getSettings() (*settings, error) {
@@ -33,6 +34,12 @@ func getSettings() (*settings, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "failed getting kubernetes config")
 		}
+	}
+
+	shouldScan := true
+	_, ok = os.LookupEnv("NO_SCAN")
+	if ok {
+		shouldScan = false
 	}
 
 	errors := []string{}
@@ -65,6 +72,7 @@ func getSettings() (*settings, error) {
 	return &settings{
 		KubernetesConfig: config,
 		DatabaseSettings: ds,
+		ShouldScan:       shouldScan,
 	}, nil
 }
 
