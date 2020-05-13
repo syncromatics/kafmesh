@@ -55,7 +55,7 @@ func (s *Service) Run(ctx context.Context) func() error {
 	subscriber := subscription.NewSubscribers(s.podLister, repositories.Processor())
 	resolver := resolvers.NewResolver(&loaders.LoaderFactory{}, subscriber)
 
-	server := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{
+	server := handler.New(generated.NewExecutableSchema(generated.Config{
 		Resolvers: resolver,
 	}))
 
