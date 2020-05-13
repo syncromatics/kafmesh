@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/99designs/gqlgen/graphql/handler/extension"
+
 	"github.com/syncromatics/kafmesh/internal/graph/generated"
 	"github.com/syncromatics/kafmesh/internal/graph/loaders"
 	"github.com/syncromatics/kafmesh/internal/graph/resolvers"
@@ -59,6 +61,7 @@ func (s *Service) Run(ctx context.Context) func() error {
 		Resolvers: resolver,
 	}))
 
+	server.Use(extension.Introspection{})
 	server.AddTransport(transport.POST{})
 	server.AddTransport(transport.Websocket{
 		KeepAlivePingInterval: 10 * time.Second,
