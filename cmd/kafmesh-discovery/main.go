@@ -52,13 +52,18 @@ func main() {
 	deleter := storage.NewDeleter(db)
 
 	scraperService := services.NewScrapeService(scraper, retriever, updater, deleter, 2*time.Minute)
-	graphService := graph.NewService(8084, db)
+	graphService := graph.NewService(8084, db, kubeAPIClient.CoreV1().Pods(""))
 
 	ctx, cancel := context.WithCancel(context.Background())
 	group, ctx := errgroup.WithContext(ctx)
 
 	log.Info("starting services")
-	group.Go(scraperService.Run(ctx))
+
+	if settings.ShouldScan {
+		log.Info("starting scrap service")
+		group.Go(scraperService.Run(ctx))
+	}
+
 	group.Go(graphService.Run(ctx))
 
 	eventChan := make(chan os.Signal)

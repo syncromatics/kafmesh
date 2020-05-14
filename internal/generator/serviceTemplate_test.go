@@ -32,7 +32,7 @@ import (
 )
 
 func Register_Details_Enricher_Processor(service *runner.Service, processor details.Enricher_Processor) error {
-	r, err := details.Register_Enricher_Processor(service.Options(), processor)
+	r, err := details.Register_Enricher_Processor(service, processor)
 	if err != nil {
 		return errors.Wrap(err, "failed to register processor")
 	}

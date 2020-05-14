@@ -1,0 +1,50 @@
+type Operation {
+	input: Input!
+	startTime: Int!
+	endTime: Int!
+	actions: [Action!]!
+}
+
+type Input {
+	topic: String!
+	message: String!
+	value: String!
+}
+
+interface Action {
+	topic: String!
+	message: String!
+	value: String!
+}
+
+type Join implements Action {
+	topic: String!
+	message: String!
+	value: String!
+}
+
+type Lookup implements Action {
+	topic: String!
+	message: String!
+	value: String!
+	key: String!
+}
+
+type GetState implements Action {
+	topic: String!
+	message: String!
+	value: String!
+}
+
+type SetState implements Action {
+	topic: String!
+	message: String!
+	value: String!
+}
+
+type Output implements Action {
+	topic: String!
+	message: String!
+	value: String!
+	key: String!
+}

@@ -243,3 +243,40 @@ func (mr *MockDataLoadersMockRecorder) ViewSourceLoader(arg0 interface{}) *gomoc
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ViewSourceLoader", reflect.TypeOf((*MockDataLoaders)(nil).ViewSourceLoader), arg0)
 }
+
+// MockSubscribers is a mock of Subscribers interface
+type MockSubscribers struct {
+	ctrl     *gomock.Controller
+	recorder *MockSubscribersMockRecorder
+}
+
+// MockSubscribersMockRecorder is the mock recorder for MockSubscribers
+type MockSubscribersMockRecorder struct {
+	mock *MockSubscribers
+}
+
+// NewMockSubscribers creates a new mock instance
+func NewMockSubscribers(ctrl *gomock.Controller) *MockSubscribers {
+	mock := &MockSubscribers{ctrl: ctrl}
+	mock.recorder = &MockSubscribersMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use
+func (m *MockSubscribers) EXPECT() *MockSubscribersMockRecorder {
+	return m.recorder
+}
+
+// Processor mocks base method
+func (m *MockSubscribers) Processor() resolvers.ProcessorWatcher {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Processor")
+	ret0, _ := ret[0].(resolvers.ProcessorWatcher)
+	return ret0
+}
+
+// Processor indicates an expected call of Processor
+func (mr *MockSubscribersMockRecorder) Processor() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Processor", reflect.TypeOf((*MockSubscribers)(nil).Processor))
+}

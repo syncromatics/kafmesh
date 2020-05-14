@@ -1,0 +1,76 @@
+syntax = "proto3";
+
+package kafmesh.watch.v1;
+
+option csharp_namespace = "Kafmesh.Watch.V1";
+option go_package = "watchv1";
+option java_multiple_files = true;
+option java_outer_classname = "OperationProto";
+option java_package = "com.kafmesh.watch.v1";
+option objc_class_prefix = "KWX";
+
+import "google/protobuf/timestamp.proto";
+
+// Input is the input message that triggered the processor.
+message Input {
+  string topic = 1;
+  string message = 2;
+  string value = 3;
+}
+
+// Join is a join action.
+message Join {
+  string topic = 1;
+  string message = 2;
+  string value = 3;
+}
+
+// Lookup is a lookup action.
+message Lookup {
+  string topic = 1;
+  string message = 2;
+  string key = 3;
+  string value = 4;
+}
+
+// GetState is a persistence action.
+message GetState {
+  string topic = 1;
+  string message = 2;
+  string value = 3;
+}
+
+// SetState is a persistence action.
+message SetState {
+  string topic = 1;
+  string message = 2;
+  string value = 3;
+}
+
+// Output is an output action.
+message Output {
+  string topic = 1;
+  string message = 2;
+  string key = 3;
+  string value = 4;
+}
+
+// Action is a streaming action a processor takes during an operation.
+message Action {
+  oneof action {
+    Join action_join = 1;
+    Lookup action_lookup = 2;
+    GetState action_get_state = 3;
+    SetState action_set_state = 4;
+    Output action_output = 5;
+  }
+}
+
+// Operation is a processor operation trigged by an input.
+message Operation {
+  google.protobuf.Timestamp start_time = 1;
+  google.protobuf.Timestamp end_time = 2;
+
+  Input input = 3;
+  repeated Action actions = 4;
+}

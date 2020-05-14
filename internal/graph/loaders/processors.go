@@ -22,6 +22,7 @@ type ProcessorRepository interface {
 	OutputsByProcessors(ctx context.Context, processors []int) ([][]*model.ProcessorOutput, error)
 	PodsByProcessors(ctx context.Context, processors []int) ([][]*model.Pod, error)
 	PersistenceByProcessors(ctx context.Context, processors []int) ([]*model.Topic, error)
+	ByID(context.Context, int) (*model.Processor, error)
 }
 
 var _ resolvers.ProcessorLoader = &ProcessorLoader{}

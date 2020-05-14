@@ -29,7 +29,7 @@ import (
 )
 {{ range .Processors }}
 func Register_{{ .ExportName }}(service *runner.Service, processor {{ .Package }}.{{ .Name }}) error {
-	r, err := {{ .Package }}.Register_{{ .Name }}(service.Options(), processor)
+	r, err := {{ .Package }}.Register_{{ .Name }}(service, processor)
 	if err != nil {
 		return errors.Wrap(err, "failed to register processor")
 	}

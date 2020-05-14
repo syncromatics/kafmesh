@@ -20,6 +20,7 @@ package {{ .Package }}
 
 import (
 	"context"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"time"
@@ -58,10 +59,11 @@ type {{ .Name }}_Processor interface {
 {{ with .Context -}}
 type {{ .Name }}_ProcessorContext_Impl struct {
 	ctx goka.Context
+	processorContext *runner.ProcessorContext
 }
 
-func new_{{ .Name }}_ProcessorContext_Impl(ctx goka.Context) *{{ .Name }}_ProcessorContext_Impl {
-	return &{{ .Name }}_ProcessorContext_Impl{ctx}
+func new_{{ .Name }}_ProcessorContext_Impl(ctx goka.Context, pc *runner.ProcessorContext) *{{ .Name }}_ProcessorContext_Impl {
+	return &{{ .Name }}_ProcessorContext_Impl{ctx, pc}
 }
 {{$c := .Name}}
 func (c *{{$c}}_ProcessorContext_Impl) Key() string {
@@ -77,37 +79,64 @@ func (c *{{$c}}_ProcessorContext_Impl) {{.Name}}({{ .Args }} {
 {{- with (eq .Type "lookup" ) }}
 	v := c.ctx.Lookup("{{- $t.Topic -}}", key)
 	if v == nil {
+		c.processorContext.Lookup("{{$t.Topic}}", "{{$t.MessageTypeName}}", key, "")
 		return nil
 	}
-	return v.(*{{- $t.MessageType -}})
+
+	m := v.(*{{- $t.MessageType -}})
+	value, _ := json.Marshal(m)
+	c.processorContext.Lookup("{{ $t.Topic }}", "{{$t.MessageTypeName}}", key, string(value))
+
+	return m
 {{- end -}}
 {{- with (eq .Type "join" ) }}
 	v := c.ctx.Join("{{- $t.Topic -}}")
 	if v == nil {
+		c.processorContext.Join("{{$t.Topic}}", "{{$t.MessageTypeName}}", "")
 		return nil
 	}
-	return v.(*{{- $t.MessageType -}})
+	
+	m := v.(*{{- $t.MessageType -}})
+	value, _ := json.Marshal(m)
+	c.processorContext.Join("{{ $t.Topic }}", "{{$t.MessageTypeName}}", string(value))
+
+	return m
 {{- end -}}
 {{- with (eq .Type "output" ) }}
+	value, _ := json.Marshal(message)
+	c.processorContext.Output("{{ $t.Topic }}", "{{$t.MessageTypeName}}", key, string(value))
 	c.ctx.Emit("{{- $t.Topic -}}", key, message)
 {{- end -}}
 {{- with (eq .Type "save") }}
+	value, _ := json.Marshal(state)
+	c.processorContext.SetState("{{ $t.Topic }}", "{{$t.MessageTypeName}}", string(value))
+
 	c.ctx.SetValue(state)
 {{- end -}}
 {{- with (eq .Type "state") }}
 	v := c.ctx.Value()
+	var m *{{- $t.MessageType }}
 	if v == nil {
-		return &{{- $t.MessageType -}}{}
+		m = &{{- $t.MessageType -}}{}
+	} else {
+		m = v.(*{{- $t.MessageType -}})
 	}
-	return v.(*{{- $t.MessageType -}})
+
+	value, _ := json.Marshal(m)
+	c.processorContext.GetState("{{ $t.Topic }}", "{{$t.MessageTypeName}}", string(value))
+
+	return m
 {{- end }}
 }
 {{ end}}
 {{- end}}
 {{ $c := .Context -}}
+{{- $componentName := .Component -}}
+{{- $processorName := .ProcessorName -}}
 {{ with .Interface -}}
-func Register_{{ .Name }}_Processor(options runner.ServiceOptions, service {{ .Name }}_Processor) (func(context.Context) func() error, error) {
+func Register_{{ .Name }}_Processor(service *runner.Service, impl {{ .Name }}_Processor) (func(context.Context) func() error, error) {
 {{- end }}
+	options := service.Options()
 	brokers := options.Brokers
 	protoWrapper := options.ProtoWrapper
 
@@ -140,8 +169,18 @@ func Register_{{ .Name }}_Processor(options runner.ServiceOptions, service {{ .N
 {{- with (eq .Type "input" ) }}
 		goka.Input(goka.Stream("{{ $e.Topic }}"), c{{ $e.Codec }}, func(ctx goka.Context, m interface{}) {
 			msg := m.(*{{ $e.Message }})
-			w := new_{{ $c.Name }}_ProcessorContext_Impl(ctx)
-			err := service.{{ $e.Func }}(w, msg)
+
+			pc := service.ProcessorContext(ctx.Context(), "{{$componentName}}", "{{$processorName}}", ctx.Key())
+			defer pc.Finish()
+
+			v, err := json.Marshal(msg)
+			if err != nil {
+				ctx.Fail(err)
+			}
+			pc.Input("{{ $e.Topic }}", "{{ $e.MessageType}}", string(v))
+
+			w := new_{{ $c.Name }}_ProcessorContext_Impl(ctx, pc)
+			err = impl.{{ $e.Func }}(w, msg)
 			if err != nil {
 				ctx.Fail(err)
 			}
@@ -187,11 +226,12 @@ func Register_{{ .Name }}_Processor(options runner.ServiceOptions, service {{ .N
 )
 
 type edge struct {
-	Type    string
-	Topic   string
-	Message string
-	Codec   int
-	Func    string
+	Type        string
+	Topic       string
+	Message     string
+	MessageType string
+	Codec       int
+	Func        string
 }
 
 type processorInterface struct {
@@ -206,9 +246,10 @@ type interfaceMethod struct {
 
 type contextMethod struct {
 	interfaceMethod
-	Type        string
-	Topic       string
-	MessageType string
+	Type            string
+	Topic           string
+	MessageType     string
+	MessageTypeName string
 }
 
 type processorContext struct {
@@ -223,14 +264,16 @@ type codec struct {
 }
 
 type processorOptions struct {
-	Package   string
-	Context   processorContext
-	Interface processorInterface
-	Imports   []string
-	Group     string
-	Edges     []edge
-	Codecs    []codec
-	Processor models.Processor
+	Package       string
+	Component     string
+	ProcessorName string
+	Context       processorContext
+	Interface     processorInterface
+	Imports       []string
+	Group         string
+	Edges         []edge
+	Codecs        []codec
+	Processor     models.Processor
 }
 
 func generateProcessor(writer io.Writer, processor *processorOptions) error {
@@ -249,12 +292,14 @@ func buildProcessorOptions(pkg string, mod string, modelsPath string, service *m
 	codecIndex := 0
 
 	options := processorOptions{
-		Package:   pkg,
-		Imports:   []string{},
-		Group:     processor.GroupName(service, component),
-		Edges:     []edge{},
-		Codecs:    []codec{},
-		Processor: models.Processor{},
+		Package:       pkg,
+		Component:     component.Name,
+		ProcessorName: processor.Name,
+		Imports:       []string{},
+		Group:         processor.GroupName(service, component),
+		Edges:         []edge{},
+		Codecs:        []codec{},
+		Processor:     models.Processor{},
 	}
 
 	options.Context = processorContext{
@@ -315,11 +360,12 @@ func buildProcessorOptions(pkg string, mod string, modelsPath string, service *m
 		}
 
 		options.Edges = append(options.Edges, edge{
-			Type:    "input",
-			Topic:   topic,
-			Message: fmt.Sprintf("m%d.%s", i, strcase.ToCamel(message)),
-			Codec:   c.Index,
-			Func:    method.Name,
+			Type:        "input",
+			Topic:       topic,
+			Message:     fmt.Sprintf("m%d.%s", i, strcase.ToCamel(message)),
+			MessageType: input.Message,
+			Codec:       c.Index,
+			Func:        method.Name,
 		})
 	}
 	options.Interface = intr
@@ -358,8 +404,9 @@ func buildProcessorOptions(pkg string, mod string, modelsPath string, service *m
 				Name: fmt.Sprintf("Lookup_%s", lookup.ToSafeMessageTypeName()),
 				Args: args.String(),
 			},
-			Type:        "lookup",
-			MessageType: fmt.Sprintf("m%d.%s", i, strcase.ToCamel(message)),
+			Type:            "lookup",
+			MessageType:     fmt.Sprintf("m%d.%s", i, strcase.ToCamel(message)),
+			MessageTypeName: lookup.Message,
 		}
 
 		m.Topic = lookup.ToTopicName(service)
@@ -417,8 +464,9 @@ func buildProcessorOptions(pkg string, mod string, modelsPath string, service *m
 				Name: fmt.Sprintf("Join_%s", join.ToSafeMessageTypeName()),
 				Args: args.String(),
 			},
-			Type:        "join",
-			MessageType: fmt.Sprintf("m%d.%s", i, strcase.ToCamel(message)),
+			Type:            "join",
+			MessageType:     fmt.Sprintf("m%d.%s", i, strcase.ToCamel(message)),
+			MessageTypeName: join.Message,
 		}
 
 		m.Topic = join.ToTopicName(service)
@@ -476,7 +524,9 @@ func buildProcessorOptions(pkg string, mod string, modelsPath string, service *m
 				Name: fmt.Sprintf("Output_%s", output.ToSafeMessageTypeName()),
 				Args: args.String(),
 			},
-			Type: "output",
+			Type:            "output",
+			MessageTypeName: output.Message,
+			Topic:           output.ToTopicName(service),
 		}
 
 		m.Topic = output.ToTopicName(service)
@@ -526,7 +576,9 @@ func buildProcessorOptions(pkg string, mod string, modelsPath string, service *m
 				Name: "SaveState",
 				Args: fmt.Sprintf("state *m%d.%s)", i, strcase.ToCamel(message)),
 			},
-			Type: "save",
+			Type:            "save",
+			MessageTypeName: processor.Persistence.Message,
+			Topic:           options.Group + "-table",
 		})
 
 		options.Context.Methods = append(options.Context.Methods, contextMethod{
@@ -534,8 +586,10 @@ func buildProcessorOptions(pkg string, mod string, modelsPath string, service *m
 				Name: "State",
 				Args: fmt.Sprintf(") *m%d.%s", i, strcase.ToCamel(message)),
 			},
-			Type:        "state",
-			MessageType: fmt.Sprintf("m%d.%s", i, strcase.ToCamel(message)),
+			Type:            "state",
+			MessageType:     fmt.Sprintf("m%d.%s", i, strcase.ToCamel(message)),
+			MessageTypeName: processor.Persistence.Message,
+			Topic:           options.Group + "-table",
 		})
 
 		c, ok := codecs[options.Group+"-table"]

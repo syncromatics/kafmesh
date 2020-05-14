@@ -9,7 +9,7 @@ import (
 )
 
 func Test_Resolver(t *testing.T) {
-	resolver := resolvers.NewResolver(nil)
+	resolver := resolvers.NewResolver(nil, nil)
 
 	assert.Assert(t, resolver.Query() != nil)
 	assert.Assert(t, resolver.Service() != nil)
