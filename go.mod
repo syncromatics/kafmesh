@@ -13,10 +13,8 @@ require (
 	github.com/facebookgo/stack v0.0.0-20160209184415-751773369052 // indirect
 	github.com/facebookgo/subset v0.0.0-20200203212716-c811ad88dec4 // indirect
 	github.com/go-chi/chi v3.3.2+incompatible
-	github.com/gogo/protobuf v1.3.1
 	github.com/golang/mock v1.4.1
 	github.com/golang/protobuf v1.4.0
-	github.com/google/martian v2.1.0+incompatible
 	github.com/gorilla/websocket v1.2.0
 	github.com/iancoleman/strcase v0.0.0-20191112232945-16388991a334
 	github.com/imdario/mergo v0.3.9 // indirect
