@@ -29,9 +29,9 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/Shopify/sarama"
 	"github.com/burdiyan/kafkautil"
 	"github.com/lovoo/goka"
-	"github.com/lovoo/goka/kafka"
 	"github.com/lovoo/goka/storage"
 	"github.com/pkg/errors"
 	"github.com/syndtr/goleveldb/leveldb/opt"
@@ -58,7 +58,7 @@ type Enricher_Processor interface {
 }
 
 type Enricher_ProcessorContext_Impl struct {
-	ctx goka.Context
+	ctx              goka.Context
 	processorContext *runner.ProcessorContext
 }
 
@@ -94,7 +94,7 @@ func (c *Enricher_ProcessorContext_Impl) Join_TestSerialDetails() *m1.Details {
 		c.processorContext.Join("testMesh.testSerial.details", "testSerial.details", "")
 		return nil
 	}
-	
+
 	m := v.(*m1.Details)
 	value, _ := json.Marshal(m)
 	c.processorContext.Join("testMesh.testSerial.details", "testSerial.details", string(value))
@@ -135,8 +135,8 @@ func Register_Enricher_Processor(service *runner.Service, impl Enricher_Processo
 	brokers := options.Brokers
 	protoWrapper := options.ProtoWrapper
 
-	config := kafka.NewConfig()
-	config.Consumer.Offsets.Initial = kafka.OffsetOldest
+	config := sarama.NewConfig()
+	config.Consumer.Offsets.Initial = sarama.OffsetOldest
 
 	opts := &opt.Options{
 		BlockCacheCapacity: opt.MiB * 1,
@@ -224,7 +224,7 @@ func Register_Enricher_Processor(service *runner.Service, impl Enricher_Processo
 
 	processor, err := goka.NewProcessor(brokers,
 		group,
-		goka.WithConsumerBuilder(kafka.ConsumerBuilderWithConfig(config)),
+		goka.WithConsumerGroupBuilder(goka.ConsumerGroupBuilderWithConfig(config)),
 		goka.WithStorageBuilder(builder),
 		goka.WithHasher(kafkautil.MurmurHasher))
 	if err != nil {
