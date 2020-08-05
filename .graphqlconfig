@@ -1,0 +1,5 @@
+{
+  "name": "Kafmesh GraphQL Schema",
+  "schemaPath": "docs/graphql/schema.graphql",
+   "includes": ["docs/graphql/*.graphqls"]
+}

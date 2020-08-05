@@ -1,0 +1,21 @@
+type Query {
+	services: [Service!]!
+	pods: [Pod!]!
+	topics: [Topic!]!
+	serviceById(id: ID!): Service
+	componentById(id: ID!): Component
+}
+
+input WatchProcessorInput {
+	processorId: ID!
+	key: String!
+}
+
+type Subscription {
+	watchProcessor(options: WatchProcessorInput): Operation!
+}
+
+schema {
+	query: Query
+	subscription: Subscription
+}

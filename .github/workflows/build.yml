@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: test
     if: github.ref == 'refs/heads/master'
-    steps: 
+    steps:
       - uses: syncromatics/gogitver-action@v0.0.1
         id: gogitver
 
@@ -30,3 +30,12 @@ jobs:
           release_name: Release ${{ steps.gogitver.outputs.version }}
           draft: false
           prerelease: false
+
+      - uses: actions/checkout@v1
+
+      - name: Ship the Docker image
+        run: make ship
+        env:
+          VERSION: ${{ steps.gogitver.outputs.version }}
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}

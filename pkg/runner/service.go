@@ -5,7 +5,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/syncromatics/kafmesh/internal/observability"
+	discoveryv1 "github.com/syncromatics/kafmesh/internal/protos/kafmesh/discovery/v1"
 	pingv1 "github.com/syncromatics/kafmesh/internal/protos/kafmesh/ping/v1"
+	watchv1 "github.com/syncromatics/kafmesh/internal/protos/kafmesh/watch/v1"
 	"github.com/syncromatics/kafmesh/internal/services"
 
 	"github.com/Shopify/sarama"
@@ -28,22 +31,32 @@ type Service struct {
 	brokers      []string
 	protoWrapper *ProtoWrapper
 	server       *grpc.Server
+	Metrics      *Metrics
+	watcher      *observability.Watcher
 
-	mtx        sync.Mutex
-	configured bool
-	running    bool
-	runners    []func(context.Context) func() error
+	mtx          sync.Mutex
+	configured   bool
+	running      bool
+	runners      []func(context.Context) func() error
+	DiscoverInfo *discoveryv1.Service
 }
 
 // NewService creates a new kafmesh service
 func NewService(brokers []string, protoRegistry *Registry, grpcServer *grpc.Server) *Service {
-	pingv1.RegisterPingAPIServer(grpcServer, &services.PingAPI{})
-
-	return &Service{
+	service := &Service{
 		brokers:      brokers,
 		protoWrapper: NewProtoWrapper(protoRegistry),
 		server:       grpcServer,
+		DiscoverInfo: &discoveryv1.Service{},
+		Metrics:      NewMetrics(),
+		watcher:      &observability.Watcher{},
 	}
+
+	pingv1.RegisterPingAPIServer(grpcServer, &services.PingAPI{})
+	discoveryv1.RegisterDiscoveryAPIServer(grpcServer, &services.DiscoverAPI{DiscoverInfo: service.DiscoverInfo})
+	watchv1.RegisterWatchAPIServer(grpcServer, &services.WatcherService{Watcher: service.watcher})
+
+	return service
 }
 
 // ConfigureKafka waits for kafka to be ready and configures the topics
@@ -148,5 +161,24 @@ func (s *Service) waitForKafkaToBeReady(ctx context.Context) error {
 		default:
 			time.Sleep(100 * time.Millisecond)
 		}
+	}
+}
+
+// ProcessorContext creates a processor context
+func (s *Service) ProcessorContext(ctx context.Context, component, processor, key string) *ProcessorContext {
+	var operation *watchv1.Operation
+
+	_, ok := s.watcher.WatchCount(component, processor, key)
+	if ok {
+		operation = &watchv1.Operation{}
+	}
+
+	return &ProcessorContext{
+		Context:   ctx,
+		operation: operation,
+		watcher:   s.watcher,
+		component: component,
+		processor: processor,
+		key:       key,
 	}
 }

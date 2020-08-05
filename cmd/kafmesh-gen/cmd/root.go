@@ -6,9 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/syncromatics/kafmesh/pkg/generator"
-
-	"github.com/syncromatics/kafmesh/pkg/models"
+	"github.com/syncromatics/kafmesh/internal/generator"
+	"github.com/syncromatics/kafmesh/internal/models"
 
 	"github.com/spf13/cobra"
 )
@@ -22,13 +21,12 @@ var rootCmd = &cobra.Command{
 			log.Fatal("wrong number of args. Should just have path to service config yaml")
 		}
 
-		servicePath := args[0]
-
 		exPath, err := os.Getwd()
 		if err != nil {
 			log.Fatal(err)
 		}
 
+		servicePath := args[0]
 		fullServicePath := filepath.Join(exPath, servicePath)
 
 		serviceFile, err := os.Open(fullServicePath)

@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package kafmesh.discovery.v1;
+
+option csharp_namespace = "Kafmesh.Discovery.V1";
+option go_package = "discoveryv1";
+option java_multiple_files = true;
+option java_outer_classname = "ComponentProto";
+option java_package = "com.kafmesh.discovery.v1";
+option objc_class_prefix = "KDX";
+
+import "kafmesh/discovery/v1/source.proto";
+import "kafmesh/discovery/v1/processor.proto";
+import "kafmesh/discovery/v1/sink.proto";
+import "kafmesh/discovery/v1/view.proto";
+import "kafmesh/discovery/v1/view_source.proto";
+import "kafmesh/discovery/v1/view_sink.proto";
+
+// Component is a part of a kafmesh service that completes a specific task.
+message Component {
+  string name = 1;
+  string description = 2;
+  repeated Source sources = 3;
+  repeated Processor processors = 4;
+  repeated Sink sinks = 5;
+  repeated View views = 6;
+  repeated ViewSource view_sources = 7;
+  repeated ViewSink view_sinks = 8;
+}

@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package kafmesh.watch.v1;
+
+option csharp_namespace = "Kafmesh.Watch.V1";
+option go_package = "watchv1";
+option java_multiple_files = true;
+option java_outer_classname = "WatchApiProto";
+option java_package = "com.kafmesh.watch.v1";
+option objc_class_prefix = "KWX";
+
+import "kafmesh/watch/v1/operation.proto";
+
+// WatchAPI provides watch capabilities.
+service WatchAPI {
+  // Processor will return operations from a processor based on key.
+  rpc Processor(ProcessorRequest) returns (stream ProcessorResponse);
+}
+
+message ProcessorRequest {
+  string component = 1;
+  string processor = 2;
+  string key = 3;
+}
+
+message ProcessorResponse { Operation operation = 1; }
