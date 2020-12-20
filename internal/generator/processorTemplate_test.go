@@ -136,7 +136,10 @@ func Register_Enricher_Processor(service *runner.Service, impl Enricher_Processo
 	protoWrapper := options.ProtoWrapper
 
 	config := sarama.NewConfig()
+	config.Version = sarama.MaxVersion
 	config.Consumer.Offsets.Initial = sarama.OffsetOldest
+	config.Consumer.Offsets.AutoCommit.Enable = true
+	config.Consumer.Offsets.CommitInterval = 1 * time.Second
 
 	opts := &opt.Options{
 		BlockCacheCapacity: opt.MiB * 1,

@@ -28,6 +28,9 @@ func ConfigureTopics(ctx context.Context, brokers []string, topics []Topic) erro
 
 	config := sarama.NewConfig()
 	config.Version = sarama.MaxVersion
+	config.Consumer.Offsets.Initial = sarama.OffsetOldest
+	config.Consumer.Offsets.AutoCommit.Enable = true
+	config.Consumer.Offsets.CommitInterval = 1 * time.Second
 
 	client, err := sarama.NewClusterAdmin(brokers, config)
 	if err != nil {

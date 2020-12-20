@@ -137,6 +137,9 @@ func (s *Service) waitForKafkaToBeReady(ctx context.Context) error {
 	var lastErr error
 	config := sarama.NewConfig()
 	config.Version = sarama.MaxVersion
+	config.Consumer.Offsets.Initial = sarama.OffsetOldest
+	config.Consumer.Offsets.AutoCommit.Enable = true
+	config.Consumer.Offsets.CommitInterval = 1 * time.Second
 
 	for {
 		var brokers []*sarama.Broker
