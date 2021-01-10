@@ -49,7 +49,9 @@ func (r *SinkRunner) Run(ctx context.Context) func() error {
 	return func() error {
 		config := cluster.NewConfig()
 		config.Consumer.Offsets.Initial = sarama.OffsetOldest
-		config.Version = sarama.V2_0_0_0
+		config.Consumer.Offsets.AutoCommit.Enable = true
+		config.Consumer.Offsets.CommitInterval = 1 * time.Second
+		config.Version = sarama.MaxVersion
 
 		cg, err := cluster.NewConsumer(r.brokers, r.definition.Group(), []string{r.definition.Topic()}, config)
 		if err != nil {

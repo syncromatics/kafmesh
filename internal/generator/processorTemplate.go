@@ -25,9 +25,9 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/Shopify/sarama"
 	"github.com/burdiyan/kafkautil"
 	"github.com/lovoo/goka"
-	"github.com/lovoo/goka/kafka"
 	"github.com/lovoo/goka/storage"
 	"github.com/pkg/errors"
 	"github.com/syndtr/goleveldb/leveldb/opt"
@@ -58,7 +58,7 @@ type {{ .Name }}_Processor interface {
 {{ $impl := "" }}
 {{ with .Context -}}
 type {{ .Name }}_ProcessorContext_Impl struct {
-	ctx goka.Context
+	ctx              goka.Context
 	processorContext *runner.ProcessorContext
 }
 
@@ -95,7 +95,7 @@ func (c *{{$c}}_ProcessorContext_Impl) {{.Name}}({{ .Args }} {
 		c.processorContext.Join("{{$t.Topic}}", "{{$t.MessageTypeName}}", "")
 		return nil
 	}
-	
+
 	m := v.(*{{- $t.MessageType -}})
 	value, _ := json.Marshal(m)
 	c.processorContext.Join("{{ $t.Topic }}", "{{$t.MessageTypeName}}", string(value))
@@ -140,8 +140,11 @@ func Register_{{ .Name }}_Processor(service *runner.Service, impl {{ .Name }}_Pr
 	brokers := options.Brokers
 	protoWrapper := options.ProtoWrapper
 
-	config := kafka.NewConfig()
-	config.Consumer.Offsets.Initial = kafka.OffsetOldest
+	config := sarama.NewConfig()
+	config.Version = sarama.MaxVersion
+	config.Consumer.Offsets.Initial = sarama.OffsetOldest
+	config.Consumer.Offsets.AutoCommit.Enable = true
+	config.Consumer.Offsets.CommitInterval = 1 * time.Second
 
 	opts := &opt.Options{
 		BlockCacheCapacity: opt.MiB * 1,
@@ -204,7 +207,7 @@ func Register_{{ .Name }}_Processor(service *runner.Service, impl {{ .Name }}_Pr
 
 	processor, err := goka.NewProcessor(brokers,
 		group,
-		goka.WithConsumerBuilder(kafka.ConsumerBuilderWithConfig(config)),
+		goka.WithConsumerGroupBuilder(goka.ConsumerGroupBuilderWithConfig(config)),
 		goka.WithStorageBuilder(builder),
 		goka.WithHasher(kafkautil.MurmurHasher))
 	if err != nil {
