@@ -80,6 +80,8 @@ message DetailsEnriched {
 	string name = 1;
 }`), os.ModePerm)
 
+	rawType := "raw"
+	externalTopicName := "externalTopic"
 	newPath := path.Join(tmpDir, "defin")
 	options := generator.Options{
 		Service: &models.Service{
@@ -105,39 +107,39 @@ message DetailsEnriched {
 		RootPath:        newPath,
 		DefinitionsPath: newPath,
 		Components: []*models.Component{
-			&models.Component{
+			{
 				Name: "details",
 				Processors: []models.Processor{
-					models.Processor{
+					{
 						Name: "enricher",
 						Inputs: []models.Input{
-							models.Input{
+							{
 								TopicDefinition: models.TopicDefinition{
 									Message: "testId.test",
 								},
 							},
-							models.Input{
+							{
 								TopicDefinition: models.TopicDefinition{
 									Message: "testId.test2",
 								},
 							},
 						},
 						Lookups: []models.Lookup{
-							models.Lookup{
+							{
 								TopicDefinition: models.TopicDefinition{
 									Message: "testSerial.details",
 								},
 							},
 						},
 						Joins: []models.Join{
-							models.Join{
+							{
 								TopicDefinition: models.TopicDefinition{
 									Message: "testSerial.details",
 								},
 							},
 						},
 						Outputs: []models.Output{
-							models.Output{
+							{
 								TopicDefinition: models.TopicDefinition{
 									Message: "testSerial.detailsEnriched",
 								},
@@ -149,16 +151,40 @@ message DetailsEnriched {
 							},
 						},
 					},
+					{
+						Name: "enricher",
+						Inputs: []models.Input{
+							{
+								TopicDefinition: models.TopicDefinition{
+									Message: "someMessage",
+									Type:    &rawType,
+									Topic:   &externalTopicName,
+								},
+							},
+							{
+								TopicDefinition: models.TopicDefinition{
+									Message: "testId.test2",
+								},
+							},
+						},
+						Outputs: []models.Output{
+							{
+								TopicDefinition: models.TopicDefinition{
+									Message: "testSerial.detailsEnriched",
+								},
+							},
+						},
+					},
 				},
 				Sources: []models.Source{
-					models.Source{
+					{
 						TopicDefinition: models.TopicDefinition{
 							Message: "testSerial.details",
 						},
 					},
 				},
 				Sinks: []models.Sink{
-					models.Sink{
+					{
 						Name: "Enriched Data Postgres",
 						TopicDefinition: models.TopicDefinition{
 							Message: "testSerial.detailsEnriched",
@@ -166,14 +192,14 @@ message DetailsEnriched {
 					},
 				},
 				Views: []models.View{
-					models.View{
+					{
 						TopicDefinition: models.TopicDefinition{
 							Message: "testSerial.detailsEnriched",
 						},
 					},
 				},
 				ViewSources: []models.ViewSource{
-					models.ViewSource{
+					{
 						Name: "test to database",
 						TopicDefinition: models.TopicDefinition{
 							Message: "testId.test",
@@ -181,7 +207,7 @@ message DetailsEnriched {
 					},
 				},
 				ViewSinks: []models.ViewSink{
-					models.ViewSink{
+					{
 						Name: "test to api",
 						TopicDefinition: models.TopicDefinition{
 							Message: "testId.test",
