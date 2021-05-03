@@ -98,6 +98,28 @@ func Protoc(options protoOptions) error {
 		if cmd.ProcessState.ExitCode() != 0 {
 			return errors.Errorf("protoc did not return 0")
 		}
+
+		// run proto generation for grpc objects
+		grpcContext := strings.ReplaceAll(contents, "go_out", "go-grpc_out")
+		grpcContext = strings.ReplaceAll(grpcContext, "go_opt", "go-grpc_opt")
+		err = ioutil.WriteFile(configFile+"-grpc", []byte(grpcContext), os.ModePerm)
+		if err != nil {
+			return errors.Wrap(err, "failed to create config file")
+		}
+
+		errBuf = bytes.NewBuffer([]byte{})
+		cmd = exec.Command("protoc", "@"+configFile+"-grpc")
+		cmd.Env = os.Environ()
+		cmd.Stderr = errBuf
+
+		_, err = cmd.Output()
+		if err != nil {
+			return errors.Wrapf(err, "failed to run protoc grpc: %s", errBuf.String())
+		}
+
+		if cmd.ProcessState.ExitCode() != 0 {
+			return errors.Errorf("protoc grpc did not return 0")
+		}
 	}
 
 	return nil
