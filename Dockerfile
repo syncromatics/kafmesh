@@ -1,4 +1,4 @@
-FROM golang:1.13 as build
+FROM golang:1.16 as build
 
 WORKDIR /build
 
@@ -20,9 +20,9 @@ RUN go build -o ./discovery ./cmd/kafmesh-discovery
 #testing
 FROM build as test
 
-ENV GOPATH=/go
 RUN apt update && apt install -y protobuf-compiler
 RUN go get -u github.com/golang/protobuf/protoc-gen-go
+RUN go get -u google.golang.org/grpc/cmd/protoc-gen-go-grpc
 RUN go get github.com/golang/mock/mockgen@latest
 
 CMD go test -race -coverprofile=/artifacts/coverage.txt -covermode=atomic -p 1 ./...

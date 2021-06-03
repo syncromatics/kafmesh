@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"os/exec"
 	"path"
 	"strings"
@@ -62,6 +63,7 @@ func mockGen(source string, destination string, pkg string) error {
 	errBuf := bytes.NewBuffer([]byte{})
 
 	cmd := exec.Command("mockgen", args...)
+	cmd.Env = os.Environ()
 	cmd.Stderr = errBuf
 
 	_, err := cmd.Output()

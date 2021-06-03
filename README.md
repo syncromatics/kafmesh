@@ -30,6 +30,9 @@ Install the kafmesh generator by using:
 
 `go get -u github.com/syncromatics/kafmesh/cmd/kafmesh-gen`
 
+You will also need [protoc](http://google.github.io/proto-lens/installing-protoc.html)
+and you will need to install protoc-gen-go `go get -u github.com/golang/protobuf/protoc-gen-go`
+
 ### Concepts
 
 A kafmesh service is built from components that have specific functions. A
