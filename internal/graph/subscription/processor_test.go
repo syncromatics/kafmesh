@@ -8,6 +8,7 @@ import (
 	"github.com/syncromatics/kafmesh/internal/graph/model"
 	subscription "github.com/syncromatics/kafmesh/internal/graph/subscription"
 	watchv1 "github.com/syncromatics/kafmesh/internal/protos/kafmesh/watch/v1"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 
 	"github.com/golang/mock/gomock"
@@ -85,8 +86,8 @@ func Test_Processor_WatchProcessor(t *testing.T) {
 			Component: "component1",
 			Processor: "testProcessor",
 			Key:       "tester",
-		}).
-		DoAndReturn(func(ctx context.Context, request *watchv1.ProcessorRequest) (watchv1.WatchAPI_ProcessorClient, error) {
+		}, gomock.Any()).
+		DoAndReturn(func(ctx context.Context, request *watchv1.ProcessorRequest, opts ...grpc.CallOption) (watchv1.WatchAPI_ProcessorClient, error) {
 			return &sub{
 				ctx: ctx,
 				messages: []*watchv1.ProcessorResponse{
@@ -164,8 +165,8 @@ func Test_Processor_WatchProcessor(t *testing.T) {
 			Component: "component1",
 			Processor: "testProcessor",
 			Key:       "tester",
-		}).
-		DoAndReturn(func(ctx context.Context, request *watchv1.ProcessorRequest) (watchv1.WatchAPI_ProcessorClient, error) {
+		}, gomock.Any()).
+		DoAndReturn(func(ctx context.Context, request *watchv1.ProcessorRequest, opts ...grpc.CallOption) (watchv1.WatchAPI_ProcessorClient, error) {
 			return &sub{
 				ctx: ctx,
 				messages: []*watchv1.ProcessorResponse{
