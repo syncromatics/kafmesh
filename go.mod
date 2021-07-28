@@ -40,7 +40,8 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/syncromatics/go-kit v1.5.1
 	github.com/syncromatics/proto-schema-registry v0.7.3
-	github.com/vektah/gqlparser/v2 v2.2.0
+	github.com/vektah/dataloaden v0.3.0 // indirect
+	github.com/vektah/gqlparser/v2 v2.1.0
 	github.com/yargevad/filepathx v0.0.0-20161019152617-907099cb5a62
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.16.0 // indirect

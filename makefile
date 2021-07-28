@@ -12,8 +12,14 @@ proto-lint:
 generate: proto-lint
 	mkdir -p internal/protos
 	docker run -v "$(PWD)/docs/protos:/work" -v $(PWD):/output uber/prototool:1.8.1 prototool generate
+	
+	go get github.com/rakyll/statik
 	statik -f -src=./docs/migrations -dest=./internal/storage
-	gqlgen generate --config docs/graphql/gqlgen.yml
+	
+	go get github.com/99designs/gqlgen
+	go run github.com/99designs/gqlgen generate --config docs/graphql/gqlgen.yml
+	
+	go get github.com/vektah/dataloaden
 	go generate ./...
 
 build-local:

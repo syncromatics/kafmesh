@@ -7,11 +7,11 @@ package scraper_test
 import (
 	context "context"
 	gomock "github.com/golang/mock/gomock"
-	discoveryv1 "github.com/syncromatics/kafmesh/internal/protos/kafmesh/discovery/v1"
+	v1 "github.com/syncromatics/kafmesh/internal/protos/kafmesh/discovery/v1"
 	scraper "github.com/syncromatics/kafmesh/internal/scraper"
 	grpc "google.golang.org/grpc"
-	v1 "k8s.io/api/core/v1"
-	v10 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	v10 "k8s.io/api/core/v1"
+	v11 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	reflect "reflect"
 )
 
@@ -39,10 +39,10 @@ func (m *MockPodLister) EXPECT() *MockPodListerMockRecorder {
 }
 
 // List mocks base method
-func (m *MockPodLister) List(arg0 context.Context, arg1 v10.ListOptions) (*v1.PodList, error) {
+func (m *MockPodLister) List(arg0 context.Context, arg1 v11.ListOptions) (*v10.PodList, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "List", arg0, arg1)
-	ret0, _ := ret[0].(*v1.PodList)
+	ret0, _ := ret[0].(*v10.PodList)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -77,14 +77,14 @@ func (m *MockDiscoveryClient) EXPECT() *MockDiscoveryClientMockRecorder {
 }
 
 // GetServiceInfo mocks base method
-func (m *MockDiscoveryClient) GetServiceInfo(arg0 context.Context, arg1 *discoveryv1.GetServiceInfoRequest, arg2 ...grpc.CallOption) (*discoveryv1.GetServiceInfoResponse, error) {
+func (m *MockDiscoveryClient) GetServiceInfo(arg0 context.Context, arg1 *v1.GetServiceInfoRequest, arg2 ...grpc.CallOption) (*v1.GetServiceInfoResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0, arg1}
 	for _, a := range arg2 {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetServiceInfo", varargs...)
-	ret0, _ := ret[0].(*discoveryv1.GetServiceInfoResponse)
+	ret0, _ := ret[0].(*v1.GetServiceInfoResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
