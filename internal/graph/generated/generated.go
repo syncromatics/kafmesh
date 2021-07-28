@@ -1254,14 +1254,14 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 }
 
 var sources = []*ast.Source{
-	&ast.Source{Name: "docs/graphql/directives.graphql", Input: `# GQL Directives
+	{Name: "docs/graphql/directives.graphql", Input: `# GQL Directives
 # This part is fairly necessary and is described in the gql documentation
 # https://gqlgen.com/config/
 directive @goModel(model: String, models: [String!]) on OBJECT | INPUT_OBJECT | SCALAR | ENUM | INTERFACE | UNION
 
 directive @goField(forceResolver: Boolean, name: String) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
 `, BuiltIn: false},
-	&ast.Source{Name: "docs/graphql/domain.graphql", Input: `type Service {
+	{Name: "docs/graphql/domain.graphql", Input: `type Service {
 	id: ID!
 	name: String!
 	description: String!
@@ -1389,7 +1389,7 @@ type View {
 	pods: [Pod!]! @goField(forceResolver: true)
 }
 `, BuiltIn: false},
-	&ast.Source{Name: "docs/graphql/observability.graphql", Input: `type Operation {
+	{Name: "docs/graphql/observability.graphql", Input: `type Operation {
 	input: Input!
 	startTime: Int!
 	endTime: Int!
@@ -1438,8 +1438,9 @@ type Output implements Action {
 	message: String!
 	value: String!
 	key: String!
-}`, BuiltIn: false},
-	&ast.Source{Name: "docs/graphql/schema.graphql", Input: `type Query {
+}
+`, BuiltIn: false},
+	{Name: "docs/graphql/schema.graphql", Input: `type Query {
 	services: [Service!]!
 	pods: [Pod!]!
 	topics: [Topic!]!
@@ -1473,6 +1474,7 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 	args := map[string]interface{}{}
 	var arg0 string
 	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
@@ -1487,6 +1489,7 @@ func (ec *executionContext) field_Query_componentById_args(ctx context.Context, 
 	args := map[string]interface{}{}
 	var arg0 int
 	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
 		arg0, err = ec.unmarshalNID2int(ctx, tmp)
 		if err != nil {
 			return nil, err
@@ -1501,6 +1504,7 @@ func (ec *executionContext) field_Query_serviceById_args(ctx context.Context, ra
 	args := map[string]interface{}{}
 	var arg0 int
 	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
 		arg0, err = ec.unmarshalNID2int(ctx, tmp)
 		if err != nil {
 			return nil, err
@@ -1515,6 +1519,7 @@ func (ec *executionContext) field_Subscription_watchProcessor_args(ctx context.C
 	args := map[string]interface{}{}
 	var arg0 *model.WatchProcessorInput
 	if tmp, ok := rawArgs["options"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("options"))
 		arg0, err = ec.unmarshalOWatchProcessorInput2ᚖgithubᚗcomᚋsyncromaticsᚋkafmeshᚋinternalᚋgraphᚋmodelᚐWatchProcessorInput(ctx, tmp)
 		if err != nil {
 			return nil, err
@@ -1529,6 +1534,7 @@ func (ec *executionContext) field___Type_enumValues_args(ctx context.Context, ra
 	args := map[string]interface{}{}
 	var arg0 bool
 	if tmp, ok := rawArgs["includeDeprecated"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("includeDeprecated"))
 		arg0, err = ec.unmarshalOBoolean2bool(ctx, tmp)
 		if err != nil {
 			return nil, err
@@ -1543,6 +1549,7 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 	args := map[string]interface{}{}
 	var arg0 bool
 	if tmp, ok := rawArgs["includeDeprecated"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("includeDeprecated"))
 		arg0, err = ec.unmarshalOBoolean2bool(ctx, tmp)
 		if err != nil {
 			return nil, err
@@ -1568,10 +1575,11 @@ func (ec *executionContext) _Component_id(ctx context.Context, field graphql.Col
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Component",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "Component",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -1602,10 +1610,11 @@ func (ec *executionContext) _Component_service(ctx context.Context, field graphq
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Component",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "Component",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -1636,10 +1645,11 @@ func (ec *executionContext) _Component_name(ctx context.Context, field graphql.C
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Component",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "Component",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -1670,10 +1680,11 @@ func (ec *executionContext) _Component_description(ctx context.Context, field gr
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Component",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "Component",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -1704,10 +1715,11 @@ func (ec *executionContext) _Component_processors(ctx context.Context, field gra
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Component",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "Component",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -1738,10 +1750,11 @@ func (ec *executionContext) _Component_sinks(ctx context.Context, field graphql.
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Component",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "Component",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -1772,10 +1785,11 @@ func (ec *executionContext) _Component_sources(ctx context.Context, field graphq
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Component",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "Component",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -1806,10 +1820,11 @@ func (ec *executionContext) _Component_viewSinks(ctx context.Context, field grap
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Component",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "Component",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -1840,10 +1855,11 @@ func (ec *executionContext) _Component_viewSources(ctx context.Context, field gr
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Component",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "Component",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -1874,10 +1890,11 @@ func (ec *executionContext) _Component_views(ctx context.Context, field graphql.
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Component",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "Component",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -1908,10 +1925,11 @@ func (ec *executionContext) _Component_dependsOn(ctx context.Context, field grap
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Component",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "Component",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -1942,10 +1960,11 @@ func (ec *executionContext) _GetState_topic(ctx context.Context, field graphql.C
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "GetState",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "GetState",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -1976,10 +1995,11 @@ func (ec *executionContext) _GetState_message(ctx context.Context, field graphql
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "GetState",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "GetState",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -2010,10 +2030,11 @@ func (ec *executionContext) _GetState_value(ctx context.Context, field graphql.C
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "GetState",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "GetState",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -2044,10 +2065,11 @@ func (ec *executionContext) _Input_topic(ctx context.Context, field graphql.Coll
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Input",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "Input",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -2078,10 +2100,11 @@ func (ec *executionContext) _Input_message(ctx context.Context, field graphql.Co
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Input",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "Input",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -2112,10 +2135,11 @@ func (ec *executionContext) _Input_value(ctx context.Context, field graphql.Coll
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Input",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "Input",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -2146,10 +2170,11 @@ func (ec *executionContext) _Join_topic(ctx context.Context, field graphql.Colle
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Join",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "Join",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -2180,10 +2205,11 @@ func (ec *executionContext) _Join_message(ctx context.Context, field graphql.Col
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Join",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "Join",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -2214,10 +2240,11 @@ func (ec *executionContext) _Join_value(ctx context.Context, field graphql.Colle
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Join",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "Join",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -2248,10 +2275,11 @@ func (ec *executionContext) _Lookup_topic(ctx context.Context, field graphql.Col
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Lookup",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "Lookup",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -2282,10 +2310,11 @@ func (ec *executionContext) _Lookup_message(ctx context.Context, field graphql.C
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Lookup",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "Lookup",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -2316,10 +2345,11 @@ func (ec *executionContext) _Lookup_value(ctx context.Context, field graphql.Col
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Lookup",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "Lookup",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -2350,10 +2380,11 @@ func (ec *executionContext) _Lookup_key(ctx context.Context, field graphql.Colle
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Lookup",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "Lookup",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -2384,10 +2415,11 @@ func (ec *executionContext) _Operation_input(ctx context.Context, field graphql.
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Operation",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "Operation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -2418,10 +2450,11 @@ func (ec *executionContext) _Operation_startTime(ctx context.Context, field grap
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Operation",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "Operation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -2452,10 +2485,11 @@ func (ec *executionContext) _Operation_endTime(ctx context.Context, field graphq
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Operation",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "Operation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -2486,10 +2520,11 @@ func (ec *executionContext) _Operation_actions(ctx context.Context, field graphq
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Operation",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "Operation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -2520,10 +2555,11 @@ func (ec *executionContext) _Output_topic(ctx context.Context, field graphql.Col
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Output",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "Output",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -2554,10 +2590,11 @@ func (ec *executionContext) _Output_message(ctx context.Context, field graphql.C
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Output",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "Output",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -2588,10 +2625,11 @@ func (ec *executionContext) _Output_value(ctx context.Context, field graphql.Col
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Output",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "Output",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -2622,10 +2660,11 @@ func (ec *executionContext) _Output_key(ctx context.Context, field graphql.Colle
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Output",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "Output",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -2656,10 +2695,11 @@ func (ec *executionContext) _Pod_id(ctx context.Context, field graphql.Collected
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Pod",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "Pod",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -2690,10 +2730,11 @@ func (ec *executionContext) _Pod_name(ctx context.Context, field graphql.Collect
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Pod",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "Pod",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -2724,10 +2765,11 @@ func (ec *executionContext) _Pod_processors(ctx context.Context, field graphql.C
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Pod",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "Pod",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -2758,10 +2800,11 @@ func (ec *executionContext) _Pod_sinks(ctx context.Context, field graphql.Collec
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Pod",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "Pod",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -2792,10 +2835,11 @@ func (ec *executionContext) _Pod_sources(ctx context.Context, field graphql.Coll
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Pod",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "Pod",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -2826,10 +2870,11 @@ func (ec *executionContext) _Pod_viewSinks(ctx context.Context, field graphql.Co
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Pod",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "Pod",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -2860,10 +2905,11 @@ func (ec *executionContext) _Pod_viewSources(ctx context.Context, field graphql.
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Pod",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "Pod",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -2894,10 +2940,11 @@ func (ec *executionContext) _Pod_views(ctx context.Context, field graphql.Collec
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Pod",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "Pod",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -2928,10 +2975,11 @@ func (ec *executionContext) _Processor_id(ctx context.Context, field graphql.Col
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Processor",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "Processor",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -2962,10 +3010,11 @@ func (ec *executionContext) _Processor_component(ctx context.Context, field grap
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Processor",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "Processor",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -2996,10 +3045,11 @@ func (ec *executionContext) _Processor_name(ctx context.Context, field graphql.C
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Processor",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "Processor",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -3030,10 +3080,11 @@ func (ec *executionContext) _Processor_description(ctx context.Context, field gr
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Processor",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "Processor",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -3064,10 +3115,11 @@ func (ec *executionContext) _Processor_groupName(ctx context.Context, field grap
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Processor",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "Processor",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -3098,10 +3150,11 @@ func (ec *executionContext) _Processor_persistence(ctx context.Context, field gr
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Processor",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "Processor",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -3129,10 +3182,11 @@ func (ec *executionContext) _Processor_pods(ctx context.Context, field graphql.C
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Processor",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "Processor",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -3163,10 +3217,11 @@ func (ec *executionContext) _Processor_inputs(ctx context.Context, field graphql
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Processor",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "Processor",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -3197,10 +3252,11 @@ func (ec *executionContext) _Processor_joins(ctx context.Context, field graphql.
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Processor",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "Processor",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -3231,10 +3287,11 @@ func (ec *executionContext) _Processor_lookups(ctx context.Context, field graphq
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Processor",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "Processor",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -3265,10 +3322,11 @@ func (ec *executionContext) _Processor_outputs(ctx context.Context, field graphq
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Processor",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "Processor",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -3299,10 +3357,11 @@ func (ec *executionContext) _ProcessorInput_id(ctx context.Context, field graphq
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "ProcessorInput",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "ProcessorInput",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -3333,10 +3392,11 @@ func (ec *executionContext) _ProcessorInput_processor(ctx context.Context, field
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "ProcessorInput",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "ProcessorInput",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -3367,10 +3427,11 @@ func (ec *executionContext) _ProcessorInput_topic(ctx context.Context, field gra
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "ProcessorInput",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "ProcessorInput",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -3401,10 +3462,11 @@ func (ec *executionContext) _ProcessorJoin_id(ctx context.Context, field graphql
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "ProcessorJoin",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "ProcessorJoin",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -3435,10 +3497,11 @@ func (ec *executionContext) _ProcessorJoin_processor(ctx context.Context, field 
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "ProcessorJoin",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "ProcessorJoin",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -3469,10 +3532,11 @@ func (ec *executionContext) _ProcessorJoin_topic(ctx context.Context, field grap
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "ProcessorJoin",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "ProcessorJoin",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -3503,10 +3567,11 @@ func (ec *executionContext) _ProcessorLookup_id(ctx context.Context, field graph
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "ProcessorLookup",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "ProcessorLookup",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -3537,10 +3602,11 @@ func (ec *executionContext) _ProcessorLookup_processor(ctx context.Context, fiel
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "ProcessorLookup",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "ProcessorLookup",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -3571,10 +3637,11 @@ func (ec *executionContext) _ProcessorLookup_topic(ctx context.Context, field gr
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "ProcessorLookup",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "ProcessorLookup",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -3605,10 +3672,11 @@ func (ec *executionContext) _ProcessorOutput_id(ctx context.Context, field graph
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "ProcessorOutput",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "ProcessorOutput",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -3639,10 +3707,11 @@ func (ec *executionContext) _ProcessorOutput_processor(ctx context.Context, fiel
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "ProcessorOutput",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "ProcessorOutput",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -3673,10 +3742,11 @@ func (ec *executionContext) _ProcessorOutput_topic(ctx context.Context, field gr
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "ProcessorOutput",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "ProcessorOutput",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -3707,10 +3777,11 @@ func (ec *executionContext) _Query_services(ctx context.Context, field graphql.C
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Query",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -3741,10 +3812,11 @@ func (ec *executionContext) _Query_pods(ctx context.Context, field graphql.Colle
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Query",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -3775,10 +3847,11 @@ func (ec *executionContext) _Query_topics(ctx context.Context, field graphql.Col
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Query",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -3809,10 +3882,11 @@ func (ec *executionContext) _Query_serviceById(ctx context.Context, field graphq
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Query",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -3847,10 +3921,11 @@ func (ec *executionContext) _Query_componentById(ctx context.Context, field grap
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Query",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -3885,10 +3960,11 @@ func (ec *executionContext) _Query___type(ctx context.Context, field graphql.Col
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Query",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -3923,10 +3999,11 @@ func (ec *executionContext) _Query___schema(ctx context.Context, field graphql.C
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Query",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -3954,10 +4031,11 @@ func (ec *executionContext) _Service_id(ctx context.Context, field graphql.Colle
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Service",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "Service",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -3988,10 +4066,11 @@ func (ec *executionContext) _Service_name(ctx context.Context, field graphql.Col
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Service",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "Service",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -4022,10 +4101,11 @@ func (ec *executionContext) _Service_description(ctx context.Context, field grap
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Service",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "Service",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -4056,10 +4136,11 @@ func (ec *executionContext) _Service_components(ctx context.Context, field graph
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Service",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "Service",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -4090,10 +4171,11 @@ func (ec *executionContext) _Service_dependsOn(ctx context.Context, field graphq
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Service",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "Service",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -4124,10 +4206,11 @@ func (ec *executionContext) _SetState_topic(ctx context.Context, field graphql.C
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "SetState",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "SetState",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -4158,10 +4241,11 @@ func (ec *executionContext) _SetState_message(ctx context.Context, field graphql
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "SetState",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "SetState",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -4192,10 +4276,11 @@ func (ec *executionContext) _SetState_value(ctx context.Context, field graphql.C
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "SetState",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "SetState",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -4226,10 +4311,11 @@ func (ec *executionContext) _Sink_id(ctx context.Context, field graphql.Collecte
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Sink",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "Sink",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -4260,10 +4346,11 @@ func (ec *executionContext) _Sink_component(ctx context.Context, field graphql.C
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Sink",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "Sink",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -4294,10 +4381,11 @@ func (ec *executionContext) _Sink_name(ctx context.Context, field graphql.Collec
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Sink",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "Sink",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -4328,10 +4416,11 @@ func (ec *executionContext) _Sink_description(ctx context.Context, field graphql
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Sink",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "Sink",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -4362,10 +4451,11 @@ func (ec *executionContext) _Sink_topic(ctx context.Context, field graphql.Colle
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Sink",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "Sink",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -4396,10 +4486,11 @@ func (ec *executionContext) _Sink_pods(ctx context.Context, field graphql.Collec
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Sink",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "Sink",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -4430,10 +4521,11 @@ func (ec *executionContext) _Source_id(ctx context.Context, field graphql.Collec
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Source",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "Source",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -4464,10 +4556,11 @@ func (ec *executionContext) _Source_component(ctx context.Context, field graphql
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Source",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "Source",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -4498,10 +4591,11 @@ func (ec *executionContext) _Source_topic(ctx context.Context, field graphql.Col
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Source",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "Source",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -4532,10 +4626,11 @@ func (ec *executionContext) _Source_pods(ctx context.Context, field graphql.Coll
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Source",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "Source",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -4566,10 +4661,11 @@ func (ec *executionContext) _Subscription_watchProcessor(ctx context.Context, fi
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Subscription",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "Subscription",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -4617,10 +4713,11 @@ func (ec *executionContext) _Topic_id(ctx context.Context, field graphql.Collect
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Topic",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "Topic",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -4651,10 +4748,11 @@ func (ec *executionContext) _Topic_name(ctx context.Context, field graphql.Colle
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Topic",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "Topic",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -4685,10 +4783,11 @@ func (ec *executionContext) _Topic_message(ctx context.Context, field graphql.Co
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Topic",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "Topic",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -4719,10 +4818,11 @@ func (ec *executionContext) _Topic_processorInputs(ctx context.Context, field gr
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Topic",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "Topic",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -4753,10 +4853,11 @@ func (ec *executionContext) _Topic_processorJoins(ctx context.Context, field gra
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Topic",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "Topic",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -4787,10 +4888,11 @@ func (ec *executionContext) _Topic_processorLookups(ctx context.Context, field g
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Topic",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "Topic",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -4821,10 +4923,11 @@ func (ec *executionContext) _Topic_processorOutputs(ctx context.Context, field g
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Topic",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "Topic",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -4855,10 +4958,11 @@ func (ec *executionContext) _Topic_processorPersistences(ctx context.Context, fi
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Topic",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "Topic",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -4889,10 +4993,11 @@ func (ec *executionContext) _Topic_sinks(ctx context.Context, field graphql.Coll
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Topic",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "Topic",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -4923,10 +5028,11 @@ func (ec *executionContext) _Topic_sources(ctx context.Context, field graphql.Co
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Topic",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "Topic",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -4957,10 +5063,11 @@ func (ec *executionContext) _Topic_viewSinks(ctx context.Context, field graphql.
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Topic",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "Topic",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -4991,10 +5098,11 @@ func (ec *executionContext) _Topic_viewSources(ctx context.Context, field graphq
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Topic",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "Topic",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -5025,10 +5133,11 @@ func (ec *executionContext) _Topic_views(ctx context.Context, field graphql.Coll
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "Topic",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "Topic",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -5059,10 +5168,11 @@ func (ec *executionContext) _View_id(ctx context.Context, field graphql.Collecte
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "View",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "View",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -5093,10 +5203,11 @@ func (ec *executionContext) _View_component(ctx context.Context, field graphql.C
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "View",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "View",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -5127,10 +5238,11 @@ func (ec *executionContext) _View_topic(ctx context.Context, field graphql.Colle
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "View",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "View",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -5161,10 +5273,11 @@ func (ec *executionContext) _View_pods(ctx context.Context, field graphql.Collec
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "View",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "View",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -5195,10 +5308,11 @@ func (ec *executionContext) _ViewSink_id(ctx context.Context, field graphql.Coll
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "ViewSink",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "ViewSink",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -5229,10 +5343,11 @@ func (ec *executionContext) _ViewSink_component(ctx context.Context, field graph
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "ViewSink",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "ViewSink",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -5263,10 +5378,11 @@ func (ec *executionContext) _ViewSink_name(ctx context.Context, field graphql.Co
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "ViewSink",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "ViewSink",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -5297,10 +5413,11 @@ func (ec *executionContext) _ViewSink_description(ctx context.Context, field gra
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "ViewSink",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "ViewSink",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -5331,10 +5448,11 @@ func (ec *executionContext) _ViewSink_topic(ctx context.Context, field graphql.C
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "ViewSink",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "ViewSink",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -5365,10 +5483,11 @@ func (ec *executionContext) _ViewSink_pods(ctx context.Context, field graphql.Co
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "ViewSink",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "ViewSink",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -5399,10 +5518,11 @@ func (ec *executionContext) _ViewSource_id(ctx context.Context, field graphql.Co
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "ViewSource",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "ViewSource",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -5433,10 +5553,11 @@ func (ec *executionContext) _ViewSource_component(ctx context.Context, field gra
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "ViewSource",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "ViewSource",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -5467,10 +5588,11 @@ func (ec *executionContext) _ViewSource_description(ctx context.Context, field g
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "ViewSource",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "ViewSource",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -5501,10 +5623,11 @@ func (ec *executionContext) _ViewSource_name(ctx context.Context, field graphql.
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "ViewSource",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "ViewSource",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -5535,10 +5658,11 @@ func (ec *executionContext) _ViewSource_topic(ctx context.Context, field graphql
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "ViewSource",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "ViewSource",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -5569,10 +5693,11 @@ func (ec *executionContext) _ViewSource_pods(ctx context.Context, field graphql.
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "ViewSource",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "ViewSource",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -5603,10 +5728,11 @@ func (ec *executionContext) ___Directive_name(ctx context.Context, field graphql
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "__Directive",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "__Directive",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -5637,10 +5763,11 @@ func (ec *executionContext) ___Directive_description(ctx context.Context, field 
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "__Directive",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "__Directive",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -5668,10 +5795,11 @@ func (ec *executionContext) ___Directive_locations(ctx context.Context, field gr
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "__Directive",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "__Directive",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -5702,10 +5830,11 @@ func (ec *executionContext) ___Directive_args(ctx context.Context, field graphql
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "__Directive",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "__Directive",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -5736,10 +5865,11 @@ func (ec *executionContext) ___EnumValue_name(ctx context.Context, field graphql
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "__EnumValue",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "__EnumValue",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -5770,10 +5900,11 @@ func (ec *executionContext) ___EnumValue_description(ctx context.Context, field 
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "__EnumValue",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "__EnumValue",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -5801,10 +5932,11 @@ func (ec *executionContext) ___EnumValue_isDeprecated(ctx context.Context, field
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "__EnumValue",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "__EnumValue",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -5835,10 +5967,11 @@ func (ec *executionContext) ___EnumValue_deprecationReason(ctx context.Context, 
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "__EnumValue",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "__EnumValue",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -5866,10 +5999,11 @@ func (ec *executionContext) ___Field_name(ctx context.Context, field graphql.Col
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "__Field",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "__Field",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -5900,10 +6034,11 @@ func (ec *executionContext) ___Field_description(ctx context.Context, field grap
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "__Field",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "__Field",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -5931,10 +6066,11 @@ func (ec *executionContext) ___Field_args(ctx context.Context, field graphql.Col
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "__Field",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "__Field",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -5965,10 +6101,11 @@ func (ec *executionContext) ___Field_type(ctx context.Context, field graphql.Col
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "__Field",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "__Field",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -5999,10 +6136,11 @@ func (ec *executionContext) ___Field_isDeprecated(ctx context.Context, field gra
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "__Field",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "__Field",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -6033,10 +6171,11 @@ func (ec *executionContext) ___Field_deprecationReason(ctx context.Context, fiel
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "__Field",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "__Field",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -6064,10 +6203,11 @@ func (ec *executionContext) ___InputValue_name(ctx context.Context, field graphq
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "__InputValue",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "__InputValue",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -6098,10 +6238,11 @@ func (ec *executionContext) ___InputValue_description(ctx context.Context, field
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "__InputValue",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "__InputValue",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -6129,10 +6270,11 @@ func (ec *executionContext) ___InputValue_type(ctx context.Context, field graphq
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "__InputValue",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "__InputValue",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -6163,10 +6305,11 @@ func (ec *executionContext) ___InputValue_defaultValue(ctx context.Context, fiel
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "__InputValue",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
+		Object:     "__InputValue",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -6194,10 +6337,11 @@ func (ec *executionContext) ___Schema_types(ctx context.Context, field graphql.C
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "__Schema",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "__Schema",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -6228,10 +6372,11 @@ func (ec *executionContext) ___Schema_queryType(ctx context.Context, field graph
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "__Schema",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "__Schema",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -6262,10 +6407,11 @@ func (ec *executionContext) ___Schema_mutationType(ctx context.Context, field gr
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "__Schema",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "__Schema",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -6293,10 +6439,11 @@ func (ec *executionContext) ___Schema_subscriptionType(ctx context.Context, fiel
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "__Schema",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "__Schema",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -6324,10 +6471,11 @@ func (ec *executionContext) ___Schema_directives(ctx context.Context, field grap
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "__Schema",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "__Schema",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -6358,10 +6506,11 @@ func (ec *executionContext) ___Type_kind(ctx context.Context, field graphql.Coll
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "__Type",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "__Type",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -6392,10 +6541,11 @@ func (ec *executionContext) ___Type_name(ctx context.Context, field graphql.Coll
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "__Type",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "__Type",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -6423,10 +6573,11 @@ func (ec *executionContext) ___Type_description(ctx context.Context, field graph
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "__Type",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "__Type",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -6454,10 +6605,11 @@ func (ec *executionContext) ___Type_fields(ctx context.Context, field graphql.Co
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "__Type",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "__Type",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -6492,10 +6644,11 @@ func (ec *executionContext) ___Type_interfaces(ctx context.Context, field graphq
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "__Type",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "__Type",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -6523,10 +6676,11 @@ func (ec *executionContext) ___Type_possibleTypes(ctx context.Context, field gra
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "__Type",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "__Type",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -6554,10 +6708,11 @@ func (ec *executionContext) ___Type_enumValues(ctx context.Context, field graphq
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "__Type",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "__Type",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -6592,10 +6747,11 @@ func (ec *executionContext) ___Type_inputFields(ctx context.Context, field graph
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "__Type",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "__Type",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -6623,10 +6779,11 @@ func (ec *executionContext) ___Type_ofType(ctx context.Context, field graphql.Co
 		}
 	}()
 	fc := &graphql.FieldContext{
-		Object:   "__Type",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
+		Object:     "__Type",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
@@ -6658,12 +6815,16 @@ func (ec *executionContext) unmarshalInputWatchProcessorInput(ctx context.Contex
 		switch k {
 		case "processorId":
 			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("processorId"))
 			it.ProcessorID, err = ec.unmarshalNID2int(ctx, v)
 			if err != nil {
 				return it, err
 			}
 		case "key":
 			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("key"))
 			it.Key, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
@@ -8646,7 +8807,8 @@ func (ec *executionContext) marshalNAction2ᚕgithubᚗcomᚋsyncromaticsᚋkafm
 }
 
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
-	return graphql.UnmarshalBoolean(v)
+	res, err := graphql.UnmarshalBoolean(v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.SelectionSet, v bool) graphql.Marshaler {
@@ -8711,7 +8873,8 @@ func (ec *executionContext) marshalNComponent2ᚖgithubᚗcomᚋsyncromaticsᚋk
 }
 
 func (ec *executionContext) unmarshalNID2int(ctx context.Context, v interface{}) (int, error) {
-	return graphql.UnmarshalIntID(v)
+	res, err := graphql.UnmarshalIntID(v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNID2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
@@ -8722,10 +8885,6 @@ func (ec *executionContext) marshalNID2int(ctx context.Context, sel ast.Selectio
 		}
 	}
 	return res
-}
-
-func (ec *executionContext) marshalNInput2githubᚗcomᚋsyncromaticsᚋkafmeshᚋinternalᚋgraphᚋmodelᚐInput(ctx context.Context, sel ast.SelectionSet, v model.Input) graphql.Marshaler {
-	return ec._Input(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNInput2ᚖgithubᚗcomᚋsyncromaticsᚋkafmeshᚋinternalᚋgraphᚋmodelᚐInput(ctx context.Context, sel ast.SelectionSet, v *model.Input) graphql.Marshaler {
@@ -8739,7 +8898,8 @@ func (ec *executionContext) marshalNInput2ᚖgithubᚗcomᚋsyncromaticsᚋkafme
 }
 
 func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}) (int, error) {
-	return graphql.UnmarshalInt(v)
+	res, err := graphql.UnmarshalInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
@@ -8764,10 +8924,6 @@ func (ec *executionContext) marshalNOperation2ᚖgithubᚗcomᚋsyncromaticsᚋk
 		return graphql.Null
 	}
 	return ec._Operation(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNPod2githubᚗcomᚋsyncromaticsᚋkafmeshᚋinternalᚋgraphᚋmodelᚐPod(ctx context.Context, sel ast.SelectionSet, v model.Pod) graphql.Marshaler {
-	return ec._Pod(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNPod2ᚕᚖgithubᚗcomᚋsyncromaticsᚋkafmeshᚋinternalᚋgraphᚋmodelᚐPodᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Pod) graphql.Marshaler {
@@ -8868,10 +9024,6 @@ func (ec *executionContext) marshalNProcessor2ᚖgithubᚗcomᚋsyncromaticsᚋk
 	return ec._Processor(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNProcessorInput2githubᚗcomᚋsyncromaticsᚋkafmeshᚋinternalᚋgraphᚋmodelᚐProcessorInput(ctx context.Context, sel ast.SelectionSet, v model.ProcessorInput) graphql.Marshaler {
-	return ec._ProcessorInput(ctx, sel, &v)
-}
-
 func (ec *executionContext) marshalNProcessorInput2ᚕᚖgithubᚗcomᚋsyncromaticsᚋkafmeshᚋinternalᚋgraphᚋmodelᚐProcessorInputᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ProcessorInput) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -8917,10 +9069,6 @@ func (ec *executionContext) marshalNProcessorInput2ᚖgithubᚗcomᚋsyncromatic
 		return graphql.Null
 	}
 	return ec._ProcessorInput(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNProcessorJoin2githubᚗcomᚋsyncromaticsᚋkafmeshᚋinternalᚋgraphᚋmodelᚐProcessorJoin(ctx context.Context, sel ast.SelectionSet, v model.ProcessorJoin) graphql.Marshaler {
-	return ec._ProcessorJoin(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNProcessorJoin2ᚕᚖgithubᚗcomᚋsyncromaticsᚋkafmeshᚋinternalᚋgraphᚋmodelᚐProcessorJoinᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ProcessorJoin) graphql.Marshaler {
@@ -8970,10 +9118,6 @@ func (ec *executionContext) marshalNProcessorJoin2ᚖgithubᚗcomᚋsyncromatics
 	return ec._ProcessorJoin(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNProcessorLookup2githubᚗcomᚋsyncromaticsᚋkafmeshᚋinternalᚋgraphᚋmodelᚐProcessorLookup(ctx context.Context, sel ast.SelectionSet, v model.ProcessorLookup) graphql.Marshaler {
-	return ec._ProcessorLookup(ctx, sel, &v)
-}
-
 func (ec *executionContext) marshalNProcessorLookup2ᚕᚖgithubᚗcomᚋsyncromaticsᚋkafmeshᚋinternalᚋgraphᚋmodelᚐProcessorLookupᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ProcessorLookup) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -9019,10 +9163,6 @@ func (ec *executionContext) marshalNProcessorLookup2ᚖgithubᚗcomᚋsyncromati
 		return graphql.Null
 	}
 	return ec._ProcessorLookup(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNProcessorOutput2githubᚗcomᚋsyncromaticsᚋkafmeshᚋinternalᚋgraphᚋmodelᚐProcessorOutput(ctx context.Context, sel ast.SelectionSet, v model.ProcessorOutput) graphql.Marshaler {
-	return ec._ProcessorOutput(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNProcessorOutput2ᚕᚖgithubᚗcomᚋsyncromaticsᚋkafmeshᚋinternalᚋgraphᚋmodelᚐProcessorOutputᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ProcessorOutput) graphql.Marshaler {
@@ -9123,10 +9263,6 @@ func (ec *executionContext) marshalNService2ᚖgithubᚗcomᚋsyncromaticsᚋkaf
 	return ec._Service(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNSink2githubᚗcomᚋsyncromaticsᚋkafmeshᚋinternalᚋgraphᚋmodelᚐSink(ctx context.Context, sel ast.SelectionSet, v model.Sink) graphql.Marshaler {
-	return ec._Sink(ctx, sel, &v)
-}
-
 func (ec *executionContext) marshalNSink2ᚕᚖgithubᚗcomᚋsyncromaticsᚋkafmeshᚋinternalᚋgraphᚋmodelᚐSinkᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Sink) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -9172,10 +9308,6 @@ func (ec *executionContext) marshalNSink2ᚖgithubᚗcomᚋsyncromaticsᚋkafmes
 		return graphql.Null
 	}
 	return ec._Sink(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNSource2githubᚗcomᚋsyncromaticsᚋkafmeshᚋinternalᚋgraphᚋmodelᚐSource(ctx context.Context, sel ast.SelectionSet, v model.Source) graphql.Marshaler {
-	return ec._Source(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNSource2ᚕᚖgithubᚗcomᚋsyncromaticsᚋkafmeshᚋinternalᚋgraphᚋmodelᚐSourceᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Source) graphql.Marshaler {
@@ -9226,7 +9358,8 @@ func (ec *executionContext) marshalNSource2ᚖgithubᚗcomᚋsyncromaticsᚋkafm
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
-	return graphql.UnmarshalString(v)
+	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
@@ -9290,10 +9423,6 @@ func (ec *executionContext) marshalNTopic2ᚖgithubᚗcomᚋsyncromaticsᚋkafme
 	return ec._Topic(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNView2githubᚗcomᚋsyncromaticsᚋkafmeshᚋinternalᚋgraphᚋmodelᚐView(ctx context.Context, sel ast.SelectionSet, v model.View) graphql.Marshaler {
-	return ec._View(ctx, sel, &v)
-}
-
 func (ec *executionContext) marshalNView2ᚕᚖgithubᚗcomᚋsyncromaticsᚋkafmeshᚋinternalᚋgraphᚋmodelᚐViewᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.View) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -9341,10 +9470,6 @@ func (ec *executionContext) marshalNView2ᚖgithubᚗcomᚋsyncromaticsᚋkafmes
 	return ec._View(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNViewSink2githubᚗcomᚋsyncromaticsᚋkafmeshᚋinternalᚋgraphᚋmodelᚐViewSink(ctx context.Context, sel ast.SelectionSet, v model.ViewSink) graphql.Marshaler {
-	return ec._ViewSink(ctx, sel, &v)
-}
-
 func (ec *executionContext) marshalNViewSink2ᚕᚖgithubᚗcomᚋsyncromaticsᚋkafmeshᚋinternalᚋgraphᚋmodelᚐViewSinkᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ViewSink) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -9390,10 +9515,6 @@ func (ec *executionContext) marshalNViewSink2ᚖgithubᚗcomᚋsyncromaticsᚋka
 		return graphql.Null
 	}
 	return ec._ViewSink(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNViewSource2githubᚗcomᚋsyncromaticsᚋkafmeshᚋinternalᚋgraphᚋmodelᚐViewSource(ctx context.Context, sel ast.SelectionSet, v model.ViewSource) graphql.Marshaler {
-	return ec._ViewSource(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNViewSource2ᚕᚖgithubᚗcomᚋsyncromaticsᚋkafmeshᚋinternalᚋgraphᚋmodelᚐViewSourceᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ViewSource) graphql.Marshaler {
@@ -9485,7 +9606,8 @@ func (ec *executionContext) marshalN__Directive2ᚕgithubᚗcomᚋ99designsᚋgq
 }
 
 func (ec *executionContext) unmarshalN__DirectiveLocation2string(ctx context.Context, v interface{}) (string, error) {
-	return graphql.UnmarshalString(v)
+	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalN__DirectiveLocation2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
@@ -9510,6 +9632,7 @@ func (ec *executionContext) unmarshalN__DirectiveLocation2ᚕstringᚄ(ctx conte
 	var err error
 	res := make([]string, len(vSlice))
 	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
 		res[i], err = ec.unmarshalN__DirectiveLocation2string(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
@@ -9656,7 +9779,8 @@ func (ec *executionContext) marshalN__Type2ᚖgithubᚗcomᚋ99designsᚋgqlgen�
 }
 
 func (ec *executionContext) unmarshalN__TypeKind2string(ctx context.Context, v interface{}) (string, error) {
-	return graphql.UnmarshalString(v)
+	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
@@ -9670,7 +9794,8 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 }
 
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
-	return graphql.UnmarshalBoolean(v)
+	res, err := graphql.UnmarshalBoolean(v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalOBoolean2bool(ctx context.Context, sel ast.SelectionSet, v bool) graphql.Marshaler {
@@ -9681,19 +9806,15 @@ func (ec *executionContext) unmarshalOBoolean2ᚖbool(ctx context.Context, v int
 	if v == nil {
 		return nil, nil
 	}
-	res, err := ec.unmarshalOBoolean2bool(ctx, v)
-	return &res, err
+	res, err := graphql.UnmarshalBoolean(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast.SelectionSet, v *bool) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return ec.marshalOBoolean2bool(ctx, sel, *v)
-}
-
-func (ec *executionContext) marshalOComponent2githubᚗcomᚋsyncromaticsᚋkafmeshᚋinternalᚋgraphᚋmodelᚐComponent(ctx context.Context, sel ast.SelectionSet, v model.Component) graphql.Marshaler {
-	return ec._Component(ctx, sel, &v)
+	return graphql.MarshalBoolean(*v)
 }
 
 func (ec *executionContext) marshalOComponent2ᚖgithubᚗcomᚋsyncromaticsᚋkafmeshᚋinternalᚋgraphᚋmodelᚐComponent(ctx context.Context, sel ast.SelectionSet, v *model.Component) graphql.Marshaler {
@@ -9701,10 +9822,6 @@ func (ec *executionContext) marshalOComponent2ᚖgithubᚗcomᚋsyncromaticsᚋk
 		return graphql.Null
 	}
 	return ec._Component(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOService2githubᚗcomᚋsyncromaticsᚋkafmeshᚋinternalᚋgraphᚋmodelᚐService(ctx context.Context, sel ast.SelectionSet, v model.Service) graphql.Marshaler {
-	return ec._Service(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalOService2ᚖgithubᚗcomᚋsyncromaticsᚋkafmeshᚋinternalᚋgraphᚋmodelᚐService(ctx context.Context, sel ast.SelectionSet, v *model.Service) graphql.Marshaler {
@@ -9715,7 +9832,8 @@ func (ec *executionContext) marshalOService2ᚖgithubᚗcomᚋsyncromaticsᚋkaf
 }
 
 func (ec *executionContext) unmarshalOString2string(ctx context.Context, v interface{}) (string, error) {
-	return graphql.UnmarshalString(v)
+	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalOString2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
@@ -9723,6 +9841,9 @@ func (ec *executionContext) marshalOString2string(ctx context.Context, sel ast.S
 }
 
 func (ec *executionContext) unmarshalOString2ᚕstringᚄ(ctx context.Context, v interface{}) ([]string, error) {
+	if v == nil {
+		return nil, nil
+	}
 	var vSlice []interface{}
 	if v != nil {
 		if tmp1, ok := v.([]interface{}); ok {
@@ -9734,6 +9855,7 @@ func (ec *executionContext) unmarshalOString2ᚕstringᚄ(ctx context.Context, v
 	var err error
 	res := make([]string, len(vSlice))
 	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
 		res[i], err = ec.unmarshalNString2string(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
@@ -9758,19 +9880,15 @@ func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v in
 	if v == nil {
 		return nil, nil
 	}
-	res, err := ec.unmarshalOString2string(ctx, v)
-	return &res, err
+	res, err := graphql.UnmarshalString(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel ast.SelectionSet, v *string) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return ec.marshalOString2string(ctx, sel, *v)
-}
-
-func (ec *executionContext) marshalOTopic2githubᚗcomᚋsyncromaticsᚋkafmeshᚋinternalᚋgraphᚋmodelᚐTopic(ctx context.Context, sel ast.SelectionSet, v model.Topic) graphql.Marshaler {
-	return ec._Topic(ctx, sel, &v)
+	return graphql.MarshalString(*v)
 }
 
 func (ec *executionContext) marshalOTopic2ᚖgithubᚗcomᚋsyncromaticsᚋkafmeshᚋinternalᚋgraphᚋmodelᚐTopic(ctx context.Context, sel ast.SelectionSet, v *model.Topic) graphql.Marshaler {
@@ -9780,16 +9898,12 @@ func (ec *executionContext) marshalOTopic2ᚖgithubᚗcomᚋsyncromaticsᚋkafme
 	return ec._Topic(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOWatchProcessorInput2githubᚗcomᚋsyncromaticsᚋkafmeshᚋinternalᚋgraphᚋmodelᚐWatchProcessorInput(ctx context.Context, v interface{}) (model.WatchProcessorInput, error) {
-	return ec.unmarshalInputWatchProcessorInput(ctx, v)
-}
-
 func (ec *executionContext) unmarshalOWatchProcessorInput2ᚖgithubᚗcomᚋsyncromaticsᚋkafmeshᚋinternalᚋgraphᚋmodelᚐWatchProcessorInput(ctx context.Context, v interface{}) (*model.WatchProcessorInput, error) {
 	if v == nil {
 		return nil, nil
 	}
-	res, err := ec.unmarshalOWatchProcessorInput2githubᚗcomᚋsyncromaticsᚋkafmeshᚋinternalᚋgraphᚋmodelᚐWatchProcessorInput(ctx, v)
-	return &res, err
+	res, err := ec.unmarshalInputWatchProcessorInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValueᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.EnumValue) graphql.Marshaler {
@@ -9912,19 +10026,11 @@ func (ec *executionContext) marshalO__InputValue2ᚕgithubᚗcomᚋ99designsᚋg
 	return ret
 }
 
-func (ec *executionContext) marshalO__Schema2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐSchema(ctx context.Context, sel ast.SelectionSet, v introspection.Schema) graphql.Marshaler {
-	return ec.___Schema(ctx, sel, &v)
-}
-
 func (ec *executionContext) marshalO__Schema2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐSchema(ctx context.Context, sel ast.SelectionSet, v *introspection.Schema) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.___Schema(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalO__Type2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐType(ctx context.Context, sel ast.SelectionSet, v introspection.Type) graphql.Marshaler {
-	return ec.___Type(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalO__Type2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐTypeᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.Type) graphql.Marshaler {
