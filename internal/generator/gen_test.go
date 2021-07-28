@@ -20,6 +20,10 @@ func Test_Generator(t *testing.T) {
 
 	fmt.Println(tmpDir)
 
+	ioutil.WriteFile(path.Join(tmpDir, "go.mod"), []byte(`module test
+
+go 1.16`), os.ModePerm)
+
 	protoDir := path.Join(tmpDir, "protos")
 	err = os.MkdirAll(protoDir, os.ModePerm)
 	if err != nil {
