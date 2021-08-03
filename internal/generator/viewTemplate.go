@@ -31,7 +31,7 @@ import (
 )
 
 type {{ .Name }}_View interface {
-	Keys() []string
+	Keys() ([]string, error)
 	Get(key string) (*{{ .MessageType }}, error)
 }
 
@@ -84,8 +84,18 @@ func (v *{{ .Name }}_View_impl) Watch(ctx context.Context) func() error {
 	}
 }
 
-func (v *{{ .Name }}_View_impl) Keys() []string {
-	return v.Keys()
+func (v *{{ .Name }}_View_impl) Keys() ([]string, error) {
+	it, err := v.view.Iterator()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get iterator from view")
+	}
+	
+	keys := []string{}
+	for it.Next() {
+		keys = append(keys, it.Key())
+	}
+
+	return keys, nil
 }
 
 func (v *{{ .Name }}_View_impl) Get(key string) (*{{ .MessageType }}, error) {

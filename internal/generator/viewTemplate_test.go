@@ -39,7 +39,7 @@ import (
 )
 
 type TestSerialDetailsEnriched_View interface {
-	Keys() []string
+	Keys() ([]string, error)
 	Get(key string) (*testSerial.DetailsEnriched, error)
 }
 
@@ -92,8 +92,18 @@ func (v *TestSerialDetailsEnriched_View_impl) Watch(ctx context.Context) func() 
 	}
 }
 
-func (v *TestSerialDetailsEnriched_View_impl) Keys() []string {
-	return v.Keys()
+func (v *TestSerialDetailsEnriched_View_impl) Keys() ([]string, error) {
+	it, err := v.view.Iterator()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get iterator from view")
+	}
+	
+	keys := []string{}
+	for it.Next() {
+		keys = append(keys, it.Key())
+	}
+
+	return keys, nil
 }
 
 func (v *TestSerialDetailsEnriched_View_impl) Get(key string) (*testSerial.DetailsEnriched, error) {
