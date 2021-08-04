@@ -88,25 +88,27 @@ func New_TestSerialDetailsEnriched_View(options runner.ServiceOptions) (*TestSer
 	}
 
 	return v, func(outerCtx context.Context) func() error {
-		cancelableCtx, cancel := context.WithCancel(outerCtx)
-		defer cancel()
-		grp, ctx := errgroup.WithContext(cancelableCtx)
+		return func() error {
+			cancelableCtx, cancel := context.WithCancel(outerCtx)
+			defer cancel()
+			grp, ctx := errgroup.WithContext(cancelableCtx)
 
-		grp.Go(func() error {
+			grp.Go(func() error {
+				select {
+				case <-ctx.Done():
+					viewCancel()
+					return nil
+				}
+			})
+			grp.Go(func() error {
+				return v.view.Run(ctx)
+			})
+			
 			select {
-			case <-ctx.Done():
-				viewCancel()
-				return nil
+			case <- ctx.Done():
+				err := grp.Wait()
+				return err
 			}
-		})
-		grp.Go(func() error {
-			return v.view.Run(ctx)
-		})
-		
-		select {
-		case <- ctx.Done():
-			err := grp.Wait()
-			return err
 		}
 	}, nil
 }

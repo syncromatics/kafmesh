@@ -82,23 +82,25 @@ func New_{{ .Name }}_Source(service *runner.Service) (*{{ .Name }}_Source_impl, 
 	}
 
 	return e, func(outerCtx context.Context) func() error {
-		cancelableCtx, cancel := context.WithCancel(outerCtx)
-		defer cancel()
-		grp, ctx := errgroup.WithContext(cancelableCtx)
+		return func() error {
+			cancelableCtx, cancel := context.WithCancel(outerCtx)
+			defer cancel()
+			grp, ctx := errgroup.WithContext(cancelableCtx)
 
-		grp.Go(func() error {
+			grp.Go(func() error {
+				select {
+				case <-ctx.Done():
+					emitterCancel()
+					return nil
+				}
+			})
+			grp.Go(e.emitter.Watch(ctx))
+
 			select {
-			case <-ctx.Done():
-				emitterCancel()
-				return nil
+			case <- ctx.Done():
+				err := grp.Wait()
+				return err
 			}
-		})
-		grp.Go(e.emitter.Watch(ctx))
-
-		select {
-		case <- ctx.Done():
-			err := grp.Wait()
-			return err
 		}
 	}, nil
 }
