@@ -41,6 +41,7 @@ type TestSerialDetails_Source interface {
 }
 
 type TestSerialDetails_Source_impl struct {
+	context.Context
 	emitter *runner.Emitter
 	metrics *runner.Metrics
 }
@@ -62,7 +63,7 @@ func (m *impl_TestSerialDetails_Source_Message) Value() interface{} {
 	return m.msg.Value
 }
 
-func New_TestSerialDetails_Source(service *runner.Service) (*TestSerialDetails_Source_impl, error) {
+func New_TestSerialDetails_Source(service *runner.Service) (*TestSerialDetails_Source_impl, func(context.Context) func() error, error) {
 	options := service.Options()
 	brokers := options.Brokers
 	protoWrapper := options.ProtoWrapper
@@ -81,14 +82,33 @@ func New_TestSerialDetails_Source(service *runner.Service) (*TestSerialDetails_S
 		return nil, errors.Wrap(err, "failed creating source")
 	}
 
-	return &TestSerialDetails_Source_impl{
-		emitter: runner.NewEmitter(emitter),
-		metrics: service.Metrics,
-	}, nil
-}
+	emitterCtx, emitterCancel := context.WithCancel(context.Background())
+	e := &TestSerialDetails_Source_impl{
+		emitterCtx,
+		runner.NewEmitter(emitter),
+		service.Metrics,
+	}
 
-func (e *TestSerialDetails_Source_impl) Watch(ctx context.Context) func() error {
-	return e.emitter.Watch(ctx)
+	return e, func(outerCtx context.Context) func() error {
+		cancelableCtx, cancel := context.WithCancel(outerCtx)
+		defer cancel()
+		grp, ctx := errgroup.WithContext(cancelableCtx)
+
+		grp.Go(func() error {
+			select {
+			case <-ctx.Done():
+				emitterCancel()
+				return nil
+			}
+		})
+		grp.Go(e.emitter.Watch(ctx))
+
+		select {
+		case <- ctx.Done():
+			err := grp.Wait()
+			return err
+		}
+	}, nil
 }
 
 func (e *TestSerialDetails_Source_impl) Emit(message TestSerialDetails_Source_Message) error {

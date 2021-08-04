@@ -126,26 +126,26 @@ func Register_TestToApi_ViewSink(options runner.ServiceOptions, synchronizer Tes
 		return nil, errors.Wrap(err, "failed creating view sink view")
 	}
 
-	return func(ctx context.Context) func() error {
+	return func(outerCtx context.Context) func() error {
 		return func() error {
-			gctx, cancel := context.WithCancel(ctx)
-			grp, gctx := errgroup.WithContext(ctx)
+			cancelableCtx, cancel := context.WithCancel(outerCtx)
 			defer cancel()
+			grp, ctx := errgroup.WithContext(cancelableCtx)
 
 			timer := time.NewTimer(0)
 			grp.Go(func() error {
 				for {
 					select {
-					case <-gctx.Done():
+					case <-ctx.Done():
 						return nil
 					case <-timer.C:
 						select {
-						case <-gctx.Done():
+						case <-ctx.Done():
 							return nil
-						case <-view.WaitRecovered():
+						case <-view.WaitRunning():
 						}
 			
-						newContext, cancel := context.WithTimeout(gctx, syncTimeout)
+						newContext, cancel := context.WithTimeout(ctx, syncTimeout)
 						c := &TestToApi_ViewSink_Context_impl{
 							Context: newContext,
 							view:    view,
@@ -163,13 +163,13 @@ func Register_TestToApi_ViewSink(options runner.ServiceOptions, synchronizer Tes
 			})
 
 			grp.Go(func() error {
-				return view.Run(gctx)
+				return view.Run(ctx)
 			})
 
 			select {
 			case <- ctx.Done():
 				return nil
-			case <- gctx.Done():
+			case <- ctx.Done():
 				err := grp.Wait()
 				return err
 			}
