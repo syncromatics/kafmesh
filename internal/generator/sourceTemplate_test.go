@@ -24,12 +24,12 @@ package details
 
 import (
 	"context"
-
+	
 	"github.com/burdiyan/kafkautil"
 	"github.com/lovoo/goka"
 	"github.com/pkg/errors"
-
 	"github.com/syncromatics/kafmesh/pkg/runner"
+	"golang.org/x/sync/errgroup"
 
 	"test/internal/kafmesh/models/testMesh/testSerial"
 )
@@ -70,7 +70,7 @@ func New_TestSerialDetails_Source(service *runner.Service) (*TestSerialDetails_S
 
 	codec, err := protoWrapper.Codec("testMesh.testSerial.details", &testSerial.Details{})
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create codec")
+		return nil, nil, errors.Wrap(err, "failed to create codec")
 	}
 
 	emitter, err := goka.NewEmitter(brokers,
@@ -79,7 +79,7 @@ func New_TestSerialDetails_Source(service *runner.Service) (*TestSerialDetails_S
 		goka.WithEmitterHasher(kafkautil.MurmurHasher))
 
 	if err != nil {
-		return nil, errors.Wrap(err, "failed creating source")
+		return nil, nil, errors.Wrap(err, "failed creating source")
 	}
 
 	emitterCtx, emitterCancel := context.WithCancel(context.Background())

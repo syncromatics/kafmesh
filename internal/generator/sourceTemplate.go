@@ -16,12 +16,12 @@ package {{ .Package }}
 
 import (
 	"context"
-
+	
 	"github.com/burdiyan/kafkautil"
 	"github.com/lovoo/goka"
 	"github.com/pkg/errors"
-
 	"github.com/syncromatics/kafmesh/pkg/runner"
+	"golang.org/x/sync/errgroup"
 
 	"{{ .Import }}"
 )
@@ -62,7 +62,7 @@ func New_{{ .Name }}_Source(service *runner.Service) (*{{ .Name }}_Source_impl, 
 
 	codec, err := protoWrapper.Codec("{{ .TopicName }}", &{{ .MessageType }}{})
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create codec")
+		return nil, nil, errors.Wrap(err, "failed to create codec")
 	}
 
 	emitter, err := goka.NewEmitter(brokers,
@@ -71,7 +71,7 @@ func New_{{ .Name }}_Source(service *runner.Service) (*{{ .Name }}_Source_impl, 
 		goka.WithEmitterHasher(kafkautil.MurmurHasher))
 
 	if err != nil {
-		return nil, errors.Wrap(err, "failed creating source")
+		return nil, nil, errors.Wrap(err, "failed creating source")
 	}
 
 	emitterCtx, emitterCancel := context.WithCancel(context.Background())

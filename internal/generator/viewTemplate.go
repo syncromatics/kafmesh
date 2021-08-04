@@ -23,9 +23,9 @@ import (
 	"github.com/lovoo/goka"
 	"github.com/lovoo/goka/storage"
 	"github.com/pkg/errors"
-	"github.com/syndtr/goleveldb/leveldb/opt"
-
 	"github.com/syncromatics/kafmesh/pkg/runner"
+	"github.com/syndtr/goleveldb/leveldb/opt"
+	"golang.org/x/sync/errgroup"
 
 	"{{ .Import }}"
 )
@@ -46,7 +46,7 @@ func New_{{ .Name }}_View(options runner.ServiceOptions) (*{{ .Name }}_View_impl
 
 	codec, err := protoWrapper.Codec("{{ .TopicName }}", &{{ .MessageType }}{})
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create codec")
+		return nil, nil, errors.Wrap(err, "failed to create codec")
 	}
 
 	opts := &opt.Options{
@@ -58,7 +58,7 @@ func New_{{ .Name }}_View(options runner.ServiceOptions) (*{{ .Name }}_View_impl
 
 	err = os.MkdirAll(path, os.ModePerm)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create view db directory")
+		return nil, nil, errors.Wrap(err, "failed to create view db directory")
 	}
 
 	builder := storage.BuilderWithOptions(path, opts)
@@ -69,9 +69,8 @@ func New_{{ .Name }}_View(options runner.ServiceOptions) (*{{ .Name }}_View_impl
 		goka.WithViewStorageBuilder(builder),
 		goka.WithViewHasher(kafkautil.MurmurHasher),
 	)
-
 	if err != nil {
-		return nil, errors.Wrap(err, "failed creating view")
+		return nil, nil, errors.Wrap(err, "failed creating view")
 	}
 	
 	viewCtx, viewCancel := context.WithCancel(context.Background())

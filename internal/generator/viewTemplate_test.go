@@ -31,9 +31,9 @@ import (
 	"github.com/lovoo/goka"
 	"github.com/lovoo/goka/storage"
 	"github.com/pkg/errors"
-	"github.com/syndtr/goleveldb/leveldb/opt"
-
 	"github.com/syncromatics/kafmesh/pkg/runner"
+	"github.com/syndtr/goleveldb/leveldb/opt"
+	"golang.org/x/sync/errgroup"
 
 	"test/internal/kafmesh/models/testMesh/testSerial"
 )
@@ -54,7 +54,7 @@ func New_TestSerialDetailsEnriched_View(options runner.ServiceOptions) (*TestSer
 
 	codec, err := protoWrapper.Codec("testMesh.testSerial.detailsEnriched", &testSerial.DetailsEnriched{})
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create codec")
+		return nil, nil, errors.Wrap(err, "failed to create codec")
 	}
 
 	opts := &opt.Options{
@@ -66,7 +66,7 @@ func New_TestSerialDetailsEnriched_View(options runner.ServiceOptions) (*TestSer
 
 	err = os.MkdirAll(path, os.ModePerm)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create view db directory")
+		return nil, nil, errors.Wrap(err, "failed to create view db directory")
 	}
 
 	builder := storage.BuilderWithOptions(path, opts)
@@ -77,9 +77,8 @@ func New_TestSerialDetailsEnriched_View(options runner.ServiceOptions) (*TestSer
 		goka.WithViewStorageBuilder(builder),
 		goka.WithViewHasher(kafkautil.MurmurHasher),
 	)
-
 	if err != nil {
-		return nil, errors.Wrap(err, "failed creating view")
+		return nil, nil, errors.Wrap(err, "failed creating view")
 	}
 	
 	viewCtx, viewCancel := context.WithCancel(context.Background())

@@ -18,18 +18,18 @@ package {{ .Package }}
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"time"
-	"fmt"
 
 	"github.com/burdiyan/kafkautil"
 	"github.com/lovoo/goka"
 	"github.com/lovoo/goka/storage"
 	"github.com/pkg/errors"
+	"github.com/syncromatics/kafmesh/pkg/runner"
 	"github.com/syndtr/goleveldb/leveldb/opt"
 	"golang.org/x/sync/errgroup"
-	"github.com/syncromatics/kafmesh/pkg/runner"
 
 	"{{ .Import }}"
 )
