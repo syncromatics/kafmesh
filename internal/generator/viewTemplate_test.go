@@ -93,6 +93,12 @@ func (v *TestSerialDetailsEnriched_View_impl) Watch(ctx context.Context) func() 
 }
 
 func (v *TestSerialDetailsEnriched_View_impl) Keys() ([]string, error) {
+	select {
+	case <-v.Done():
+		return nil, errors.New("context cancelled while waiting for partition to become running")
+	case <-v.view.WaitRunning():
+	}
+
 	it, err := v.view.Iterator()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get iterator from view")
@@ -107,6 +113,12 @@ func (v *TestSerialDetailsEnriched_View_impl) Keys() ([]string, error) {
 }
 
 func (v *TestSerialDetailsEnriched_View_impl) Get(key string) (*testSerial.DetailsEnriched, error) {
+	select {
+	case <-v.Done():
+		return nil, errors.New("context cancelled while waiting for partition to become running")
+	case <-v.view.WaitRunning():
+	}
+
 	m, err := v.view.Get(key)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get value from view")

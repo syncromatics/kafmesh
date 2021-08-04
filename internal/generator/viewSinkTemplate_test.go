@@ -52,6 +52,12 @@ type TestToApi_ViewSink_Context_impl struct {
 }
 
 func (c *TestToApi_ViewSink_Context_impl) Keys() ([]string, error) {
+	select {
+	case <-c.Done():
+		return nil, errors.New("context cancelled while waiting for partition to become running")
+	case <-c.view.WaitRunning():
+	}
+
 	it, err := c.view.Iterator()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get iterator")
@@ -64,6 +70,12 @@ func (c *TestToApi_ViewSink_Context_impl) Keys() ([]string, error) {
 }
 
 func (c *TestToApi_ViewSink_Context_impl) Get(key string) (*testId.Test, error) {
+	select {
+	case <-c.Done():
+		return nil, errors.New("context cancelled while waiting for partition to become running")
+	case <-c.view.WaitRunning():
+	}
+
 	m, err := c.view.Get(key)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get value from view")
@@ -82,7 +94,7 @@ type TestToApi_ViewSink interface {
 	Sync(TestToApi_ViewSink_Context) error
 }
 
-func Register_TestToApi_ViewSink(options runner.ServiceOptions, sychronizer TestToApi_ViewSink, updateInterval time.Duration, syncTimeout time.Duration) (func(context.Context) func() error, error) {
+func Register_TestToApi_ViewSink(options runner.ServiceOptions, synchronizer TestToApi_ViewSink, updateInterval time.Duration, syncTimeout time.Duration) (func(context.Context) func() error, error) {
 	brokers := options.Brokers
 	protoWrapper := options.ProtoWrapper
 
@@ -127,12 +139,18 @@ func Register_TestToApi_ViewSink(options runner.ServiceOptions, sychronizer Test
 					case <-gctx.Done():
 						return nil
 					case <-timer.C:
+						select {
+						case <-gctx.Done():
+							return nil
+						case <-view.WaitRecovered():
+						}
+			
 						newContext, cancel := context.WithTimeout(gctx, syncTimeout)
 						c := &TestToApi_ViewSink_Context_impl{
 							Context: newContext,
 							view:    view,
 						}
-						err := sychronizer.Sync(c)
+						err := synchronizer.Sync(c)
 						if err != nil {
 							cancel()
 							fmt.Printf("sync error '%v'", err)

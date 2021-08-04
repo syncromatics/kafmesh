@@ -53,7 +53,7 @@ func (c *contextWrap_{{ .Name }}) Update(key string, msg *{{ .MessageType }}) er
 	return c.job.Update(key, msg)
 }
 
-func Register_{{ .Name }}_ViewSource(options runner.ServiceOptions, sychronizer {{ .Name }}_ViewSource, updateInterval time.Duration, syncTimeout time.Duration) (func(context.Context) func() error, error) {
+func Register_{{ .Name }}_ViewSource(options runner.ServiceOptions, synchronizer {{ .Name }}_ViewSource, updateInterval time.Duration, syncTimeout time.Duration) (func(context.Context) func() error, error) {
 	brokers := options.Brokers
 	protoWrapper := options.ProtoWrapper
 
@@ -84,7 +84,7 @@ func Register_{{ .Name }}_ViewSource(options runner.ServiceOptions, sychronizer 
 	)
 
 	if err != nil {
-		return nil, errors.Wrap(err, "failed creating sychronizer view")
+		return nil, errors.Wrap(err, "failed creating synchronizer view")
 	}
 
 	e, err := goka.NewEmitter(brokers,
@@ -93,7 +93,7 @@ func Register_{{ .Name }}_ViewSource(options runner.ServiceOptions, sychronizer 
 		goka.WithEmitterHasher(kafkautil.MurmurHasher))
 
 	if err != nil {
-		return nil, errors.Wrap(err, "failed creating sychronizer emitter")
+		return nil, errors.Wrap(err, "failed creating synchronizer emitter")
 	}
 
 	emitter := runner.NewEmitter(e)
@@ -111,10 +111,16 @@ func Register_{{ .Name }}_ViewSource(options runner.ServiceOptions, sychronizer 
 					case <-gctx.Done():
 						return nil
 					case <-timer.C:
+						select {
+						case <-gctx.Done():
+							return nil
+						case <-view.WaitRecovered():
+						}
+			
 						newContext, cancel := context.WithTimeout(gctx, syncTimeout)
 						c := runner.NewProtoViewSourceJob(newContext, view, emitter)
 						cw := &contextWrap_{{ .Name }}{newContext, c}
-						err := sychronizer.Sync(cw)
+						err := synchronizer.Sync(cw)
 						if err != nil {
 							cancel()
 							fmt.Printf("sync error '%v'", err)

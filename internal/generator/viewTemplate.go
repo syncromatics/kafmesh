@@ -85,6 +85,12 @@ func (v *{{ .Name }}_View_impl) Watch(ctx context.Context) func() error {
 }
 
 func (v *{{ .Name }}_View_impl) Keys() ([]string, error) {
+	select {
+	case <-v.Done():
+		return nil, errors.New("context cancelled while waiting for partition to become running")
+	case <-v.view.WaitRunning():
+	}
+
 	it, err := v.view.Iterator()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get iterator from view")
@@ -99,6 +105,12 @@ func (v *{{ .Name }}_View_impl) Keys() ([]string, error) {
 }
 
 func (v *{{ .Name }}_View_impl) Get(key string) (*{{ .MessageType }}, error) {
+	select {
+	case <-v.Done():
+		return nil, errors.New("context cancelled while waiting for partition to become running")
+	case <-v.view.WaitRunning():
+	}
+
 	m, err := v.view.Get(key)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get value from view")

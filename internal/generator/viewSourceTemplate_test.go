@@ -59,7 +59,7 @@ func (c *contextWrap_TestToDatabase) Update(key string, msg *testId.Test) error 
 	return c.job.Update(key, msg)
 }
 
-func Register_TestToDatabase_ViewSource(options runner.ServiceOptions, sychronizer TestToDatabase_ViewSource, updateInterval time.Duration, syncTimeout time.Duration) (func(context.Context) func() error, error) {
+func Register_TestToDatabase_ViewSource(options runner.ServiceOptions, synchronizer TestToDatabase_ViewSource, updateInterval time.Duration, syncTimeout time.Duration) (func(context.Context) func() error, error) {
 	brokers := options.Brokers
 	protoWrapper := options.ProtoWrapper
 
@@ -90,7 +90,7 @@ func Register_TestToDatabase_ViewSource(options runner.ServiceOptions, sychroniz
 	)
 
 	if err != nil {
-		return nil, errors.Wrap(err, "failed creating sychronizer view")
+		return nil, errors.Wrap(err, "failed creating synchronizer view")
 	}
 
 	e, err := goka.NewEmitter(brokers,
@@ -99,7 +99,7 @@ func Register_TestToDatabase_ViewSource(options runner.ServiceOptions, sychroniz
 		goka.WithEmitterHasher(kafkautil.MurmurHasher))
 
 	if err != nil {
-		return nil, errors.Wrap(err, "failed creating sychronizer emitter")
+		return nil, errors.Wrap(err, "failed creating synchronizer emitter")
 	}
 
 	emitter := runner.NewEmitter(e)
@@ -117,10 +117,16 @@ func Register_TestToDatabase_ViewSource(options runner.ServiceOptions, sychroniz
 					case <-gctx.Done():
 						return nil
 					case <-timer.C:
+						select {
+						case <-gctx.Done():
+							return nil
+						case <-view.WaitRecovered():
+						}
+			
 						newContext, cancel := context.WithTimeout(gctx, syncTimeout)
 						c := runner.NewProtoViewSourceJob(newContext, view, emitter)
 						cw := &contextWrap_TestToDatabase{newContext, c}
-						err := sychronizer.Sync(cw)
+						err := synchronizer.Sync(cw)
 						if err != nil {
 							cancel()
 							fmt.Printf("sync error '%v'", err)
