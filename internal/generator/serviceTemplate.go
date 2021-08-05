@@ -50,12 +50,12 @@ func Register_{{ .ExportName }}(service *runner.Service, processor {{ .Package }
 
 {{ range .Sources }}
 func New_{{ .ExportName }}_Source(service *runner.Service) ({{ .Package }}.{{ .Name }}_Source, error) {
-	e, err := {{ .Package }}.New_{{ .Name }}_Source(service)
+	e, r, err := {{ .Package }}.New_{{ .Name }}_Source(service)
 	if err != nil {
 		return nil, err
 	}
 
-	err = service.RegisterRunner(e.Watch)
+	err = service.RegisterRunner(r)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to register runner with service")
 	}
@@ -71,12 +71,12 @@ func New_{{ .ExportName }}_Source(service *runner.Service) ({{ .Package }}.{{ .N
 
 {{ range .Views }}
 func New_{{ .ExportName }}_View(service *runner.Service) ({{ .Package }}.{{ .Name }}_View, error) {
-	v, err := {{ .Package }}.New_{{ .Name }}_View(service.Options())
+	v, r, err := {{ .Package }}.New_{{ .Name }}_View(service.Options())
 	if err != nil {
 		return nil, err
 	}
 
-	err = service.RegisterRunner(v.Watch)
+	err = service.RegisterRunner(r)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to register runner with service")
 	}

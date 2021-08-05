@@ -18,18 +18,18 @@ package {{ .Package }}
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"time"
-	"fmt"
 
 	"github.com/burdiyan/kafkautil"
 	"github.com/lovoo/goka"
 	"github.com/lovoo/goka/storage"
 	"github.com/pkg/errors"
+	"github.com/syncromatics/kafmesh/pkg/runner"
 	"github.com/syndtr/goleveldb/leveldb/opt"
 	"golang.org/x/sync/errgroup"
-	"github.com/syncromatics/kafmesh/pkg/runner"
 
 	"{{ .Import }}"
 )
@@ -46,6 +46,12 @@ type {{ .Name }}_ViewSink_Context_impl struct {
 }
 
 func (c *{{ .Name }}_ViewSink_Context_impl) Keys() ([]string, error) {
+	select {
+	case <-c.Done():
+		return nil, errors.New("context cancelled while waiting for partition to become running")
+	case <-c.view.WaitRunning():
+	}
+
 	it, err := c.view.Iterator()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get iterator")
@@ -58,6 +64,12 @@ func (c *{{ .Name }}_ViewSink_Context_impl) Keys() ([]string, error) {
 }
 
 func (c *{{ .Name }}_ViewSink_Context_impl) Get(key string) (*{{ .MessageType }}, error) {
+	select {
+	case <-c.Done():
+		return nil, errors.New("context cancelled while waiting for partition to become running")
+	case <-c.view.WaitRunning():
+	}
+
 	m, err := c.view.Get(key)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get value from view")
@@ -76,7 +88,7 @@ type {{ .Name }}_ViewSink interface {
 	Sync({{ .Name }}_ViewSink_Context) error
 }
 
-func Register_{{ .Name }}_ViewSink(options runner.ServiceOptions, sychronizer {{ .Name }}_ViewSink, updateInterval time.Duration, syncTimeout time.Duration) (func(context.Context) func() error, error) {
+func Register_{{ .Name }}_ViewSink(options runner.ServiceOptions, synchronizer {{ .Name }}_ViewSink, updateInterval time.Duration, syncTimeout time.Duration) (func(context.Context) func() error, error) {
 	brokers := options.Brokers
 	protoWrapper := options.ProtoWrapper
 
@@ -108,25 +120,31 @@ func Register_{{ .Name }}_ViewSink(options runner.ServiceOptions, sychronizer {{
 		return nil, errors.Wrap(err, "failed creating view sink view")
 	}
 
-	return func(ctx context.Context) func() error {
+	return func(outerCtx context.Context) func() error {
 		return func() error {
-			gctx, cancel := context.WithCancel(ctx)
-			grp, gctx := errgroup.WithContext(ctx)
+			cancelableCtx, cancel := context.WithCancel(outerCtx)
 			defer cancel()
+			grp, ctx := errgroup.WithContext(cancelableCtx)
 
 			timer := time.NewTimer(0)
 			grp.Go(func() error {
 				for {
 					select {
-					case <-gctx.Done():
+					case <-ctx.Done():
 						return nil
 					case <-timer.C:
-						newContext, cancel := context.WithTimeout(gctx, syncTimeout)
+						select {
+						case <-ctx.Done():
+							return nil
+						case <-view.WaitRunning():
+						}
+			
+						newContext, cancel := context.WithTimeout(ctx, syncTimeout)
 						c := &{{ .Name }}_ViewSink_Context_impl{
 							Context: newContext,
 							view:    view,
 						}
-						err := sychronizer.Sync(c)
+						err := synchronizer.Sync(c)
 						if err != nil {
 							cancel()
 							fmt.Printf("sync error '%v'", err)
@@ -139,13 +157,13 @@ func Register_{{ .Name }}_ViewSink(options runner.ServiceOptions, sychronizer {{
 			})
 
 			grp.Go(func() error {
-				return view.Run(gctx)
+				return view.Run(ctx)
 			})
 
 			select {
 			case <- ctx.Done():
 				return nil
-			case <- gctx.Done():
+			case <- ctx.Done():
 				err := grp.Wait()
 				return err
 			}

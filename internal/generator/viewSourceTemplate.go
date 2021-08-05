@@ -18,19 +18,18 @@ package {{ .Package }}
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"time"
-	"fmt"
 
 	"github.com/burdiyan/kafkautil"
 	"github.com/lovoo/goka"
 	"github.com/lovoo/goka/storage"
 	"github.com/pkg/errors"
+	"github.com/syncromatics/kafmesh/pkg/runner"
 	"github.com/syndtr/goleveldb/leveldb/opt"
 	"golang.org/x/sync/errgroup"
-
-	"github.com/syncromatics/kafmesh/pkg/runner"
 
 	"{{ .Import }}"
 )
@@ -53,7 +52,7 @@ func (c *contextWrap_{{ .Name }}) Update(key string, msg *{{ .MessageType }}) er
 	return c.job.Update(key, msg)
 }
 
-func Register_{{ .Name }}_ViewSource(options runner.ServiceOptions, sychronizer {{ .Name }}_ViewSource, updateInterval time.Duration, syncTimeout time.Duration) (func(context.Context) func() error, error) {
+func Register_{{ .Name }}_ViewSource(options runner.ServiceOptions, synchronizer {{ .Name }}_ViewSource, updateInterval time.Duration, syncTimeout time.Duration) (func(context.Context) func() error, error) {
 	brokers := options.Brokers
 	protoWrapper := options.ProtoWrapper
 
@@ -75,16 +74,14 @@ func Register_{{ .Name }}_ViewSource(options runner.ServiceOptions, sychronizer 
 	}
 
 	builder := storage.BuilderWithOptions(path, opts)
-
 	view, err := goka.NewView(brokers,
 		goka.Table("{{ .TopicName }}"),
 		codec,
 		goka.WithViewStorageBuilder(builder),
 		goka.WithViewHasher(kafkautil.MurmurHasher),
 	)
-
 	if err != nil {
-		return nil, errors.Wrap(err, "failed creating sychronizer view")
+		return nil, errors.Wrap(err, "failed creating synchronizer view")
 	}
 
 	e, err := goka.NewEmitter(brokers,
@@ -93,28 +90,34 @@ func Register_{{ .Name }}_ViewSource(options runner.ServiceOptions, sychronizer 
 		goka.WithEmitterHasher(kafkautil.MurmurHasher))
 
 	if err != nil {
-		return nil, errors.Wrap(err, "failed creating sychronizer emitter")
+		return nil, errors.Wrap(err, "failed creating synchronizer emitter")
 	}
 
 	emitter := runner.NewEmitter(e)
 
-	return func(ctx context.Context) func() error {
+	return func(outerCtx context.Context) func() error {
 		return func() error {
-			gctx, cancel := context.WithCancel(ctx)
-			grp, gctx := errgroup.WithContext(ctx)
+			cancelableCtx, cancel := context.WithCancel(outerCtx)
 			defer cancel()
+			grp, ctx := errgroup.WithContext(cancelableCtx)
 
 			timer := time.NewTimer(0)
 			grp.Go(func() error {
 				for {
 					select {
-					case <-gctx.Done():
+					case <-ctx.Done():
 						return nil
 					case <-timer.C:
-						newContext, cancel := context.WithTimeout(gctx, syncTimeout)
+						select {
+						case <-ctx.Done():
+							return nil
+						case <-view.WaitRunning():
+						}
+			
+						newContext, cancel := context.WithTimeout(ctx, syncTimeout)
 						c := runner.NewProtoViewSourceJob(newContext, view, emitter)
 						cw := &contextWrap_{{ .Name }}{newContext, c}
-						err := sychronizer.Sync(cw)
+						err := synchronizer.Sync(cw)
 						if err != nil {
 							cancel()
 							fmt.Printf("sync error '%v'", err)
@@ -132,15 +135,13 @@ func Register_{{ .Name }}_ViewSource(options runner.ServiceOptions, sychronizer 
 				}
 			})
 
-			grp.Go(emitter.Watch(gctx))
+			grp.Go(emitter.Watch(ctx))
 			grp.Go(func() error {
-				return view.Run(gctx)
+				return view.Run(ctx)
 			})
 
 			select {
 			case <- ctx.Done():
-				return nil
-			case <- gctx.Done():
 				err := grp.Wait()
 				return err
 			}

@@ -23,29 +23,30 @@ import (
 	"github.com/lovoo/goka"
 	"github.com/lovoo/goka/storage"
 	"github.com/pkg/errors"
-	"github.com/syndtr/goleveldb/leveldb/opt"
-
 	"github.com/syncromatics/kafmesh/pkg/runner"
+	"github.com/syndtr/goleveldb/leveldb/opt"
+	"golang.org/x/sync/errgroup"
 
 	"{{ .Import }}"
 )
 
 type {{ .Name }}_View interface {
-	Keys() []string
+	Keys() ([]string, error)
 	Get(key string) (*{{ .MessageType }}, error)
 }
 
 type {{ .Name }}_View_impl struct {
+	context.Context
 	view *goka.View
 }
 
-func New_{{ .Name }}_View(options runner.ServiceOptions) (*{{ .Name }}_View_impl, error) {
+func New_{{ .Name }}_View(options runner.ServiceOptions) (*{{ .Name }}_View_impl, func(context.Context) func() error, error) {
 	brokers := options.Brokers
 	protoWrapper := options.ProtoWrapper
 
 	codec, err := protoWrapper.Codec("{{ .TopicName }}", &{{ .MessageType }}{})
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create codec")
+		return nil, nil, errors.Wrap(err, "failed to create codec")
 	}
 
 	opts := &opt.Options{
@@ -57,7 +58,7 @@ func New_{{ .Name }}_View(options runner.ServiceOptions) (*{{ .Name }}_View_impl
 
 	err = os.MkdirAll(path, os.ModePerm)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create view db directory")
+		return nil, nil, errors.Wrap(err, "failed to create view db directory")
 	}
 
 	builder := storage.BuilderWithOptions(path, opts)
@@ -68,27 +69,69 @@ func New_{{ .Name }}_View(options runner.ServiceOptions) (*{{ .Name }}_View_impl
 		goka.WithViewStorageBuilder(builder),
 		goka.WithViewHasher(kafkautil.MurmurHasher),
 	)
-
 	if err != nil {
-		return nil, errors.Wrap(err, "failed creating view")
+		return nil, nil, errors.Wrap(err, "failed creating view")
+	}
+	
+	viewCtx, viewCancel := context.WithCancel(context.Background())
+	v := &{{ .Name }}_View_impl{
+		viewCtx,
+		view,
 	}
 
-	return &{{ .Name }}_View_impl{
-		view: view,
+	return v, func(outerCtx context.Context) func() error {
+		return func() error {
+			cancelableCtx, cancel := context.WithCancel(outerCtx)
+			defer cancel()
+			grp, ctx := errgroup.WithContext(cancelableCtx)
+
+			grp.Go(func() error {
+				select {
+				case <-ctx.Done():
+					viewCancel()
+					return nil
+				}
+			})
+			grp.Go(func() error {
+				return v.view.Run(ctx)
+			})
+			
+			select {
+			case <- ctx.Done():
+				err := grp.Wait()
+				return err
+			}
+		}
 	}, nil
 }
 
-func (v *{{ .Name }}_View_impl) Watch(ctx context.Context) func() error {
-	return func() error {
-		return v.view.Run(ctx)
+func (v *{{ .Name }}_View_impl) Keys() ([]string, error) {
+	select {
+	case <-v.Done():
+		return nil, errors.New("context cancelled while waiting for partition to become running")
+	case <-v.view.WaitRunning():
 	}
-}
 
-func (v *{{ .Name }}_View_impl) Keys() []string {
-	return v.Keys()
+	it, err := v.view.Iterator()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get iterator from view")
+	}
+	
+	keys := []string{}
+	for it.Next() {
+		keys = append(keys, it.Key())
+	}
+
+	return keys, nil
 }
 
 func (v *{{ .Name }}_View_impl) Get(key string) (*{{ .MessageType }}, error) {
+	select {
+	case <-v.Done():
+		return nil, errors.New("context cancelled while waiting for partition to become running")
+	case <-v.view.WaitRunning():
+	}
+
 	m, err := v.view.Get(key)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get value from view")

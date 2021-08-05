@@ -51,12 +51,12 @@ func Register_Details_Enricher_Processor(service *runner.Service, processor deta
 }
 
 func New_Details_TestSerialDetails_Source(service *runner.Service) (details.TestSerialDetails_Source, error) {
-	e, err := details.New_TestSerialDetails_Source(service)
+	e, r, err := details.New_TestSerialDetails_Source(service)
 	if err != nil {
 		return nil, err
 	}
 
-	err = service.RegisterRunner(e.Watch)
+	err = service.RegisterRunner(r)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to register runner with service")
 	}
@@ -70,12 +70,12 @@ func New_Details_TestSerialDetails_Source(service *runner.Service) (details.Test
 }
 
 func New_Details_TestSerialDetailsEnriched_View(service *runner.Service) (details.TestSerialDetailsEnriched_View, error) {
-	v, err := details.New_TestSerialDetailsEnriched_View(service.Options())
+	v, r, err := details.New_TestSerialDetailsEnriched_View(service.Options())
 	if err != nil {
 		return nil, err
 	}
 
-	err = service.RegisterRunner(v.Watch)
+	err = service.RegisterRunner(r)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to register runner with service")
 	}
