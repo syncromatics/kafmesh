@@ -251,7 +251,7 @@ func buildServiceOptions(service *models.Service, components []*models.Component
 		for _, s := range c.Sinks {
 			proc := serviceSink{
 				Package:    c.Name,
-				ExportName: fmt.Sprintf("%s_%s", c.ToSafeName(), s.ToSafeMessageTypeName()),
+				ExportName: fmt.Sprintf("%s_%s", c.ToSafeName(), s.ToSafeName()),
 				Name:       s.ToSafeName(),
 			}
 			options.Sinks = append(options.Sinks, proc)
