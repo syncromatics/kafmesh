@@ -426,7 +426,7 @@ func generateDiscover(writer io.Writer, service *models.Service, components []*m
 					Topic:   sink.ToTopicName(service),
 					Type:    t,
 				},
-				MethodName:  fmt.Sprintf("%s_%s_Sink", component.ToSafeName(), sink.ToSafeMessageTypeName()),
+				MethodName:  fmt.Sprintf("%s_%s_Sink", component.ToSafeName(), sink.ToSafeName()),
 				Name:        sink.Name,
 				Description: sink.Description,
 			})
