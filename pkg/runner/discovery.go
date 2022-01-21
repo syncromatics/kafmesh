@@ -30,6 +30,8 @@ type MessageType int
 const (
 	// MessageTypeProtobuf uses protobuf serialization
 	MessageTypeProtobuf MessageType = iota
+	// MessageTypeRaw uses no serialization and will return the raw byte slice
+	MessageTypeRaw
 )
 
 // TopicDiscovery provides topic information for discovery
@@ -368,6 +370,8 @@ func convertMessageType(messageType MessageType) (discoveryv1.TopicType, error) 
 	switch messageType {
 	case MessageTypeProtobuf:
 		return discoveryv1.TopicType_TOPIC_TYPE_PROTOBUF, nil
+	case MessageTypeRaw:
+		return discoveryv1.TopicType_TOPIC_TYPE_RAW, nil
 	}
 
 	return discoveryv1.TopicType_TOPIC_TYPE_INVALID, errors.Errorf("unknown message type '%d'", messageType)

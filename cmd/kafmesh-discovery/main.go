@@ -66,7 +66,7 @@ func main() {
 
 	group.Go(graphService.Run(ctx))
 
-	eventChan := make(chan os.Signal)
+	eventChan := make(chan os.Signal, 1)
 	signal.Notify(eventChan, syscall.SIGINT, syscall.SIGTERM)
 
 	select {
