@@ -24,14 +24,12 @@ require (
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/iancoleman/strcase v0.1.3
 	github.com/imdario/mergo v0.3.12 // indirect
-	github.com/json-iterator/go v1.1.11 // indirect
 	github.com/klauspost/compress v1.12.2 // indirect
 	github.com/lib/pq v1.10.1
 	github.com/lovoo/goka v1.0.6
 	github.com/mitchellh/mapstructure v1.4.1 // indirect
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/client_golang v1.10.0
-	github.com/prometheus/common v0.23.0 // indirect
+	github.com/prometheus/client_golang v1.11.1
 	github.com/rakyll/statik v0.1.7
 	github.com/rs/cors v1.7.0
 	github.com/samuel/go-zookeeper v0.0.0-20201211165307-7117e9ea2414 // indirect
@@ -40,7 +38,6 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/syncromatics/go-kit v1.5.1
 	github.com/syncromatics/proto-schema-registry v0.7.3
-	github.com/vektah/dataloaden v0.3.0 // indirect
 	github.com/vektah/gqlparser/v2 v2.1.0
 	github.com/yargevad/filepathx v0.0.0-20161019152617-907099cb5a62
 	go.uber.org/multierr v1.6.0 // indirect
