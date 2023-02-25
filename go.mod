@@ -40,7 +40,6 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/syncromatics/go-kit v1.5.1
 	github.com/syncromatics/proto-schema-registry v0.7.3
-	github.com/vektah/dataloaden v0.3.0 // indirect
 	github.com/vektah/gqlparser/v2 v2.1.0
 	github.com/yargevad/filepathx v0.0.0-20161019152617-907099cb5a62
 	go.uber.org/multierr v1.6.0 // indirect
@@ -50,7 +49,7 @@ require (
 	golang.org/x/net v0.0.0-20210428140749-89ef3d95e781 // indirect
 	golang.org/x/oauth2 v0.0.0-20210427180440-81ed05c6b58c // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c // indirect
+	golang.org/x/sys v0.1.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20210429181445-86c259c2b4ab // indirect
 	google.golang.org/grpc v1.37.0
